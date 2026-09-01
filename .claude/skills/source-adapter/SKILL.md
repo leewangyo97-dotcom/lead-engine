@@ -56,6 +56,12 @@ export interface NormalisedLead {
    not `React Native` / `RN` / `react native`. Keep the map in `lib/sources/stack-map.ts`.
 7. **Public sources only.** Nothing behind a login. Decision 006.
 8. `User-Agent` set, `robots.txt` respected, one request per second.
+9. **Never call `fetch` directly.** Use `fetchJson` from `lib/sources/fetch-json.ts`:
+   it times out at 15s and retries 5xx, 429 and network errors three times with
+   backoff. A stalled source otherwise holds the nightly job until GitHub kills
+   it at 15 minutes, taking every adapter behind it. Algolia returns intermittent
+   500s on individual pages — skip the page and carry on rather than aborting the
+   source, and say so in the log.
 
 ## Required tests
 
@@ -84,10 +90,18 @@ report the row count.
 |---|---|---|
 | `hn-whoishiring` | HN via Algolia API | Algolia **ANDs** multi-word queries — issue one single-term query at a time, then merge |
 | `remoteok` | remoteok.com/api | Large JSON array; filter to engineering before normalising |
-| `funding-wire` | funding roundup pages | `kind: 'funding'`; `triggerEvent` is the whole value here |
+| `launch-hn` | HN "Launch HN" stories via Algolia | `kind: 'funding'` — a founder who has just raised. No stated region or terms, so `triggerEvent` and the contact carry the value. Scored on the founder weights, not the job ones |
 
 ## Candidates, not yet built
 
 Wellfound RSS, Product Hunt launches, YC company directory, Indie Hackers.
-Do not add any of these until Phase 5 works end to end — a broader funnel before a
-working filter just costs more.
+
+**Measure before building.** A source survey (see `memory/DECISIONS.md`) killed
+three candidates on evidence: HN's "Freelancer? Seeking freelancer?" thread
+carries roughly one client post per four months, WeWorkRemotely's programming
+feed had zero contract and zero mobile roles in 25 items, and both sites'
+contract-only feeds now 404. Four API calls each, no adapter written.
+
+Run `pnpm audit:titles` after adding a source — a new feed brings a new
+vocabulary of job titles, and a "Senior Product Manager" once reached the inbox
+at 67 on remote-contract-$96/hr terms because nothing in the list matched it.

@@ -55,7 +55,8 @@ lib/
   scoring/           deterministic pre-score (no model)
   gmail/             draft creation
   db/                drizzle schema + migrations
-scripts/             harvest.ts, prefilter.ts — run by GitHub Actions
+scripts/             harvest, prefilter, keepalive, report, retention run nightly;
+                     the apply-* pair, gmail:*, refilter, audit:titles are manual
 .claude/
   agents/            subagent definitions
   skills/            reusable procedures
@@ -66,7 +67,7 @@ docs/                specs, read on demand
 
 ## The memory bank
 
-Four files. Read the one you need, not all four.
+Six files. Read the one you need, not all six.
 
 | File | When to read | Write policy |
 |---|---|---|

@@ -49,6 +49,22 @@ contacted within 90 days; unpaid or equity-only.
 These are regex and a `WHERE` clause. They cost nothing and they remove the
 majority of a night's rows.
 
+## Founder leads score differently — `kind = 'funding'`
+
+Rubric 1.1.0 added a second set of weights, and using the job table for these is
+the most likely way to score them wrongly.
+
+A `launch-hn` lead is a founder who has just raised. The post states no region,
+no terms and no pay, so the job weights dock it 50 points for things the founder
+has not been asked yet — that measures our ignorance, not the lead. It is scored
+on trigger freshness (30), stack (30), direct contact (25) and stage signal (15).
+
+Timezone and contract terms are deliberately absent rather than zero. They are
+the two things a first email exists to find out.
+
+`scores.rubricVersion` records which version judged a lead, so leads scored under
+1.0.0 and 1.1.0 stay comparable. Check it before concluding a score looks wrong.
+
 ## Tiers
 
 `live` ≥75 · `warn` 60–74 · `cold` <60. Draft threshold: **75**.
