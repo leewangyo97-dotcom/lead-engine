@@ -1,0 +1,56 @@
+# The gate from CLAUDE.md's definition of done, enforced rather than remembered.
+#
+# No DATABASE_URL here on purpose: every test is pure. A suite that needs a live
+# database is a suite that goes red when Neon autosuspends, and one that is red
+# for reasons nobody caused stops being read.
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch: {}
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v5
+
+      # No `version:` — action-setup reads the `packageManager` field.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      # Migrations are forward-only and checked in. If the generated SQL and the
+      # schema have drifted, `generate` writes a new file — and a dirty tree here
+      # means someone changed the schema without committing its migration.
+      - name: Migrations are committed
+        run: |
+          pnpm db:generate
+          if [ -n "$(git status --porcelain lib/db/migrations)" ]; then
+            echo "schema and migrations have drifted — run pnpm db:generate and commit the result"
+            git status --porcelain lib/db/migrations
+            exit 1
+          fi
