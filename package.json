@@ -27,7 +27,8 @@
     "gmail:drafts": "tsx scripts/create-gmail-drafts.ts",
     "tokens": "tsx scripts/tokens.ts",
     "followups": "tsx scripts/followups-due.ts",
-    "review": "tsx scripts/weekly-review.ts"
+    "review": "tsx scripts/weekly-review.ts",
+    "nightly": "pnpm harvest && pnpm prefilter"
   },
   "dependencies": {
     "@neon/config": "^1.1.0",
