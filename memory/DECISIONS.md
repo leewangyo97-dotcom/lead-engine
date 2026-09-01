@@ -91,3 +91,21 @@ public sources (HN, RemoteOK, funding wires) already produce more than he can
 action in a week.
 
 **Consequences:** Some leads are unreachable by the tool. He can add them by hand.
+
+---
+
+## 00X — pnpm build scripts are approved in `pnpm-workspace.yaml`
+
+**Date:** 2026-09-01
+
+pnpm 11 blocks dependency install scripts by default and exits 1 rather than
+warning. The approval key is `allowBuilds` in `pnpm-workspace.yaml` — not
+`onlyBuiltDependencies`, and not a `pnpm` field in `package.json`. Both of those
+are silently ignored, so the install keeps failing with the same error and it
+looks like the allowlist is being disregarded.
+
+`esbuild` is approved because vitest and drizzle-kit both need it to unpack its
+platform binary. Nothing else is approved. If a future dependency demands a build
+script, read what the script does before adding it here — this is the one place
+in the repo where installing a package runs arbitrary code.
+
