@@ -1,4 +1,4 @@
-import { getInbox, tierOf } from "@/lib/leads/queries";
+import { getInbox, getJudgedCount, tierOf } from "@/lib/leads/queries";
 import { getPipelineFaults } from "@/lib/leads/health-query";
 import { InboxList } from "./components/inbox-list";
 
@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function Inbox() {
   const rows = await getInbox();
   const faults = await getPipelineFaults();
+  const judged = rows.length === 0 ? await getJudgedCount() : 0;
 
   const counts = rows.reduce(
     (acc, r) => {
@@ -50,7 +51,7 @@ export default async function Inbox() {
         </div>
       )}
 
-      <InboxList rows={rows} />
+      <InboxList rows={rows} judged={judged} />
 
       <p className="mt-7 text-caption text-faint">
         <kbd className="rounded-xs bg-sunk px-2 py-1 font-mono text-data-sm">?</kbd> for shortcuts ·{" "}

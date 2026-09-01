@@ -100,3 +100,20 @@ export function tierOf(score: number | null): "live" | "warn" | "cold" {
   if (score == null) return "cold";
   return score >= 75 ? "live" : score >= 60 ? "warn" : "cold";
 }
+
+/**
+ * How many leads the filter judged and set aside.
+ *
+ * An empty inbox has two very different causes: nothing has been harvested yet,
+ * or everything harvested was rejected. The first is a reason to wait; the
+ * second is a reason to look at the rubric.
+ */
+export async function getJudgedCount(): Promise<number> {
+  const db = getDb();
+  const [row] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(leads)
+    .where(inArray(leads.status, ["parked", "disqualified"]));
+  return row?.n ?? 0;
+}
+
