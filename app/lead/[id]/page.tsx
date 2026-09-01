@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getLead } from "@/lib/leads/queries";
 import { fromLead, prescore } from "@/lib/scoring/prescore";
 import { Pill } from "@/app/components/pills";
+import { OutcomeButtons } from "@/app/components/outcome-buttons";
 
 export const dynamic = "force-dynamic";
 
@@ -113,6 +114,15 @@ export default async function LeadDetail({ params }: { params: Promise<{ id: str
         <p className="mt-4 max-w-prose text-caption text-faint">
           The angle and the proof points come from the copywriter in Phase 5. Nothing here is
           generated — every field above is read from the posting or computed from it.
+        </p>
+      </section>
+
+      <section className="mb-9">
+        <h2 className="mb-5 text-label uppercase text-muted">Outcome</h2>
+        <OutcomeButtons leadId={lead.id} />
+        <p className="mt-4 max-w-prose text-caption text-faint">
+          Recorded by hand, because this system never sends. The weekly review can only be as honest
+          as what is logged here — an unrecorded send makes every reply rate below it wrong.
         </p>
       </section>
 

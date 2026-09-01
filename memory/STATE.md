@@ -3,32 +3,30 @@
 **Cap: 150 lines.** When it exceeds that, roll closed items into `DECISIONS.md`
 and truncate. This file is read every session; every line costs tokens repeatedly.
 
-Last updated: 2026-09-01 · Phase: **5 — code complete, Gmail unauthorised**
+Last updated: 2026-09-01 · Phase: **6 — complete. All six phases built.**
 
 ## Right now
 
-Phases 0-4 are done. Phase 5's plumbing is written and tested, but it has never
-run end to end, because two things it needs cannot be done from a terminal
-session: Google OAuth consent, and the model calls themselves.
+All six phases are built. Gmail is authorised — token exchange and the drafts
+endpoint both verified on 2026-09-01.
 
-What exists: Zod contracts for score/draft/verify, payload emitters that project
-fields rather than selecting rows whole, three apply-scripts that validate before
-writing, the Gmail draft client, and `pnpm tokens`.
-
-What has never executed: any model call, and anything touching Gmail.
+The loop that has never run: score, draft, verify, create drafts. Nothing has
+been sent, so the review page and the follow-up ladder are both correctly empty
+rather than untested — their logic is covered by 10 unit tests.
 
 ## Next three actions
 
-1. Create a Google Cloud OAuth client (Web application, redirect
-   `http://localhost:53682/callback`), put the id and secret in `.env.local`,
-   then `pnpm gmail:auth`.
-2. Run `/daily-run` for real. There is exactly one lead at `needs_scoring`, so
-   this is a cheap first pass — expect well under the 25k target.
-3. Phase 6: outcome logging, the weekly rollup, and the follow-up ladder.
+1. Run `/daily-run`. One lead sits at `needs_scoring`, so the first pass is cheap.
+   It ends with a real Gmail draft.
+2. Send it by hand, then log the send on the lead detail page. Nothing in the
+   learning loop works until sends are recorded — an unlogged send makes every
+   reply rate below it wrong.
+3. Add a second source once the first end-to-end run works. Not before: a wider
+   funnel in front of an unproven filter only costs more.
 
 ## Blocked
 
-Phase 5's exit test needs Gmail authorised. Nothing else is blocked.
+Nothing.
 
 ## Open questions for Joshua
 
@@ -39,6 +37,9 @@ Phase 5's exit test needs Gmail authorised. Nothing else is blocked.
 
 ## Recently done
 
+- 2026-09-01 — Phase 6: outcome logging, weekly rollup with evidence gates, the
+  follow-up ladder, /review and /followups. 10 tests.
+- 2026-09-01 — Gmail authorised; token exchange and drafts endpoint verified.
 - 2026-09-01 — Phase 5 plumbing: model contracts, payload emitters, apply
   scripts, Gmail draft client, `pnpm tokens`. Untested against a real model.
 - 2026-09-01 — Phase 4: inbox, lead detail, draft placeholder, settings.

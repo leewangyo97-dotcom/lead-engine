@@ -24,10 +24,14 @@ Run the morning pipeline. Target: under 25,000 tokens, three model calls, ten mi
    That validates against the Zod schema, rejects ids not awaiting scoring, and
    promotes at 75 or parks. The threshold lives in code, not in the prompt.
 
-4. Get the drafting payload for the survivors:
+4. Get the drafting payload for the survivors, and anything the follow-up
+   ladder owes today:
    ```bash
    pnpm leads:drafting > /tmp/drafts-in.json
+   pnpm followups > /tmp/followups.json
    ```
+   Both go into the **same** copywriter call. A follow-up is a draft; splitting
+   them doubles the prompt overhead to no benefit.
 
 5. Delegate to the `copywriter` subagent. One batched call. Persist with:
    ```bash

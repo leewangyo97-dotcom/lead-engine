@@ -25,7 +25,9 @@
     "apply:verdicts": "tsx scripts/apply-verdicts.ts",
     "gmail:auth": "tsx scripts/gmail-auth.ts",
     "gmail:drafts": "tsx scripts/create-gmail-drafts.ts",
-    "tokens": "tsx scripts/tokens.ts"
+    "tokens": "tsx scripts/tokens.ts",
+    "followups": "tsx scripts/followups-due.ts",
+    "review": "tsx scripts/weekly-review.ts"
   },
   "dependencies": {
     "@neon/config": "^1.1.0",

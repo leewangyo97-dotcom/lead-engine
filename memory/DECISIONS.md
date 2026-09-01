@@ -195,3 +195,38 @@ The same reasoning puts the verified-only Gmail rule in a `WHERE` clause rather
 than an `if`: an unverified row is never fetched, so no later edit to that file
 can let one through by accident.
 
+---
+
+## 00X — reply rates are withheld below five sends, and suggestions below twenty
+
+**Date:** 2026-09-01
+
+Two replies in three sends is 67%. Displayed as a percentage it looks like a
+finding, and it is noise wearing a number — the exact failure the learning loop
+exists to avoid, since a tool that launders guesses as measurements is worse than
+no tool.
+
+So: a cut below `MIN_SENDS` (5) shows its counts and withholds its rate. A rubric
+suggestion needs `MIN_TOTAL_FOR_SUGGESTION` (20) logged sends *and* a gap of 15
+percentage points or more between the best and worst angle. Below either bar the
+page says why it is silent rather than showing something weak.
+
+Nothing is ever auto-applied. `weekly-review.ts` prints; accepting is a human act
+that writes here.
+
+---
+
+## 00X — follow-up due dates are computed, not stored
+
+**Date:** 2026-09-01
+
+A `dueAt` column would have to be rewritten every time an outcome is logged, and
+a stale one would queue a follow-up to somebody who already replied — the single
+most embarrassing failure this tool could have.
+
+`getDueFollowups` derives it instead, from the last touch and the events table.
+A logged reply cancels the ladder by existing, with no cleanup step to forget.
+
+Measured from the *last* touch, not the first: a day-4 note that went out late
+must not be followed by the day-11 one the next morning.
+

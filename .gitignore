@@ -12,3 +12,6 @@ next-env.d.ts
 .DS_Store
 coverage/
 .neon
+
+# OAuth client downloads from Google Cloud. Never commit these.
+client_secret_*.json
