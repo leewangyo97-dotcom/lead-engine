@@ -34,16 +34,21 @@ For every draft:
 ## Output schema
 
 ```json
-[
+{ "verdicts": [
   { "leadId": "string",
-    "verdict": "pass|fail",
+    "ok": true,
     "violations": [
       { "type": "unsupported_claim|disqualified_stack|ai_overclaim|region_mismatch|dead_link|no_ask|multiple_asks",
         "quote": "the offending text, verbatim",
         "fix": "the specific change needed" }
     ] }
-]
+] }
 ```
+
+`ok` is a boolean, not "pass"/"fail", and the `verdicts` wrapper is required —
+`pnpm apply:verdicts` validates against `lib/model/schemas.ts`. A verdict that is
+`ok: true` while carrying violations is rejected as incoherent rather than
+quietly treated as a pass.
 
 ## Rules
 

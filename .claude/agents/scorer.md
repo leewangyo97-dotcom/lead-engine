@@ -26,14 +26,17 @@ one-line reason.
 ## Output schema
 
 ```json
-[
+{ "scores": [
   { "id": "string",
     "score": 0,
     "tier": "live|warn|cold",
     "delta": 0,
     "reason": "string, MAX 120 chars" }
-]
+] }
 ```
+
+The `scores` wrapper is not decoration — `pnpm apply:scores` validates against
+`lib/model/schemas.ts` and rejects a bare array outright.
 
 `delta` is your adjustment, so a wrong score can be traced without re-running you.
 

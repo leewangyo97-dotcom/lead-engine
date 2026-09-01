@@ -111,7 +111,15 @@ async function main() {
 
   const badSchema = await run(
     "scripts/apply-verdicts.ts",
-    JSON.stringify({ verdicts: [{ leadId: "L1", ok: true, violations: ["contradiction"] }] }),
+    JSON.stringify({
+      verdicts: [
+        {
+          leadId: "L1",
+          ok: true,
+          violations: [{ type: "no_ask", quote: "body", fix: "add one ask" }],
+        },
+      ],
+    }),
   );
   check("refuses a verdict that passes while carrying violations", badSchema.code === 1);
 

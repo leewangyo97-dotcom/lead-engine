@@ -14,6 +14,8 @@ export const ScoreItem = z.object({
   id: z.string().min(1),
   score: z.number().int().min(0).max(100),
   tier: z.enum(["live", "warn", "cold"]),
+  /** The adjustment applied, so a wrong score is traceable without a re-run. */
+  delta: z.number().int().min(-15).max(15).optional(),
   reason: z.string().max(120),
 });
 
@@ -45,11 +47,30 @@ export const DraftBatch = z.object({
  * so `ok: true` with a non-empty `violations` array is rejected as incoherent
  * rather than quietly treated as a pass.
  */
+/**
+ * A violation names the offending text and the change needed, not just a
+ * category. The copywriter gets exactly one retry, and "unsupported_claim" alone
+ * does not tell it which sentence to fix.
+ */
+export const Violation = z.object({
+  type: z.enum([
+    "unsupported_claim",
+    "disqualified_stack",
+    "ai_overclaim",
+    "region_mismatch",
+    "dead_link",
+    "no_ask",
+    "multiple_asks",
+  ]),
+  quote: z.string().min(1).max(300),
+  fix: z.string().min(1).max(300),
+});
+
 export const VerdictItem = z
   .object({
     leadId: z.string().min(1),
     ok: z.boolean(),
-    violations: z.array(z.string().max(200)),
+    violations: z.array(Violation),
   })
   .refine((v) => !v.ok || v.violations.length === 0, {
     message: "a verdict cannot be ok and carry violations",
@@ -62,6 +83,7 @@ export const VerdictBatch = z.object({
 export type ScoreItem = z.infer<typeof ScoreItem>;
 export type DraftItem = z.infer<typeof DraftItem>;
 export type VerdictItem = z.infer<typeof VerdictItem>;
+export type Violation = z.infer<typeof Violation>;
 
 /** Reads a JSON payload from stdin and validates it, or exits non-zero. */
 export async function readValidatedStdin<T>(schema: z.ZodType<T>): Promise<T> {

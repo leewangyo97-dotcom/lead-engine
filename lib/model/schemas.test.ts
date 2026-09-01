@@ -31,15 +31,45 @@ describe("model output contract", () => {
   });
 
   it("rejects a verdict that passes while carrying violations", () => {
-    const incoherent = VerdictBatch.safeParse({
-      verdicts: [{ leadId: "a", ok: true, violations: ["claims a client not in PROFILE.md"] }],
-    });
-    expect(incoherent.success).toBe(false);
+    const violation = {
+      type: "unsupported_claim",
+      quote: "led a team of twelve",
+      fix: "PROFILE.md records no team size; remove the claim",
+    };
 
-    const coherent = VerdictBatch.safeParse({
-      verdicts: [{ leadId: "a", ok: false, violations: ["claims a client not in PROFILE.md"] }],
+    expect(
+      VerdictBatch.safeParse({ verdicts: [{ leadId: "a", ok: true, violations: [violation] }] })
+        .success,
+    ).toBe(false);
+
+    expect(
+      VerdictBatch.safeParse({ verdicts: [{ leadId: "a", ok: false, violations: [violation] }] })
+        .success,
+    ).toBe(true);
+  });
+
+  it("requires a violation to name the offending text and the fix", () => {
+    // The copywriter gets exactly one retry. A bare category does not tell it
+    // which sentence to change.
+    const bare = VerdictBatch.safeParse({
+      verdicts: [{ leadId: "a", ok: false, violations: ["unsupported_claim"] }],
     });
-    expect(coherent.success).toBe(true);
+    expect(bare.success).toBe(false);
+
+    const missingFix = VerdictBatch.safeParse({
+      verdicts: [
+        { leadId: "a", ok: false, violations: [{ type: "no_ask", quote: "the body" }] },
+      ],
+    });
+    expect(missingFix.success).toBe(false);
+  });
+
+  it("accepts the scorer's delta, and rejects one outside the allowed range", () => {
+    const item = { id: "a", score: 80, tier: "live", reason: "x" };
+    expect(ScoreBatch.safeParse({ scores: [{ ...item, delta: -8 }] }).success).toBe(true);
+    // Stage 2 may adjust by at most 15 either way; anything more is not an
+    // adjustment, it is a different score.
+    expect(ScoreBatch.safeParse({ scores: [{ ...item, delta: 40 }] }).success).toBe(false);
   });
 
   it("rejects an empty batch rather than treating it as a no-op", () => {

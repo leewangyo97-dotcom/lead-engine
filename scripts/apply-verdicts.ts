@@ -54,7 +54,10 @@ async function main() {
 
   if (failed) {
     for (const v of verdicts.filter((x) => !x.ok)) {
-      console.log(`  ${v.leadId}: ${v.violations.join("; ")}`);
+      for (const violation of v.violations) {
+        console.log(`  ${v.leadId} [${violation.type}] "${violation.quote}"`);
+        console.log(`    fix: ${violation.fix}`);
+      }
     }
   }
 }

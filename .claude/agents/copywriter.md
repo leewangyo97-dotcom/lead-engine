@@ -66,14 +66,17 @@ joshuasenining.dev · WhatsApp +63 915 858 7388
 ## Output schema
 
 ```json
-[
+{ "drafts": [
   { "leadId": "string",
     "subject": "string, max 60 chars, specific — never 'Application'",
     "body": "string",
     "angle": "stack-exact|offline-hard|tz-preempt|trigger-fund|paid-trial|ask-direct|bench-offer",
     "proofUsed": ["crash-rate"|"defects"|"fastlane"|"tencent"|"kmp"|"shipped-apps"|"ai-tooling"] }
-]
+] }
 ```
+
+The `drafts` wrapper is required: `pnpm apply:drafts` validates the payload and
+rejects a bare array.
 
 `angle` and `proofUsed` are not bookkeeping — they are what the learning loop
 measures. A draft without them teaches the system nothing.
