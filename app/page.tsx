@@ -1,4 +1,5 @@
 import { getInbox, tierOf } from "@/lib/leads/queries";
+import { getPipelineFaults } from "@/lib/leads/health-query";
 import { InboxList } from "./components/inbox-list";
 
 // Triage state changes on every keystroke, so nothing here may be cached.
@@ -6,6 +7,7 @@ export const dynamic = "force-dynamic";
 
 export default async function Inbox() {
   const rows = await getInbox();
+  const faults = await getPipelineFaults();
 
   const counts = rows.reduce(
     (acc, r) => {
@@ -31,6 +33,22 @@ export default async function Inbox() {
           <span>Long shot {counts.cold}</span>
         </div>
       </header>
+
+      {/* An empty inbox and a broken harvest look identical from here. This is
+          the difference between "nothing matched today" and "nothing ran". */}
+      {faults.length > 0 && (
+        <div
+          role="alert"
+          className="mb-5 rounded-md border border-stop bg-stop-tint p-5 text-body-sm text-primary"
+        >
+          <p className="mb-2 text-label uppercase text-stop">Pipeline fault</p>
+          <ul className="list-disc pl-5">
+            {faults.map((f) => (
+              <li key={f}>{f}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <InboxList rows={rows} />
 
