@@ -260,3 +260,27 @@ region or stack, so the current rubric scores it near zero by construction.
 
 That is a rubric decision for Joshua, not an implementation detail to guess at.
 
+---
+
+## 00X — founder leads get their own rubric dimensions
+
+**Date:** 2026-09-01 · rubric 1.1.0
+
+The source survey established that free job boards carry almost no contract work
+with a named human contact — 30 of the job rubric's 100 points describe exactly
+what those feeds lack. `launch-hn` harvests the opposite shape: a founder who has
+just launched, with a dated trigger and often their own inbox, but no stated
+region, terms or pay.
+
+Scored under the job weights, such a lead loses 50 points for things the founder
+has not been asked yet. That is measuring our ignorance, not the lead. So
+`kind='funding'` is scored on trigger freshness (30), stack (30), direct contact
+(25) and stage signal (15).
+
+Timezone and contract are deliberately absent rather than zero: they are the two
+things a first email exists to find out.
+
+**These weights are initial and unvalidated.** No founder-outreach outcome data
+exists. The Phase 6 loop is what should correct them, and Joshua can revert the
+whole branch by deleting `prescoreFunding` — the job path is untouched.
+

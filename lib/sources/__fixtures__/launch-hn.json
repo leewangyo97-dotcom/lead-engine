@@ -1,0 +1,36 @@
+{
+  "hits": [
+    {
+      "objectID": "49451495",
+      "author": "AlexRisio",
+      "title": "Launch HN: Risklytics (YC S26) – Insurance brokerage for frontier tech companies",
+      "url": "https://www.risklytics.ai/",
+      "created_at": "2026-08-26T16:06:01Z",
+      "story_text": "Hi HN, we&#x27;re Sam and Alex, founders of Risklytics (<a href=\"https:&#x2F;&#x2F;risklytics.ai\">https:&#x2F;&#x2F;risklytics.ai</a>). We&#x27;re both on leave from Harvard, and we run an insurance brokerage for companies building robots, drones, autonomous systems and satellites. You describe your machine, we find the insurance companies willing to cover it, and we read everything before you sign.<p>Buying insurance for any frontier tech goes like this:<p>- your first customer or pilot requires coverage before your machine can work on their site<p>- a broker hands you an application written for ordinary businesses, and often will deny you on baseless &quot;risks&quot; (one of our clients got denied for using CAD software in their workflow)<p>- you get filed under something close or outright denied, the person at the insurance company often can&#x27;t tell what they&#x27;re looking at, and the safe answer is no<p>- if a quote does come back, the AI risk is often quietly removed by an add-on clause that prevents you from truly being covered<p>Those clauses surprised us. Insurance companies mostly don&#x27;t write their own policies from scratch. They license standard forms from an "
+    },
+    {
+      "objectID": "49348136",
+      "author": "bwm",
+      "title": "Launch HN: machine0 (YC S26) – Persistent CPU and GPU VMs from the CLI",
+      "url": "https://machine0.io",
+      "created_at": "2026-08-18T16:26:42Z",
+      "story_text": "Hi HN! I’m Barnaby, founder of machine0 (<a href=\"https:&#x2F;&#x2F;machine0.io\">https:&#x2F;&#x2F;machine0.io</a>). I’m building a CLI for long horizon agent compute: `machine0 new mybox` gives your agent a persistent cloud VM, billed by the minute, from $0.013&#x2F;hr up to 60 vCPU &#x2F; 240 GB RAM and GPUs (H100s, H200s etc), with 99.99% VM level uptime. Agents self drive via CLI or MCP.<p>Demo: <a href=\"https:&#x2F;&#x2F;www.youtube.com&#x2F;watch?v=gyllkZ0M04E\" rel=\"nofollow\">https:&#x2F;&#x2F;www.youtube.com&#x2F;watch?v=gyllkZ0M04E</a><p>Agent workloads are moving from ephemeral to always-on. A coding agent working on a complex feature runs 6-8 hours. Agent orchestrated training &amp; RL runs take days. OpenClaw &amp; Hermes run 24&#x2F;7. As you run more in parallel:<p>- Resources: a few agents on a large codebase saturate RAM and CPU. Model training and RL needs GPUs you don&#x27;t have.<p>- Security: `--yolo` on your personal machine is one prompt injection away from exfiltrated credentials.<p>- Availability: close your laptop and the agent dies mid-task.<p>- Isolation: there&#x27;s no clean line between you and the minimum your agent actually needs.<p>machine0 gives eve"
+    },
+    {
+      "objectID": "49511007",
+      "author": "kushagrchitkar",
+      "title": "Launch HN: Almanac (YC S26) – AI that knows your company",
+      "url": "https://usealmanac.com/",
+      "created_at": "2026-08-31T15:34:34Z",
+      "story_text": "Hi HN, I&#x27;m Kushagra, one of three founders of Almanac, a Hermes with a brain that knows everything about your company.<p>We started our journey with setting up Hermes for our company, thinking it must be easy. We wanted an agent that would know every context about our company, so we could ask questions and get context-appropriate responses to.<p>This started a very annoying and difficult journey. Setting up Hermes, getting it to talk right, building OAuth apps for every connector myself, then feeding it context myself, and ultimately struggling with Hermes&#x27;s default memory. At the same time, we saw our YC batchmates struggling with the same problem, and we saw an opportunity.<p>So we built Almanac. This is how it works. You sign up, you get a Hermes agent straight out of the box. You have a one-click connect to any account (Gmail, Calendar, Granola, PostHog, etc). You have personal accounts (only accessible by you) and also shared accounts (accessible by everyone in the company). The consequence being I can never see my cofounders&#x27; accounts.<p>The “brain” of this agent is wikis. We pull in information from your connected sources, and start organizing this information"
+    },
+    {
+      "objectID": "49510632",
+      "author": "kstonekuan",
+      "title": "Launch HN: Hebbian Robotics (YC S26) – Build scalable robotics data pipelines",
+      "url": "https://github.com/Hebbian-Robotics/hflow",
+      "created_at": "2026-08-31T15:02:41Z",
+      "story_text": "Hi HN, we’re Brandon and Kingston, the founders of Hebbian Robotics. We built HFlow (<a href=\"https:&#x2F;&#x2F;github.com&#x2F;Hebbian-Robotics&#x2F;hflow\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;Hebbian-Robotics&#x2F;hflow</a>), an SDK that turns multimodal recordings from robots and human operators into standardized, quality-checked episodes and queryable dataset manifests. A recording can contain synchronized video, joint states, actions, timestamps, and metadata, and HFlow processes those streams together.<p>Here’s a demo of HFlow in action: <a href=\"https:&#x2F;&#x2F;www.youtube.com&#x2F;watch?v=xni0GwV-xAw\" rel=\"nofollow\">https:&#x2F;&#x2F;www.youtube.com&#x2F;watch?v=xni0GwV-xAw</a><p>Robotics data pipelines often begin as scripts: one transcodes video, another checks timestamps, another adds labels, and another copies selected recordings into a training set. This works until the corpus grows. Then it becomes difficult to know which code ran, why an episode was excluded, or whether a dataset can be reproduced. The first pain is usually quality control because frozen cameras, missing topics, timestamp drift, and duplicate recordings can quietly enter training data.<"
+    }
+  ]
+}

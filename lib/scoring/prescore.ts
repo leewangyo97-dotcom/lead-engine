@@ -6,12 +6,14 @@ import type { Lead } from "../db/schema";
  * prompt. See memory/RUBRIC.md; bump RUBRIC_VERSION with every weight change so
  * old scores stay interpretable.
  */
-export const RUBRIC_VERSION = "1.0.0";
+export const RUBRIC_VERSION = "1.1.0";
 
 export const NEEDS_DRAFT_THRESHOLD = 75;
 
 export interface PrescoreInput {
+  kind?: "job" | "funding" | "cofounder";
   title: string;
+  triggerEvent?: string | null;
   summary?: string | null;
   region?: string | null;
   remoteScope?: string | null;
@@ -38,7 +40,9 @@ export interface PrescoreResult {
 
 export function fromLead(lead: Lead): PrescoreInput {
   return {
+    kind: lead.kind,
     title: lead.title,
+    triggerEvent: lead.triggerEvent,
     summary: lead.summary,
     region: lead.region,
     remoteScope: lead.remoteScope,
@@ -129,7 +133,39 @@ function freshnessPoints(input: PrescoreInput, now: Date): number {
   return 0;
 }
 
+/**
+ * Founder leads, scored on what a launch post actually states.
+ *
+ * A Launch HN post has no region, terms or pay. Running it through the job
+ * weights would score it near zero for things the founder has not been asked
+ * yet — measuring our ignorance rather than the lead. See memory/RUBRIC.md 1.1.0.
+ */
+function prescoreFunding(input: PrescoreInput, now: Date): PrescoreResult {
+  const days = input.postedAt
+    ? (now.getTime() - input.postedAt.getTime()) / 86_400_000
+    : Number.POSITIVE_INFINITY;
+
+  const freshness = days <= 7 ? 30 : days <= 21 ? 18 : days <= 45 ? 6 : 0;
+  // The job table's 25-point stack scale, rescaled to 30.
+  const stack = Math.round(stackPoints(input) * (30 / 25));
+  const contact = input.contact ? (input.isDirect ? 25 : 10) : 4;
+  const stage = /YC [A-Z]\d{2}|accelerator|seed|series [a-c]/i.test(input.triggerEvent ?? "")
+    ? 15
+    : 8;
+
+  const score = freshness + stack + contact + stage;
+  return {
+    score,
+    tier: score >= 75 ? "live" : score >= 60 ? "warn" : "cold",
+    // Reported under the job dimension names so the detail page stays one table.
+    // Timezone and contract are structurally absent, not zero-scoring.
+    parts: { timezone: 0, contract: 0, stack, contact, pay: stage, freshness },
+  };
+}
+
 export function prescore(input: PrescoreInput, now = new Date()): PrescoreResult {
+  if (input.kind === "funding") return prescoreFunding(input, now);
+
   const parts = {
     timezone: timezonePoints(input),
     contract: contractPoints(input),

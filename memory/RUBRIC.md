@@ -1,6 +1,6 @@
 # RUBRIC — scoring weights
 
-**Version: 1.0.0** — bump on every change; `scores.rubricVersion` records it.
+**Version: 1.1.0** — bump on every change; `scores.rubricVersion` records it.
 
 Score is 0–100. Stage 1 (deterministic TypeScript) computes everything it can.
 Stage 2 (model) adjusts within ±15 and writes the reason.
@@ -28,6 +28,27 @@ Stage 2 (model) adjusts within ±15 and writes the reason.
 | Vue / Nuxt / PHP / Laravel | 11 |
 | Agent tooling, MCP, AI-assisted dev workflows | 15 |
 | CI/CD, Fastlane, release engineering | 14 |
+
+## Founder leads — `kind = 'funding'`
+
+A Launch HN post is not a job posting. It states no region, no contract terms and
+no pay, so the table above would score it near zero for things the founder has
+not been asked yet. Scoring it on absent fields would be measuring our ignorance.
+
+These four dimensions are what such a post actually contains:
+
+| Dimension | Max | How |
+|---|---|---|
+| **Trigger freshness** | 30 | ≤7 days 30 · ≤21 days 18 · ≤45 days 6 · older 0 |
+| **Stack match** | 30 | same sub-weights as above, scaled to 30 |
+| **Direct contact** | 25 | founder's own inbox 25 · role inbox 10 · none 4 |
+| **Stage signal** | 15 | named accelerator batch 15 · launch post alone 8 |
+
+Timezone and contract terms are deliberately absent. They are the two things a
+first email exists to find out, and a founder who has just launched has usually
+not decided either.
+
+The `needs_draft` threshold stays 75 for both kinds.
 
 ## Tiers
 
@@ -70,6 +91,7 @@ Append every change here with evidence. Never tune on a hunch.
 | Date | Change | Why | Version |
 |---|---|---|---|
 | 2026-09-01 | Initial | Derived from resume + first manual lead pass | 1.0.0 |
+| 2026-09-01 | Added `kind='funding'` weights | The source survey found free job boards carry almost no contract work with a named contact — 30 of the 100 points above describe what those feeds structurally lack. Founder leads are a different shape and needed their own dimensions. **These weights are initial and unvalidated**, in the same sense 1.0.0 was: no outcome data exists for founder outreach yet. The Phase 6 loop should be the thing that corrects them. | 1.1.0 |
 
 > Phase 6 note: once 30+ outcomes are logged, the weekly review proposes changes
 > here from measured reply rates. Proposals are never auto-applied.

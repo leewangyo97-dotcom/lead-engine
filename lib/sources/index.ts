@@ -1,4 +1,5 @@
 import { hnWhoIsHiring } from "./hn-whoishiring";
+import { launchHn } from "./launch-hn";
 import { remoteOk } from "./remoteok";
 import type { SourceAdapter } from "./types";
 
@@ -10,6 +11,7 @@ import type { SourceAdapter } from "./types";
 export const adapters: SourceAdapter<never>[] = [
   hnWhoIsHiring as SourceAdapter<never>,
   remoteOk as SourceAdapter<never>,
+  launchHn as SourceAdapter<never>,
 ];
 
-export { hnWhoIsHiring, remoteOk };
+export { hnWhoIsHiring, launchHn, remoteOk };
