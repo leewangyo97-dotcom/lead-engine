@@ -33,7 +33,8 @@
     "test:integration": "tsx scripts/integration-check.ts",
     "gate": "pnpm typecheck && pnpm test && pnpm build:gate",
     "log:outreach": "tsx scripts/log-outreach.ts",
-    "build:gate": "tsx scripts/build-gate.ts"
+    "build:gate": "tsx scripts/build-gate.ts",
+    "tokens:record": "tsx scripts/record-tokens.ts"
   },
   "dependencies": {
     "@neon/config": "^1.1.0",

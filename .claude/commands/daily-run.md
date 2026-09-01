@@ -56,7 +56,12 @@ Run the morning pipeline. Target: under 25,000 tokens, three model calls, ten mi
    Verified-only is enforced in the WHERE clause, so an unverified row is never
    fetched in the first place.
 
-9. Write `run_metrics`: counts at each funnel stage, tokens in/out, duration.
+9. Record what the run cost, against the harvest's own metrics row:
+   ```bash
+   pnpm tokens:record --in <input> --out <output> --scored <n> --drafted <n>
+   ```
+   Take the numbers from this session. Without them `pnpm tokens` reports
+   "(not measured)" and the 25,000 target cannot be checked.
 
 10. Update `memory/STATE.md` and append to `memory/OUTREACH-LOG.md`.
 
