@@ -24,6 +24,9 @@ Delegate to the `harvester` subagent, which will:
    malformed input, summary truncation, and `isDirect` detection.
 5. Register in `lib/sources/index.ts` and insert the `sources` row.
 6. Run `pnpm test`, then one live harvest.
+7. Run `pnpm audit:titles`. A new feed brings a new vocabulary of job titles, and
+   the disqualifier only knows the words already in its list — a "Senior Product
+   Manager" once reached the inbox at 67 because nothing matched it.
 
 ## Then, here
 

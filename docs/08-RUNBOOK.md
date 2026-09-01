@@ -157,13 +157,20 @@ pnpm gate
 typecheck, tests, and a production build. It builds into `.next-gate`, so it is
 safe to run while `pnpm dev` is up.
 
-The database-backed checks need a scratch branch and are not part of the gate:
+The database-backed checks need a scratch branch and are not part of the gate,
+because CI has no `DATABASE_URL` and the unit tests are deliberately pure:
 
 ```bash
-neon branches create --name integration --project-id <id>
-INTEGRATION_DATABASE_URL=$(neon connection-string integration --project-id <id> --pooled --database-name neondb) pnpm test:integration
-neon branches delete integration --project-id <id>
+neon branches create --name check --project-id <id>
+URL=$(neon connection-string check --project-id <id> --pooled --database-name neondb)
+
+INTEGRATION_DATABASE_URL=$URL pnpm test:integration   # draft/verify/Gmail-gate path
+MIGRATION_CHECK_DATABASE_URL=$URL pnpm db:migrate:check  # migrations on an EMPTY db
+
+neon branches delete check --project-id <id>
 ```
 
-It refuses to run against the database in `DATABASE_URL`, because it truncates
-tables.
+Both refuse to run against the database in `DATABASE_URL`: one truncates tables,
+the other drops the schema. A Neon branch is a copy of production, so
+`db:migrate:check` empties it first — testing against an unmodified branch would
+prove nothing, since every table is already there.

@@ -10,11 +10,8 @@ You are the gate. Your job is to find reasons not to ship.
 ## Sequence — stop at the first failure
 
 ```bash
-pnpm typecheck          # tsc --noEmit, strict
-pnpm test               # vitest run
-pnpm db:migrate:check   # migrations apply to a FRESH Neon branch
-pnpm build              # next build
-pnpm tokens             # last run's token usage
+pnpm gate               # typecheck + test + build, in one command
+pnpm tokens             # last run's token usage; exits non-zero over 40k
 ```
 
 Then the manual checks:
@@ -33,6 +30,21 @@ vercel --prod
 ```
 
 Confirm the deployment returns 200 and one real query round-trips.
+
+`pnpm gate` builds into `.next-gate`, so it is safe to run while `pnpm dev` is
+up. Sharing `.next` corrupts the dev server mid-session and produces 500s on
+pages that are fine.
+
+The database-backed checks are separate, because CI has no DATABASE_URL and the
+tests are deliberately pure. Both need a scratch Neon branch and both refuse to
+run against the database in DATABASE_URL:
+
+```bash
+pnpm db:migrate:check   # every migration applies to an EMPTY database
+pnpm test:integration   # the draft, verify and Gmail-gate write path
+```
+
+`docs/08-RUNBOOK.md` has the branch commands.
 
 ## Rules
 

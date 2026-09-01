@@ -44,6 +44,13 @@ and the `NormalisedLead` shape. Do not improvise either.
 ## Hard rules
 
 - **Never fetch from inside a Vercel function.** Adapters run in GitHub Actions.
+- **Never call `fetch` directly.** Use `fetchJson` from `lib/sources/fetch-json.ts`
+  — 15s timeout, three retries on 5xx/429/network. Without it a stalled source
+  holds the nightly job until GitHub kills it at 15 minutes, taking every adapter
+  behind it with it.
+- **A failed page is not a failed source.** Algolia returns intermittent 500s on
+  individual pages; skip the page, log it, and keep the ones already collected.
+  Aborting on the first failure once discarded 79% of a harvest silently.
 - **`summary` is truncated to 400 characters at ingest.** Not at read time. If you
   store the full text, someone will eventually put it in a prompt.
 - **`contentHash` is computed from `company | title | region | summary.slice(0,500)`
