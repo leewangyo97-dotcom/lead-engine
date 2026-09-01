@@ -35,11 +35,25 @@ If a decision was made this session that constrains future work, write it into
 ## 4. Run the gate
 
 ```bash
-pnpm typecheck && pnpm test
+pnpm gate
 ```
+
+That is typecheck, test and build. It is one script because Windows PowerShell
+has no `&&`, and a gate that cannot be pasted into the shell in front of you is a
+gate that gets skipped.
 
 If either fails, say so plainly in the summary. Do not fix it silently and do not
 leave it undocumented — the next session needs to know it's walking into a red build.
+
+## 5. Refresh the outreach log
+
+```bash
+pnpm log:outreach
+```
+
+Regenerates the table in `memory/OUTREACH-LOG.md` from the `outreach` and
+`events` tables. The database is the truth; that file is its mirror, and a mirror
+maintained by hand drifts.
 
 ## Report
 

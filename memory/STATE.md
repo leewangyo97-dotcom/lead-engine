@@ -7,31 +7,31 @@ Last updated: 2026-09-01 · Phase: **6 — complete. Pipeline proven; funnel is 
 
 ## Right now
 
-Every path in the system has now been executed at least once against real
-infrastructure, including the two that had never run.
+All six phases are built, deployed and running unattended. Nothing is in flight.
 
-Verified on 2026-09-01, not assumed:
+Verified against real infrastructure, not assumed: the nightly workflow runs
+green from CI; Gmail creates and deletes a draft (`pnpm gmail:smoke`); the
+verified-only gate refuses an unverified row and admits a verified one; and the
+draft/verify write path has nine integration assertions (`pnpm test:integration`,
+scratch branch required).
 
-- Gmail: `pnpm gmail:smoke` refreshes the token, creates a draft, reads it back
-  and deletes it. Mailbox unchanged by a green run.
-- The verified-only gate, on a throwaway Neon branch: a draft with a real
-  contact and `verified_at = null` produced "nothing verified and unsent"; the
-  same row with `verified_at` set produced a draft. Both directions, and the
-  test draft and branch were deleted afterwards.
-
-What has still never happened is a *real* draft, because no lead has cleared 75
-on merit. The nearest miss is Atria at 68 — worldwide, direct contact, React —
-held back only by "full-time employees only".
+The one thing that has never happened is a real outreach draft. No lead has
+scored 75 on merit. Current funnel: 164 harvested, 41 disqualified, 117 parked,
+6 waiting at needs_scoring — and those 6 were already judged and parked once, so
+re-scoring them will reach the same answer.
 
 ## Next three actions
 
-1. **Resolve the full-time vs contract question.** PROFILE flags it as an
-   unresolved inconsistency, and it is now costing leads: the contract weight is
-   20 points, so a full-time-only posting cannot clear 75 however good it is.
-   Answering it is a one-line rubric change, not a rewrite.
-2. Run `pnpm nightly` daily. The September HN thread fills through the month.
-3. Watch whether Launch HN founders keep being rejected by stage 2 (see
-   DECISIONS). If the pattern holds for a fortnight, filter the domain earlier.
+1. **Answer the contract vs full-time question.** PROFILE.md records it as an
+   unresolved inconsistency and it is now the binding constraint: contract terms
+   are 20 points, so a full-time-only posting cannot reach 75 however good it is.
+   Atria sits at 68 — worldwide, direct contact, React — held back by nothing
+   else. Answering it is one weight in `memory/RUBRIC.md` plus a version bump.
+2. Run `pnpm nightly` daily for a fortnight and let the September threads fill.
+   One thin week is not a fair sample of the sources.
+3. Then decide on Launch HN. Stage 2 has rejected four of four founder leads as
+   deep-tech with no app surface. If that holds over a fortnight, filter the
+   domain in code; four is not evidence yet.
 
 ## Blocked
 
@@ -49,6 +49,10 @@ Nothing.
 - 2026-09-01 — `remoteok` adapter added; harvest idempotent across both sources
   (30 raw, 28 unique, 0 inserted on the second run).
 - 2026-09-01 — Fixed: BD titles were clearing every hard reject.
+- 2026-09-01 — Integration check for the draft/verify/Gmail-gate write path;
+  its guard is identity, after two row-count heuristics failed opposite ways.
+- 2026-09-01 — Adapters given a 15s timeout and retry; `pnpm gate`;
+  `pnpm log:outreach` regenerates OUTREACH-LOG from the database.
 - 2026-09-01 — Phase 6: outcome logging, weekly rollup with evidence gates, the
   follow-up ladder, /review and /followups. 10 tests.
 - 2026-09-01 — Gmail authorised; token exchange and drafts endpoint verified.
