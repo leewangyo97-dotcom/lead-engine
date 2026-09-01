@@ -1,6 +1,7 @@
 import type { NormalisedLead, SourceAdapter } from "./types";
 import { truncateSummary } from "./types";
 import { extractStack } from "./stack-map";
+import { fetchJson } from "./fetch-json";
 import { decodeEntities, isDirectContact } from "./hn-whoishiring";
 
 /** A "Launch HN" story: a founder announcing a newly funded company. */
@@ -50,14 +51,11 @@ export const launchHn: SourceAdapter<LaunchHnStory> = {
   label: "Launch HN (newly funded)",
 
   async fetch(since: Date): Promise<LaunchHnStory[]> {
-    const res = await fetch(
+    const data = await fetchJson<{ hits: LaunchHnStory[] }>(
       `${ALGOLIA}/search_by_date?tags=story&query=Launch%20HN&hitsPerPage=100` +
         `&numericFilters=created_at_i>${Math.floor(since.getTime() / 1000)}`,
       { headers: { "User-Agent": UA } },
     );
-    if (!res.ok) throw new Error(`Launch HN fetch failed: ${res.status}`);
-
-    const data = (await res.json()) as { hits: LaunchHnStory[] };
     // Algolia matches "launch" and "HN" anywhere, so the prefix is checked here
     // rather than trusted from the query.
     return data.hits.filter((h) => /^Launch HN:/i.test(h.title ?? ""));

@@ -1,6 +1,7 @@
 import type { NormalisedLead, SourceAdapter } from "./types";
 import { truncateSummary } from "./types";
 import { extractStack } from "./stack-map";
+import { fetchJson } from "./fetch-json";
 
 /** One top-level comment in a "Who is hiring?" thread. */
 export interface HnComment {
@@ -158,12 +159,10 @@ export const hnWhoIsHiring: SourceAdapter<HnComment> = {
 
   async fetch(since: Date): Promise<HnComment[]> {
     // Algolia ANDs multi-word queries, so the thread is found by tag, not text.
-    const storyRes = await fetch(
+    const stories = await fetchJson<{ hits: { objectID: string; title: string }[] }>(
       `${ALGOLIA}/search_by_date?tags=story,author_whoishiring&hitsPerPage=4`,
       { headers: { "User-Agent": UA } },
     );
-    if (!storyRes.ok) throw new Error(`HN story lookup failed: ${storyRes.status}`);
-    const stories = (await storyRes.json()) as { hits: { objectID: string; title: string }[] };
 
     // Both recent threads, not just the newest. The harvest window is 45 days,
     // so on any day after the 1st the previous month's thread still contains
@@ -177,12 +176,17 @@ export const hnWhoIsHiring: SourceAdapter<HnComment> = {
     for (const thread of threads) {
       // One request per second, per the adapter contract.
       for (let page = 0; page < 5; page++) {
-        const res = await fetch(
-          `${ALGOLIA}/search_by_date?tags=comment,story_${thread.objectID}&hitsPerPage=100&page=${page}`,
-          { headers: { "User-Agent": UA } },
-        );
-        if (!res.ok) break;
-        const data = (await res.json()) as { hits: HnComment[]; nbPages: number };
+        // A page that will not load must not lose the pages already collected,
+        // so this breaks out rather than failing the whole source.
+        let data: { hits: HnComment[]; nbPages: number };
+        try {
+          data = await fetchJson<{ hits: HnComment[]; nbPages: number }>(
+            `${ALGOLIA}/search_by_date?tags=comment,story_${thread.objectID}&hitsPerPage=100&page=${page}`,
+            { headers: { "User-Agent": UA } },
+          );
+        } catch {
+          break;
+        }
         out.push(...data.hits.filter((h) => new Date(h.created_at) >= since));
         if (page + 1 >= data.nbPages) break;
         await new Promise((r) => setTimeout(r, 1000));

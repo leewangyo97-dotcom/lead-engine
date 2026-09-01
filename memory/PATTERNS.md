@@ -88,3 +88,17 @@ An adapter that returns nothing still exits 0, so without an explicit check the
 workflow stays green while the pipeline starves. The funnel line is printed for
 a human, but the exit code is what actually surfaces a broken source.
 
+## Adapters never call `fetch` directly
+
+`lib/sources/fetch-json.ts` is the only place a source touches the network. It
+adds a 15-second timeout and retries 5xx, 429 and network errors three times with
+backoff; 4xx is raised immediately, because a 404 will be a 404 on the next
+attempt too.
+
+Two failures it prevents. `fetch` has no default timeout, so a source that
+accepts a connection and stalls holds the nightly job until GitHub kills it at 15
+minutes, taking every later adapter with it. And a single 502 would otherwise
+mark a source failed, which makes `report-run` exit non-zero — a run that goes
+red for reasons nobody caused stops being read, and then a real failure is missed
+as well.
+

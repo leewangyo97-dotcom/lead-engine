@@ -1,6 +1,7 @@
 import type { NormalisedLead, SourceAdapter } from "./types";
 import { truncateSummary } from "./types";
 import { canonicaliseStack, extractStack } from "./stack-map";
+import { fetchJson } from "./fetch-json";
 
 /** One item from remoteok.com/api. The first element is a legal notice, not a job. */
 export interface RemoteOkItem {
@@ -66,10 +67,9 @@ export const remoteOk: SourceAdapter<RemoteOkItem> = {
   label: "RemoteOK",
 
   async fetch(since: Date): Promise<RemoteOkItem[]> {
-    const res = await fetch(API, { headers: { "User-Agent": UA, Accept: "application/json" } });
-    if (!res.ok) throw new Error(`RemoteOK fetch failed: ${res.status}`);
-
-    const data = (await res.json()) as RemoteOkItem[];
+    const data = await fetchJson<RemoteOkItem[]>(API, {
+      headers: { "User-Agent": UA, Accept: "application/json" },
+    });
     // The API returns one legal-notice object before the jobs; it has no
     // `position`, so filtering on that removes it without special-casing.
     return data.filter(
