@@ -39,6 +39,19 @@ const DISQUALIFIED_STACK = [
   "research scientist",
 ];
 
+/**
+ * A disqualified language named as *the* language of the role, in the title.
+ *
+ * `DISQUALIFIED_STACK` above matches the phrase "rust systems", which missed
+ * "Backend Systems Engineer (Rust)" — that reached stage 2 on the first real
+ * batch and cost tokens to be scored 51.
+ *
+ * Deliberately title-only and deliberately narrow. Rust appearing among six
+ * tags on a TypeScript job is not disqualifying; Rust in the role's own name is.
+ */
+const DISQUALIFIED_PRIMARY_LANGUAGE =
+  /\((?:rust|go|golang|c\+\+|elixir|scala|haskell|erlang)\)|\b(?:rust|golang|c\+\+|haskell|erlang)\s+(?:engineer|developer|dev|programmer)\b|\b(?:senior|staff|principal|lead)?\s*(?:rust|haskell|erlang)\b\s*(?:engineer|developer)/i;
+
 /** Languages Joshua does not speak, when the posting requires them. */
 const LANGUAGE_REQUIRED =
   /\b(german|deutsch|japanese|日本語|korean|한국어|french|français|mandarin)\b[^.]{0,40}\b(required|fluent|native|speaker|proficien\w+|mandatory)\b|\b(fluent|native)\b[^.]{0,20}\b(german|japanese|korean|french)\b/i;
@@ -98,6 +111,7 @@ export function disqualify(input: DisqualifyInput, now = new Date()): Disqualify
   const haystack = `${input.title} ${input.summary ?? ""}`.toLowerCase();
 
   if (DISQUALIFIED_STACK.some((s) => haystack.includes(s))) return "disqualified_stack";
+  if (DISQUALIFIED_PRIMARY_LANGUAGE.test(input.title)) return "disqualified_stack";
 
   // Onsite is only fatal when there is no contract option — a contract that
   // happens to be onsite-preferred is still worth an email.

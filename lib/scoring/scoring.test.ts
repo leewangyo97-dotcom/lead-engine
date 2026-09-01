@@ -31,6 +31,30 @@ describe("disqualify", () => {
     );
   });
 
+  it("rejects a disqualified language named as the role's own language", () => {
+    // Both reached stage 2 on the first real batch and cost tokens to score.
+    expect(disqualify({ ...base, title: "Backend Systems Engineer (Rust)" }, NOW)).toBe(
+      "disqualified_stack",
+    );
+    expect(disqualify({ ...base, title: "Rust Developer" }, NOW)).toBe("disqualified_stack");
+    expect(disqualify({ ...base, title: "Senior Golang Engineer" }, NOW)).toBe("disqualified_stack");
+  });
+
+  it("leaves a mixed title to stage 2 rather than hard-rejecting it", () => {
+    // "Sr Full-Stack Engineer (Rust + React)" names a language he does work in.
+    // A hard disqualifier has to be certain; this one is a judgment call, and
+    // stage 2 already scored it 50 and parked it.
+    expect(disqualify({ ...base, title: "Sr Full-Stack Engineer (Rust + React)" }, NOW)).toBeNull();
+  });
+
+  it("keeps a role that merely lists a disqualified language among others", () => {
+    // Rust in a tag list on a TypeScript job is not a reason to reject.
+    expect(
+      disqualify({ ...base, title: "Senior Software Engineer", summary: "TypeScript, React, some Rust" }, NOW),
+    ).toBeNull();
+    expect(disqualify({ ...base, title: "Android Engineer", stack: ["kotlin", "rust"] }, NOW)).toBeNull();
+  });
+
   it("rejects onsite only when there is no contract option", () => {
     expect(disqualify({ ...base, remoteScope: "onsite", isContract: false }, NOW)).toBe(
       "onsite_no_contract",
