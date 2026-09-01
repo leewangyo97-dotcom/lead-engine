@@ -28,7 +28,8 @@
     "tokens": "tsx scripts/tokens.ts",
     "followups": "tsx scripts/followups-due.ts",
     "review": "tsx scripts/weekly-review.ts",
-    "nightly": "pnpm harvest && pnpm prefilter"
+    "nightly": "pnpm harvest && pnpm prefilter",
+    "gmail:smoke": "tsx scripts/gmail-smoke.ts"
   },
   "dependencies": {
     "@neon/config": "^1.1.0",

@@ -7,32 +7,31 @@ Last updated: 2026-09-01 · Phase: **6 — complete. Pipeline proven; funnel is 
 
 ## Right now
 
-All six phases are built, CI gates every push, and the mechanical pipeline is
-correct and verified. What it has never produced is a lead worth emailing.
+Every path in the system has now been executed at least once against real
+infrastructure, including the two that had never run.
 
-Current funnel: 144 harvested, 41 disqualified, 100 parked, 3 reaching stage 2,
-0 clearing 75.
+Verified on 2026-09-01, not assumed:
 
-Three defects were found by running it rather than by reading it: the harvest
-window was 21 days against a filter that accepts 45; HN titles were whatever
-field happened to be second ("Earth", "Full-time", a bare URL); and a
-disqualified language in a role's own name did not hard-reject.
+- Gmail: `pnpm gmail:smoke` refreshes the token, creates a draft, reads it back
+  and deletes it. Mailbox unchanged by a green run.
+- The verified-only gate, on a throwaway Neon branch: a draft with a real
+  contact and `verified_at = null` produced "nothing verified and unsent"; the
+  same row with `verified_at` set produced a draft. Both directions, and the
+  test draft and branch were deleted afterwards.
 
-A source survey (see DECISIONS) established that the free feeds structurally do
-not carry contract work with a named human contact. That is 30 of the rubric's
-100 points, so the funnel is not going to produce a 75 from these sources.
+What has still never happened is a *real* draft, because no lead has cleared 75
+on merit. The nearest miss is Atria at 68 — worldwide, direct contact, React —
+held back only by "full-time employees only".
 
 ## Next three actions
 
-1. **Joshua's call:** either add `funding-wire` with rubric weights for
-   `kind: 'funding'` (founders, not HR pipelines — where contract work actually
-   originates), or accept that the tool surfaces fewer, better leads and wait
-   for the September threads to fill. Do not add another job board; the survey
-   says why.
-2. Run `pnpm nightly` daily either way. The September HN thread was empty on the
-   1st and fills through the month.
-3. When something clears 75, `/daily-run` finishes the one path never proven:
-   draft, verify, Gmail.
+1. **Resolve the full-time vs contract question.** PROFILE flags it as an
+   unresolved inconsistency, and it is now costing leads: the contract weight is
+   20 points, so a full-time-only posting cannot clear 75 however good it is.
+   Answering it is a one-line rubric change, not a rewrite.
+2. Run `pnpm nightly` daily. The September HN thread fills through the month.
+3. Watch whether Launch HN founders keep being rejected by stage 2 (see
+   DECISIONS). If the pattern holds for a fortnight, filter the domain earlier.
 
 ## Blocked
 
