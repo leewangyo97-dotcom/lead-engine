@@ -7,29 +7,32 @@ Last updated: 2026-09-01 · Phase: **6 — complete. Pipeline proven; funnel is 
 
 ## Right now
 
-All six phases are built and the mechanical pipeline has been run against live
-data end to end. Two sources are live: `hn-whoishiring` and `remoteok`.
+All six phases are built, CI gates every push, and the mechanical pipeline is
+correct and verified. What it has never produced is a lead worth emailing.
 
-The first real attempt at `/daily-run` found a filter leak: "Founding Growth &
-Partnerships Lead" reached the scorer with a pre-score of 63, because the
-non-engineering rule matched `sales` but not `growth` or `partnerships`. Fixed
-and tested in both directions.
+Current funnel: 144 harvested, 41 disqualified, 100 parked, 3 reaching stage 2,
+0 clearing 75.
 
-**Nothing currently qualifies.** After the fix, 0 of 28 leads clear the gate of
-60. The best is 52 — a kdb+/q contract role, which is worldwide and contract but
-matches none of the stack. Everything else is US-only full-time. That is the
-filter working, not failing, and it is the honest state: the two live sources
-are not producing Kotlin/React Native contract work this week.
+Three defects were found by running it rather than by reading it: the harvest
+window was 21 days against a filter that accepts 45; HN titles were whatever
+field happened to be second ("Earth", "Full-time", a bare URL); and a
+disqualified language in a role's own name did not hard-reject.
+
+A source survey (see DECISIONS) established that the free feeds structurally do
+not carry contract work with a named human contact. That is 30 of the rubric's
+100 points, so the funnel is not going to produce a 75 from these sources.
 
 ## Next three actions
 
-1. Wait a day or two and re-run `pnpm harvest && pnpm prefilter`. The September
-   HN thread was not up at the time of writing; RemoteOK turns over daily.
-2. When something clears 60, run `/daily-run` for the first genuine end-to-end
-   pass. It ends in a real Gmail draft.
-3. If a week passes with nothing clearing, the question is the source mix, not
-   the rubric. Do not lower the gate to manufacture a lead — that spends tokens
-   to email people who were never a fit.
+1. **Joshua's call:** either add `funding-wire` with rubric weights for
+   `kind: 'funding'` (founders, not HR pipelines — where contract work actually
+   originates), or accept that the tool surfaces fewer, better leads and wait
+   for the September threads to fill. Do not add another job board; the survey
+   says why.
+2. Run `pnpm nightly` daily either way. The September HN thread was empty on the
+   1st and fills through the month.
+3. When something clears 75, `/daily-run` finishes the one path never proven:
+   draft, verify, Gmail.
 
 ## Blocked
 

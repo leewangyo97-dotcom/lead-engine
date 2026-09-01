@@ -230,3 +230,33 @@ A logged reply cancels the ladder by existing, with no cleanup step to forget.
 Measured from the *last* touch, not the first: a day-4 note that went out late
 must not be followed by the day-11 one the next morning.
 
+---
+
+## 00X — source survey: the free feeds do not carry this work
+
+**Date:** 2026-09-01
+
+Before building a third adapter, each candidate was measured rather than
+assumed. Results, all from live requests:
+
+| Source | Finding |
+|---|---|
+| HN "Who is hiring" (2 threads, 244 comments) | 141 parse to a real role; US full-time skew; 3 reach stage 2, 0 clear 75 |
+| RemoteOK API | ~3 engineering roles per 100 items; no contact ever, so capped at 2/10 on that weight |
+| HN "Freelancer? Seeking freelancer?" | **1** client post across four months, and it was Vue/Ruby, US+EU only |
+| WeWorkRemotely programming RSS | 25 items, 0 contract, 0 mobile; heavy Toptal/Proxify agency presence |
+| WWR and RemoteOK contract-only feeds | 301 and 410 — neither exists any more |
+
+The conclusion is not that the filter is too strict. It is that free public job
+feeds are dominated by full-time salaried roles, and the rubric weights contract
+terms at 20 and direct contact at 10 — 30 of the 100 points describe something
+these sources structurally do not have.
+
+**Do not add another job board.** The next source that could change the outcome
+is one where the counterparty is a founder rather than an HR pipeline: the
+`funding-wire` adapter in the source-adapter contract. That needs rubric weights
+for `kind: 'funding'`, which do not exist yet — a funding lead has no title,
+region or stack, so the current rubric scores it near zero by construction.
+
+That is a rubric decision for Joshua, not an implementation detail to guess at.
+
