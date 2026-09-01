@@ -26,6 +26,25 @@ const UA = "lead-engine/0.1 (personal job-search tool; contact via HN)";
  * the opposite shape: no stated region or terms, but a dated trigger and often
  * the founder's own inbox.
  */
+/** Sentences that state what a company builds with, rather than merely mention it. */
+const BUILD_CONTEXT =
+  /\b(built|build|building|wrote|written|rewrote|use|uses|using|powered by|runs on|stack|backend|frontend|codebase|migrat\w+|port\w+)\b/i;
+
+/**
+ * A launch post is a pitch, not a job spec.
+ *
+ * Scanning the whole post put `typescript` and `postgres` on machine0 — a GPU
+ * VM company — because both words appear in passing, and that inflated it to 81
+ * and past the draft threshold. Only sentences that say what the company builds
+ * with are considered, so an aside about someone else's stack does not count as
+ * a match.
+ */
+export function extractStackFromBuildContext(text: string): string[] {
+  const sentences = text.split(/(?<=[.!?\n])\s+/);
+  const relevant = sentences.filter((s) => BUILD_CONTEXT.test(s)).join(" ");
+  return extractStack(relevant);
+}
+
 export const launchHn: SourceAdapter<LaunchHnStory> = {
   id: "launch-hn",
   label: "Launch HN (newly funded)",
@@ -76,7 +95,7 @@ export const launchHn: SourceAdapter<LaunchHnStory> = {
       contact: email,
       isDirect: email ? isDirectContact(email) : false,
       url: `https://news.ycombinator.com/item?id=${raw.objectID}`,
-      stack: extractStack(`${title} ${body}`),
+      stack: extractStackFromBuildContext(`${title}. ${body}`),
       summary: truncateSummary(body || pitch),
       triggerEvent: batch
         ? `launched on HN ${days}d ago, YC ${batch}`

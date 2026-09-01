@@ -284,3 +284,26 @@ things a first email exists to find out.
 exists. The Phase 6 loop is what should correct them, and Joshua can revert the
 whole branch by deleting `prescoreFunding` — the job path is untouched.
 
+---
+
+## 00X — Launch HN founders are deep-tech, and stage 2 keeps rejecting them
+
+**Date:** 2026-09-01
+
+The first real founder batch scored well deterministically and was rejected by
+judgment, every time: GPU VM infrastructure, an insurance brokerage, robotics
+data pipelines, a Go video tool. All YC S26, all freshly launched, none with a
+consumer app surface.
+
+That is the two-stage design working — code produced 81 for machine0 on a
+genuine TypeScript/Postgres stack, and stage 2 took it to 66 because the *work*
+is GPU infrastructure, a PROFILE-disqualified domain. But a source whose leads
+stage 2 rejects every night is a source that costs tokens to say no.
+
+Watch it for a fortnight before deciding. If founder leads keep reaching stage 2
+and keep being parked, the fix is a hard filter on the domain — not a weight
+change, because the weights are measuring what they claim to measure.
+
+Do not act on this yet: four rejections is not evidence, and Phase 6's rollup is
+the thing designed to answer it.
+

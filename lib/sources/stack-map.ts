@@ -89,12 +89,23 @@ export function canonicaliseStack(tokens: string[]): string[] {
     const mapped = ALIASES[t] ?? t;
     if (KNOWN.has(mapped)) out.add(mapped);
   }
+  // "React Native" contains "React", so both match. They are not the same skill
+  // and the more specific one is what the posting actually said.
+  if (out.has("react-native")) out.delete("react");
+  if (out.has("next")) out.delete("javascript");
+
   return [...out].sort();
 }
 
 /** Scans free text for known stack tokens. Multi-word aliases first. */
 export function extractStack(text: string): string[] {
-  const lower = ` ${text.toLowerCase().replace(/[^a-z0-9+#.\- ]/g, " ")} `;
+  // A period is kept because ".net" and "node.js" need it, but a sentence-final
+  // one has to go: without this, "React Native." never matched the two-word
+  // alias and silently degraded to plain "react".
+  const lower = ` ${text
+    .toLowerCase()
+    .replace(/[^a-z0-9+#.\- ]/g, " ")
+    .replace(/\.(?=\s|$)/g, " ")} `;
   const found: string[] = [];
 
   for (const alias of Object.keys(ALIASES)) {

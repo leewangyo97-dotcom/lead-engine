@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import fixture from "./__fixtures__/launch-hn.json";
-import { launchHn, type LaunchHnStory } from "./launch-hn";
+import { extractStackFromBuildContext, launchHn, type LaunchHnStory } from "./launch-hn";
 import { contentHash } from "./hash";
 import { SUMMARY_MAX } from "./types";
 
@@ -76,5 +76,24 @@ describe("launch-hn", () => {
     for (const lead of normalised) {
       expect((lead.summary ?? "").length).toBeLessThanOrEqual(SUMMARY_MAX);
     }
+  });
+});
+
+describe("stack extraction from a pitch", () => {
+  it("ignores a technology mentioned in passing", () => {
+    // machine0 is a GPU VM company. Both words below appear in its post, and
+    // scanning the whole text scored it 81 on a stack it does not need.
+    expect(
+      extractStackFromBuildContext(
+        "We give your agent a persistent cloud VM. Great for running TypeScript agents or a Postgres box.",
+      ),
+    ).toEqual([]);
+  });
+
+  it("counts a technology the company says it builds with", () => {
+    expect(
+      extractStackFromBuildContext("Our app is built with Kotlin and React Native."),
+    ).toEqual(["kotlin", "react-native"]);
+    expect(extractStackFromBuildContext("The backend uses Node and Postgres.")).toContain("node");
   });
 });
