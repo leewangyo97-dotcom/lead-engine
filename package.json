@@ -31,8 +31,9 @@
     "nightly": "pnpm harvest && pnpm prefilter",
     "gmail:smoke": "tsx scripts/gmail-smoke.ts",
     "test:integration": "tsx scripts/integration-check.ts",
-    "gate": "pnpm typecheck && pnpm test && pnpm build",
-    "log:outreach": "tsx scripts/log-outreach.ts"
+    "gate": "pnpm typecheck && pnpm test && pnpm build:gate",
+    "log:outreach": "tsx scripts/log-outreach.ts",
+    "build:gate": "tsx scripts/build-gate.ts"
   },
   "dependencies": {
     "@neon/config": "^1.1.0",

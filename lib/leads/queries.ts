@@ -10,13 +10,16 @@ import { leads, scores } from "../db/schema";
  * Joining on it therefore multiplies the lead: a second score row made
  * Risklytics appear twice in the inbox, with no error anywhere.
  */
+// Written as literal SQL rather than by interpolating ${scores} and ${leads.id}:
+// Drizzle re-aliases interpolated identifiers inside a raw fragment, which made
+// the correlation silently fail and every score come back null.
 const latestScore = sql<number | null>`(
-  select coalesce(s.model_score, s.pre_score) from ${scores} s
-  where s.lead_id = ${leads.id} order by s.scored_at desc limit 1
+  select coalesce(s.model_score, s.pre_score) from scores s
+  where s.lead_id = leads.id order by s.scored_at desc limit 1
 )`;
 
 const latestTier = sql<string | null>`(
-  select s.tier from ${scores} s where s.lead_id = ${leads.id}
+  select s.tier from scores s where s.lead_id = leads.id
   order by s.scored_at desc limit 1
 )`;
 

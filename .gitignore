@@ -15,3 +15,4 @@ coverage/
 
 # OAuth client downloads from Google Cloud. Never commit these.
 client_secret_*.json
+.next-gate/

@@ -33,19 +33,19 @@ export async function getRejected(limit = 200): Promise<RejectedRow[]> {
       // Subqueries, not a join: scores is append-only, so joining multiplies
       // the lead once it has been judged more than once.
       score: sql<number | null>`(
-        select coalesce(s.model_score, s.pre_score) from ${scores} s
-        where s.lead_id = ${leads.id} order by s.scored_at desc limit 1
+        select coalesce(s.model_score, s.pre_score) from scores s
+        where s.lead_id = leads.id order by s.scored_at desc limit 1
       )`,
       modelReason: sql<string | null>`(
-        select s.reason from ${scores} s where s.lead_id = ${leads.id}
+        select s.reason from scores s where s.lead_id = leads.id
         order by s.scored_at desc limit 1
       )`,
     })
     .from(leads)
     .where(inArray(leads.status, ["disqualified", "parked"]))
     .orderBy(desc(sql`(
-      select coalesce(s.model_score, s.pre_score) from ${scores} s
-      where s.lead_id = ${leads.id} order by s.scored_at desc limit 1
+      select coalesce(s.model_score, s.pre_score) from scores s
+      where s.lead_id = leads.id order by s.scored_at desc limit 1
     )`))
     .limit(limit);
 
