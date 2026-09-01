@@ -8,6 +8,13 @@
       "when": 1788255191898,
       "tag": "0000_yummy_hex",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788262340257,
+      "tag": "0001_violet_namorita",
+      "breakpoints": true
     }
   ]
 }

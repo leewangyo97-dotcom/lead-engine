@@ -53,3 +53,25 @@ Read before writing new code. Append when a convention emerges; keep entries sho
 
 - Conventional commits: `feat:`, `fix:`, `chore:`, `docs:`
 - One phase per branch. Never commit directly to `main` while a phase is open.
+
+## Scripts load `.env.local` in-process, never via a runner flag
+
+`tsx --env-file=.env.local` does **not** forward the flag to the Node process tsx
+spawns. The variable never arrives and the script fails claiming `DATABASE_URL`
+is unset, which reads like a missing secret rather than a missing flag. Use
+`loadLocalEnv()` from `lib/env.ts` as the first line of any script's `main()`.
+In CI there is no file and the value comes from the environment, so it no-ops.
+
+## `onConflictDoNothing`, never `onConflictDoUpdate`, on `leads`
+
+A row that already exists has been filtered, possibly scored, possibly drafted.
+Rewriting it on a re-harvest would reset that work. The content hash is stable
+precisely so the conflict branch is the common one — see the Phase 1 exit test.
+
+## Dedupe within the batch before the insert
+
+The same posting can appear twice in one fetch. Postgres rejects a batch insert
+carrying two identical conflict targets, so `harvest.ts` collapses rows through a
+`Map` keyed by hash first. Without it the whole run fails on a duplicate rather
+than skipping one row.
+
