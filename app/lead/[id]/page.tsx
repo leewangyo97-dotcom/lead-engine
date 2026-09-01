@@ -1,29 +1,33 @@
 import { notFound } from "next/navigation";
 import { getLead } from "@/lib/leads/queries";
-import { fromLead, prescore } from "@/lib/scoring/prescore";
+import { fromLead, prescore, type PrescoreResult } from "@/lib/scoring/prescore";
 import { Pill } from "@/app/components/pills";
 import { OutcomeButtons } from "@/app/components/outcome-buttons";
 
 export const dynamic = "force-dynamic";
 
-/** Rubric line items, so a wrong score is diagnosable rather than mysterious. */
-const MAXIMUMS: Record<string, number> = {
-  timezone: 30,
-  contract: 20,
-  stack: 25,
-  contact: 10,
-  pay: 10,
-  freshness: 5,
-};
+/**
+ * Rubric line items, so a wrong score is diagnosable rather than mysterious.
+ *
+ * Two sets, because rubric 1.1.0 scores founder leads on different dimensions.
+ * Showing the job maxima against funding parts produced "25 / 10" and
+ * "18 / 5" — arithmetic that tells the reader the page is lying to them.
+ */
+const JOB_ROWS: [keyof PrescoreResult["parts"], string, number][] = [
+  ["timezone", "Timezone eligibility", 30],
+  ["contract", "Contract terms", 20],
+  ["stack", "Stack match", 25],
+  ["contact", "Direct contact", 10],
+  ["pay", "Pay signal", 10],
+  ["freshness", "Trigger freshness", 5],
+];
 
-const LABELS: Record<string, string> = {
-  timezone: "Timezone eligibility",
-  contract: "Contract terms",
-  stack: "Stack match",
-  contact: "Direct contact",
-  pay: "Pay signal",
-  freshness: "Trigger freshness",
-};
+const FUNDING_ROWS: [keyof PrescoreResult["parts"], string, number][] = [
+  ["freshness", "Trigger freshness", 30],
+  ["stack", "Stack match", 30],
+  ["contact", "Direct contact", 25],
+  ["pay", "Stage signal", 15],
+];
 
 export default async function LeadDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -35,6 +39,7 @@ export default async function LeadDetail({ params }: { params: Promise<{ id: str
   // Recomputed rather than read back: the breakdown is deterministic, and
   // storing six more columns to avoid one function call would be worse.
   const computed = prescore(fromLead(lead));
+  const rows = lead.kind === "funding" ? FUNDING_ROWS : JOB_ROWS;
 
   return (
     <main className="mx-auto max-w-content px-6 py-8">
@@ -61,11 +66,11 @@ export default async function LeadDetail({ params }: { params: Promise<{ id: str
         <h2 className="mb-5 text-label uppercase text-muted">Why it scored</h2>
         <table className="w-full max-w-prose text-body-sm">
           <tbody>
-            {Object.entries(computed.parts).map(([key, value]) => (
+            {rows.map(([key, label, max]) => (
               <tr key={key} className="border-b border-rule-soft">
-                <td className="py-3 text-secondary">{LABELS[key]}</td>
+                <td className="py-3 text-secondary">{label}</td>
                 <td className="py-3 text-right font-mono tabular-nums text-primary">
-                  {value} / {MAXIMUMS[key]}
+                  {computed.parts[key]} / {max}
                 </td>
               </tr>
             ))}
