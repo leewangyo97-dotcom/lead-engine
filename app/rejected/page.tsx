@@ -5,6 +5,7 @@ import {
   getScoreBands,
   REJECTED_PAGE_SIZE,
 } from "@/lib/leads/rejected-query";
+import { getScenarios } from "@/lib/leads/whatif";
 import { Pill } from "@/app/components/pills";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +19,7 @@ export default async function Rejected() {
     getRejectedCount(),
     getScoreBands(),
   ]);
+  const scenarios = await getScenarios();
   const peak = Math.max(1, ...bands.map((b) => b.n));
 
   return (
@@ -73,6 +75,31 @@ export default async function Rejected() {
           Scored leads only — a hard rejection never gets a score. The draft threshold is 75. A
           funnel bunched just below it would be a threshold problem; one peaking well below is a
           supply problem, and only the second is fixed by adding sources.
+        </p>
+      </section>
+
+      <section className="mt-9">
+        <h2 className="mb-4 text-label uppercase text-muted">What would change</h2>
+        <ul className="max-w-prose">
+          {scenarios.map((s) => (
+            <li key={s.key} className="border-b border-rule-soft py-3">
+              <div className="flex items-baseline justify-between gap-4">
+                <span className="text-body-sm text-secondary">{s.label}</span>
+                <span className="shrink-0 font-mono tabular-nums text-primary">
+                  {s.qualifying} would qualify
+                </span>
+              </div>
+              {s.examples.length > 0 && (
+                <p className="mt-1 font-mono text-data-sm text-faint">{s.examples.join(" · ")}</p>
+              )}
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 max-w-prose text-caption text-faint">
+          Computed, never applied — changing a weight stays a commit against{" "}
+          <code className="font-mono text-data">memory/RUBRIC.md</code> with a version bump, so old
+          scores stay interpretable. These are deterministic scores only; the model&rsquo;s ±15
+          judgment is not replayed, and it has parked leads that scored well here.
         </p>
       </section>
 
