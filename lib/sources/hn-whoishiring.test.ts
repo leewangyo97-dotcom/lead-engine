@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import fixture from "./__fixtures__/hn-whoishiring.json";
-import { hnWhoIsHiring, isDirectContact, parseHourlyUsd, detectRemoteScope } from "./hn-whoishiring";
+import {
+  detectRemoteScope,
+  hnWhoIsHiring,
+  isDirectContact,
+  parseHourlyUsd,
+  pickRegion,
+  pickRole,
+} from "./hn-whoishiring";
 import type { HnComment } from "./hn-whoishiring";
 import { contentHash } from "./hash";
 import { SUMMARY_MAX } from "./types";
@@ -77,5 +84,54 @@ describe("hn-whoishiring", () => {
     expect(parseHourlyUsd("Acme | Eng | $80/hr").minUsdHr).toBe(80);
     expect(parseHourlyUsd("Acme | Eng | $170-240K + equity").minUsdHr).toBe(82);
     expect(parseHourlyUsd("Acme | Eng | competitive salary").minUsdHr).toBeUndefined();
+  });
+});
+
+describe("header field classification", () => {
+  // Every one of these produced a wrong title on the first real run.
+  it("finds the role wherever the poster put it", () => {
+    expect(pickRole(["Cogram", "Full-time", "Remote (CET ±3)", "Senior Backend Engineer"])).toBe(
+      "Senior Backend Engineer",
+    );
+    expect(pickRole(["Atria", "Global Remote (almost anywhere)", "Product Engineer"])).toBe(
+      "Product Engineer",
+    );
+    expect(pickRole(["Adalat AI", "https://www.adalat.ai", "Remote (India)", "Backend Engineer"])).toBe(
+      "Backend Engineer",
+    );
+  });
+
+  it("rejects terms, locations and URLs as roles", () => {
+    expect(pickRole(["Acme", "Full-time"])).toBeNull();
+    expect(pickRole(["Acme", "REMOTE (Worldwide)"])).toBeNull();
+    expect(pickRole(["Acme", "https://acme.com"])).toBeNull();
+    expect(pickRole(["Acme", "$150-200k", "ONSITE NYC"])).toBeNull();
+  });
+
+  it("refuses a field that is not a job, however well placed", () => {
+    // These all survived the location/terms filters and became titles on the
+    // first real run: "B2B Saas / AI for AEC", "Earth", a stack list.
+    expect(pickRole(["Cogram", "Full-time", "B2B Saas / AI for AEC"])).toBeNull();
+    expect(pickRole(["Trustworthy Technology", "Earth", "Part Time"])).toBeNull();
+    expect(pickRole(["Adalat AI", "Go, React, Next.js, k8s"])).toBeNull();
+  });
+
+  it("returns null rather than inventing a role", () => {
+    // A posting with no identifiable role cannot be written about honestly.
+    expect(pickRole(["Acme"])).toBeNull();
+    expect(hnWhoIsHiring.normalise({ ...hits[0], comment_text: "Acme | Full-time | REMOTE" })).toBeNull();
+  });
+
+  it("picks the location field for region, not whatever follows the role", () => {
+    expect(pickRegion(["Acme", "Backend Engineer", "REMOTE (EMEA)", "Full-time"])).toBe("REMOTE (EMEA)");
+    expect(pickRegion(["Acme", "Backend Engineer"])).toBeUndefined();
+  });
+
+  it("strips a URL that the poster fused into the company name", () => {
+    const lead = hnWhoIsHiring.normalise({
+      ...hits[0],
+      comment_text: "Flywheel Motion ( https://flywheelmotion.com/ ) | Contract | REMOTE (worldwide) | Senior Engineer",
+    });
+    expect(lead?.company).toBe("Flywheel Motion");
   });
 });

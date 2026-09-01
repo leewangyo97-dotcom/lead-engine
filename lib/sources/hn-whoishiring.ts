@@ -107,6 +107,51 @@ export function parseHourlyUsd(text: string): { raw?: string; minUsdHr?: number 
   return {};
 }
 
+/**
+ * Header fields are pipe-separated but in no fixed order. Posters write
+ * "COMPANY | ROLE | LOCATION", "COMPANY | LOCATION | ROLE", and every
+ * permutation with a URL, a salary or a visa note dropped in the middle.
+ *
+ * Taking fields[1] as the role produced titles like "Earth", "Full-time" and a
+ * bare URL — which then reach the copywriter as the subject of the email. So
+ * each field is classified by content, and the role is whatever is left over.
+ */
+const LOCATION_FIELD =
+  /REMOTE|ONSITE|HYBRID|WORLDWIDE|ANYWHERE|\b(US|USA|EU|EMEA|APAC|UK)\b|,\s*[A-Z]{2}\b|\b(London|Berlin|Paris|NYC|New York|San Francisco|Bangalore|Singapore|Tokyo|Toronto|Amsterdam|Bremen)\b/i;
+
+const TERMS_FIELD =
+  /^(full[- ]?time|part[- ]?time|contract|freelance|intern(ship)?|permanent|equity|c2h|contract[- ]to[- ]hire|visa|no visa)\b|\bequity\b|^\$|^€|^£|\b\d{2,3}k\b/i;
+
+const URL_FIELD = /^https?:\/\/|^www\./i;
+
+/**
+ * A field only counts as a role if it names a job.
+ *
+ * Without this, "B2B Saas / AI for AEC" and "Earth" survive as titles simply by
+ * being neither a location nor a set of terms — and the copywriter then opens an
+ * email with them. Many HN postings put the role in the body rather than the
+ * header, and for those the correct answer is no lead, not a guessed one.
+ */
+const ROLE_WORD =
+  /\b(engineer|engineering|developer|dev|swe|programmer|architect|sre|devops|designer|scientist|analyst|lead|manager|director|head of|intern|contractor|consultant|founding|full[- ]?stack|backend|back[- ]end|frontend|front[- ]end|mobile|android|ios|qa|data)\b/i;
+
+export function pickRole(fields: string[]): string | null {
+  // fields[0] is the company, so it is never a candidate.
+  const candidates = fields.slice(1).map((f) => f.trim()).filter(Boolean);
+
+  const usable = candidates.filter(
+    (f) => !URL_FIELD.test(f) && !TERMS_FIELD.test(f) && f.length <= 160 && ROLE_WORD.test(f),
+  );
+
+  // Prefer a field that is only a role. A location that also names the role
+  // ("Remote (EU) - Senior Rails Engineer") is the fallback, not the first pick.
+  return usable.find((f) => !LOCATION_FIELD.test(f)) ?? usable[0] ?? null;
+}
+
+export function pickRegion(fields: string[]): string | undefined {
+  return fields.slice(1).find((f) => LOCATION_FIELD.test(f))?.trim() || undefined;
+}
+
 export const hnWhoIsHiring: SourceAdapter<HnComment> = {
   id: "hn-whoishiring",
   label: "HN — Who is hiring?",
@@ -158,9 +203,10 @@ export const hnWhoIsHiring: SourceAdapter<HnComment> = {
     // one bad record must not end the run.
     if (fields.length < 2 || !fields[0]) return null;
 
-    const company = fields[0];
-    const title = fields[1];
-    if (!company || !title || company.length > 120 || title.length > 160) return null;
+    const company = fields[0].replace(/\s*\(\s*https?:[^)]*\)\s*/gi, "").trim();
+    const title = pickRole(fields);
+    // No identifiable role means the posting cannot be written about honestly.
+    if (!company || !title || company.length > 120) return null;
 
     const body = rest.join(" ").trim();
     const email = text.match(/[\w.+-]+@[\w-]+\.[\w.]{2,}/)?.[0];
@@ -171,7 +217,7 @@ export const hnWhoIsHiring: SourceAdapter<HnComment> = {
       kind: "job",
       company,
       title,
-      region: fields.slice(2).join(" | ") || undefined,
+      region: pickRegion(fields) ?? (fields.slice(2).join(" | ") || undefined),
       remoteScope: detectRemoteScope(headerLine),
       isContract: detectContract(headerLine),
       contact: email,
