@@ -58,6 +58,7 @@ async function main() {
       lastRunAt: r.lastRunAt,
       lastOk: r.lastOk,
       lastError: r.lastError,
+      lastRawCount: r.lastRawCount,
     })),
   });
 

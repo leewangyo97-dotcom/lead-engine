@@ -22,6 +22,7 @@ export async function getPipelineFaults(): Promise<string[]> {
       lastRunAt: r.lastRunAt,
       lastOk: r.lastOk,
       lastError: r.lastError,
+      lastRawCount: r.lastRawCount,
     })),
   });
 }

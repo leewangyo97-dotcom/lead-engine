@@ -17,6 +17,8 @@ export interface SourceHealth {
   lastRunAt: Date | null;
   lastOk: boolean;
   lastError?: string | null;
+  /** Raw items this source returned last run. Null before it has ever run. */
+  lastRawCount?: number | null;
 }
 
 export interface PipelineState {
@@ -41,6 +43,23 @@ export function pipelineFaults({ latestRawCount, sources, now = new Date() }: Pi
   // normal and expected — the content hash means most nights insert nothing.
   if (latestRawCount === 0) {
     faults.push("every source returned zero items — the pipeline has starved, not settled");
+  }
+
+  // One source returning nothing while others work means that adapter died —
+  // a site redesign, a moved endpoint. Distinct from every source returning
+  // nothing, which is the outage case handled above, and stated as an absolute
+  // rather than a percentage: harvest volume swings legitimately with thread age
+  // and feed rotation, so a drop-off threshold would cry wolf.
+  const productive = sources.filter((s) => (s.lastRawCount ?? 0) > 0);
+  if (productive.length > 0) {
+    const silent = sources.filter((s) => s.lastRawCount === 0);
+    if (silent.length) {
+      faults.push(
+        `${silent.length} source(s) returned nothing while others worked: ${silent
+          .map((s) => s.id)
+          .join(", ")}`,
+      );
+    }
   }
 
   const stale = sources.filter(
