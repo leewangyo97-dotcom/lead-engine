@@ -102,3 +102,15 @@ mark a source failed, which makes `report-run` exit non-zero — a run that goes
 red for reasons nobody caused stops being read, and then a real failure is missed
 as well.
 
+## A destructive script is guarded by identity, not by row counts
+
+`integration-check.ts` truncates tables, so it must never see production. Two
+size heuristics were tried and both were wrong, in opposite directions: "refuse
+if the outreach table has rows" waved production straight through, because
+production's outreach table is also empty; "refuse if there are more than 50
+leads" then blocked every legitimate scratch branch, because a Neon branch is a
+copy of production and starts with all of its rows.
+
+The check that holds is `INTEGRATION_DATABASE_URL !== DATABASE_URL`. Row counts
+describe the data; only identity describes which database it is.
+

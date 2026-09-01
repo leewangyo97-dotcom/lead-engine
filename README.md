@@ -111,6 +111,21 @@ above rather than something being broken.
 
 ---
 
+## Integration check
+
+Unit tests cover pure logic; the write path needs a database, and CI deliberately
+has none. Run it against a scratch Neon branch, which is disposable because it is
+a copy:
+
+```bash
+neon branches create --name integration --project-id <id>
+INTEGRATION_DATABASE_URL=$(neon connection-string integration --project-id <id> --pooled --database-name neondb) pnpm test:integration
+neon branches delete integration --project-id <id>
+```
+
+It truncates tables, so it refuses to run against the database in `DATABASE_URL`.
+It spawns the real scripts rather than reimplementing them.
+
 ## Definition of done
 
 `pnpm typecheck`, `pnpm test` and `pnpm build` pass, the migration applies to a
