@@ -39,8 +39,16 @@ export type InboxRow = {
   tier: string | null;
 };
 
-/** Statuses that belong in the morning triage. Everything else is history. */
-export const TRIAGE_STATUSES = ["needs_scoring", "scored", "needs_draft", "harvested"] as const;
+/**
+ * Statuses that belong in the morning triage.
+ *
+ * `harvested` is deliberately absent. A harvested lead has not been through the
+ * filter, and the nightly workflow spends a real window in that state between
+ * its harvest and prefilter steps — longer if prefilter fails. Showing those
+ * rows invites triaging leads the disqualifier would have rejected, which is the
+ * one thing the filter exists to prevent.
+ */
+export const TRIAGE_STATUSES = ["needs_scoring", "scored", "needs_draft"] as const;
 
 export async function getInbox(): Promise<InboxRow[]> {
   const db = getDb();
