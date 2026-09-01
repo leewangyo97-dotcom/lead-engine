@@ -1,0 +1,82 @@
+# Nightly harvest — the scheduler for this project.
+#
+# Vercel Hobby cron cannot do this: it is capped at once per day with +/-59 min
+# drift, and any more frequent expression fails at deploy time. See
+# memory/DECISIONS.md entry 001.
+#
+# This workflow contains NO model calls. It harvests, hashes, filters and
+# pre-scores — all deterministic, all free. Rows land in Neon as needs_scoring
+# and wait for /daily-run.
+
+name: nightly
+
+on:
+  schedule:
+    # 20:00 UTC Mon-Fri = 04:00 Manila (UTC+8)
+    - cron: '0 20 * * 1-5'
+  workflow_dispatch: {}
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+jobs:
+  harvest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # No `version:` — action-setup reads the `packageManager` field in package.json.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Harvest: fetch, normalise, content-hash, upsert.
+      # One adapter failing must not fail the run — handled inside harvest.ts.
+      - name: Harvest sources
+        run: pnpm tsx scripts/harvest.ts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      # Pre-filter: hard disqualifiers + deterministic rule scoring.
+      # Survivors are marked needs_scoring. Target: 15-25 rows.
+      - name: Pre-filter and pre-score
+        run: pnpm tsx scripts/prefilter.ts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      # GitHub disables scheduled workflows after 60 days of repo inactivity.
+      # This write keeps the repo active so the schedule survives quiet periods.
+      - name: Keepalive
+        run: pnpm tsx scripts/keepalive.ts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Report funnel
+        run: pnpm tsx scripts/report-run.ts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+  # Monthly retention: prune dead rows so storage stays flat inside Neon's 0.5 GB.
+  retention:
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 20 1 * *'
+    steps:
+      - uses: actions/checkout@v4
+      # No `version:` — action-setup reads the `packageManager` field in package.json.
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm tsx scripts/retention.ts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}

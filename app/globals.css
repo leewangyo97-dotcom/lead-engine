@@ -1,0 +1,134 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Ember & Paper foundations — docs/design/00-LEAD-ENGINE-FOUNDATIONS.md
+   Primitives are raw values. Components reference only the semantic tokens.
+   Contrast pairs in that doc are computed, not estimated — if you change a
+   colour here, recompute them there. */
+@layer base {
+  /* primitive/colour + semantic/colour — Light */
+  :root {
+    --paper-50: #fbfaf6;  --paper-100: #f5f3ec; --paper-200: #f2f1ea;
+    --paper-300: #eae8df; --paper-400: #ddd9ce; --paper-500: #c7c2b3;
+    --ink-900: #1b1a16;   --ink-800: #2c2a24;   --ink-700: #3f3d37;
+    --ink-600: #56534a;   --ink-500: #5a574f;   --ink-400: #6e6b60;
+    --ink-300: #b3afa2;
+    --night-900: #100f0c; --night-800: #14130f; --night-700: #1d1b16;
+    --night-600: #262319; --night-500: #2e2b23;
+    --ember-700: #93300f; --ember-600: #a93a17; --ember-500: #c2451f;
+    --ember-400: #d4633f; --ember-300: #e58c6c; --ember-200: #f0bca7;
+    --ember-100: #f7e4da;
+    --go-600: #245741;    --go-500: #2f6b4f;    --go-400: #4e9271;
+    --go-300: #6fbf93;    --go-100: #dfebe2;
+    --hold-600: #7a5410;  --hold-500: #855c0f;  --hold-400: #c08d2a;
+    --hold-300: #d6a445;  --hold-100: #f5e8ce;
+    --stop-600: #6e2430;  --stop-500: #8a2e3b;  --stop-300: #d4707c;
+    --stop-100: #f3dde1;
+    
+    --bg-canvas: var(--paper-200);
+    --bg-surface: var(--paper-50);
+    --bg-sunk: var(--paper-300);
+    --bg-hover: var(--paper-300);
+    --bg-selected: var(--ember-100);
+    --text-primary: var(--ink-900);
+    --text-secondary: var(--ink-700);
+    --text-muted: var(--ink-500);
+    --text-faint: var(--ink-400);
+    --text-on-accent: var(--paper-50);
+    --rule-default: var(--paper-400);
+    --rule-soft: var(--paper-300);
+    --rule-strong: var(--ink-300);
+    --accent-base: var(--ember-500);
+    --accent-hover: var(--ember-600);
+    --accent-tint: var(--ember-100);
+    --status-go: var(--go-500);
+    --status-go-tint: var(--go-100);
+    --status-hold: var(--hold-500);
+    --status-hold-tint: var(--hold-100);
+    --status-stop: var(--stop-500);
+    --status-stop-tint: var(--stop-100);
+    --elev-raised: 0 1px 2px rgb(27 26 22 / 0.05), 0 8px 24px -16px rgb(27 26 22 / 0.2);
+    --elev-overlay: 0 2px 6px rgb(27 26 22 / 0.07), 0 28px 56px -28px rgb(27 26 22 / 0.3);
+  }
+
+  /* semantic/colour — Dark. Only the semantics move; primitives never do. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg-canvas: var(--night-800);
+      --bg-surface: var(--night-700);
+      --bg-sunk: var(--night-900);
+      --bg-hover: var(--night-600);
+      --bg-selected: rgb(147 48 15 / 0.22);
+      --text-primary: var(--paper-100);
+      --text-secondary: var(--paper-500);
+      --text-muted: var(--ink-300);
+      --text-faint: var(--ink-500);
+      --text-on-accent: var(--night-900);
+      --rule-default: var(--night-500);
+      --rule-soft: var(--night-600);
+      --rule-strong: var(--ink-600);
+      --accent-base: var(--ember-400);
+      --accent-hover: var(--ember-300);
+      --accent-tint: rgb(147 48 15 / 0.3);
+      --status-go: var(--go-300);
+      --status-go-tint: rgb(36 87 65 / 0.3);
+      --status-hold: var(--hold-300);
+      --status-hold-tint: rgb(122 84 16 / 0.3);
+      --status-stop: var(--stop-300);
+      --status-stop-tint: rgb(110 36 48 / 0.3);
+      --elev-raised: 0 1px 2px rgb(0 0 0 / 0.35), 0 8px 24px -16px rgb(0 0 0 / 0.7);
+      --elev-overlay: 0 2px 6px rgb(0 0 0 / 0.45), 0 28px 56px -28px rgb(0 0 0 / 0.8);
+    }
+  }
+
+  [data-theme="dark"] {
+    --bg-canvas: var(--night-800);
+    --bg-surface: var(--night-700);
+    --bg-sunk: var(--night-900);
+    --bg-hover: var(--night-600);
+    --bg-selected: rgb(147 48 15 / 0.22);
+    --text-primary: var(--paper-100);
+    --text-secondary: var(--paper-500);
+    --text-muted: var(--ink-300);
+    --text-faint: var(--ink-500);
+    --text-on-accent: var(--night-900);
+    --rule-default: var(--night-500);
+    --rule-soft: var(--night-600);
+    --rule-strong: var(--ink-600);
+    --accent-base: var(--ember-400);
+    --accent-hover: var(--ember-300);
+    --accent-tint: rgb(147 48 15 / 0.3);
+    --status-go: var(--go-300);
+    --status-go-tint: rgb(36 87 65 / 0.3);
+    --status-hold: var(--hold-300);
+    --status-hold-tint: rgb(122 84 16 / 0.3);
+    --status-stop: var(--stop-300);
+    --status-stop-tint: rgb(110 36 48 / 0.3);
+    --elev-raised: 0 1px 2px rgb(0 0 0 / 0.35), 0 8px 24px -16px rgb(0 0 0 / 0.7);
+    --elev-overlay: 0 2px 6px rgb(0 0 0 / 0.45), 0 28px 56px -28px rgb(0 0 0 / 0.8);
+  }
+
+  html {
+    color-scheme: light dark;
+  }
+
+  body {
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+  }
+
+  /* One focus treatment everywhere. Never removed, never colour-only. */
+  :focus-visible {
+    outline: 2px solid var(--accent-base);
+    outline-offset: 2px;
+    border-radius: inherit;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
+}
