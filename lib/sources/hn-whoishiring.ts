@@ -176,16 +176,23 @@ export const hnWhoIsHiring: SourceAdapter<HnComment> = {
     for (const thread of threads) {
       // One request per second, per the adapter contract.
       for (let page = 0; page < 5; page++) {
-        // A page that will not load must not lose the pages already collected,
-        // so this breaks out rather than failing the whole source.
+        // Algolia returns intermittent 500s on individual pages. Skipping the
+        // failed page and carrying on recovers the rest; stopping at the first
+        // one discarded up to 70% of a harvest, and did it silently — which
+        // looks exactly like a quiet week.
         let data: { hits: HnComment[]; nbPages: number };
         try {
           data = await fetchJson<{ hits: HnComment[]; nbPages: number }>(
             `${ALGOLIA}/search_by_date?tags=comment,story_${thread.objectID}&hitsPerPage=100&page=${page}`,
             { headers: { "User-Agent": UA } },
           );
-        } catch {
-          break;
+        } catch (err) {
+          console.error(
+            `[hn-whoishiring] thread ${thread.objectID} page ${page} failed, skipping it: ${
+              err instanceof Error ? err.message : String(err)
+            }`,
+          );
+          continue;
         }
         out.push(...data.hits.filter((h) => new Date(h.created_at) >= since));
         if (page + 1 >= data.nbPages) break;
