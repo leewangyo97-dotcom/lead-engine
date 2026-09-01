@@ -46,7 +46,9 @@ async function main() {
 
   for (const s of sourceRows) {
     const state = s.lastOk ? "ok" : `FAILED: ${s.lastError ?? "unknown"}`;
-    console.log(`source ${s.id}: ${state} (last run ${s.lastRunAt?.toISOString() ?? "never"})`);
+    console.log(
+      `source ${s.id}: ${state} · ${s.lastRawCount ?? "?"} raw (last run ${s.lastRunAt?.toISOString() ?? "never"})`,
+    );
   }
 
   const faults = pipelineFaults({

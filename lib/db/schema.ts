@@ -37,6 +37,10 @@ export const sources = pgTable("sources", {
   lastRunAt: timestamp("last_run_at"),
   lastOk: boolean("last_ok").notNull().default(true),
   lastError: text("last_error"),
+  // Raw items this source returned on its last run. A total across all sources
+  // cannot say which adapter went quiet, and an adapter that half-fails is the
+  // failure mode that does not announce itself.
+  lastRawCount: integer("last_raw_count"),
 });
 
 /* ── leads ───────────────────────────────────────────── */

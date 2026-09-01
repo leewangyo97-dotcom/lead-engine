@@ -54,9 +54,11 @@ async function main() {
       .values({ id: adapter.id, label: adapter.label })
       .onConflictDoNothing();
 
+    let sourceRaw = 0;
     try {
       const raw = await adapter.fetch(since);
       rawCount += raw.length;
+      sourceRaw = raw.length;
 
       for (const item of raw) {
         // normalise never throws by contract, but one adapter bug must not end
@@ -67,14 +69,19 @@ async function main() {
 
       await db
         .update(sources)
-        .set({ lastRunAt: new Date(), lastOk: true, lastError: null })
+        .set({ lastRunAt: new Date(), lastOk: true, lastError: null, lastRawCount: sourceRaw })
         .where(sql`${sources.id} = ${adapter.id}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       console.error(`[${adapter.id}] fetch failed: ${message}`);
       await db
         .update(sources)
-        .set({ lastRunAt: new Date(), lastOk: false, lastError: message.slice(0, 500) })
+        .set({
+          lastRunAt: new Date(),
+          lastOk: false,
+          lastError: message.slice(0, 500),
+          lastRawCount: sourceRaw,
+        })
         .where(sql`${sources.id} = ${adapter.id}`);
     }
   }

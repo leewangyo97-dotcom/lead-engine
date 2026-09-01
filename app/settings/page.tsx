@@ -43,7 +43,8 @@ export default async function Settings() {
             <li key={s.id} className="flex items-baseline justify-between border-b border-rule-soft py-3">
               <span className="text-body text-primary">{s.label}</span>
               <span className={`font-mono text-data-sm ${s.lastOk ? "text-go" : "text-stop"}`}>
-                {s.lastOk ? "ok" : "failed"} · {s.lastRunAt?.toISOString().slice(0, 16).replace("T", " ") ?? "never"}
+                {s.lastOk ? "ok" : "failed"} · {s.lastRawCount ?? "?"} raw ·{" "}
+                {s.lastRunAt?.toISOString().slice(0, 16).replace("T", " ") ?? "never"}
               </span>
             </li>
           ))}
