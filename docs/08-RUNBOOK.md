@@ -103,6 +103,20 @@ sources carry mostly onsite, full-time work.
 
 ---
 
+## A role slipped through that is not engineering work
+
+A "Senior Product Manager" once reached the inbox at 67 — remote, contract,
+$96-118/hour. Every weighted dimension was excellent, so it passed on merit.
+
+```bash
+pnpm audit:titles
+```
+
+Lists anything scoring 50+ whose title reads like a non-engineering role. It is a
+report, not a filter: it cannot tell whether an unusual title is wrong, only that
+it deserves a glance. Worth running after adding a source, which is when a new
+vocabulary of job titles arrives.
+
 ## A run cost more than expected
 
 ```bash
