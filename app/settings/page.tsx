@@ -10,12 +10,14 @@ export const dynamic = "force-dynamic";
 /**
  * Read-only for now, and honestly labelled as such.
  *
- * The spec asks for weight sliders live-previewed against last night's leads.
- * That is worth building, but the weights live in memory/RUBRIC.md, which is a
- * file in the repo rather than a table — editing it from a web form means either
- * a write path into the working tree or a second source of truth. Both are
- * decisions to make deliberately in Phase 6, when the learning loop needs to
- * propose weight changes anyway.
+ * docs/04-UI-SPEC.md asks for weight sliders live-previewed against last night's
+ * leads. They are not here, and that is a standing decision rather than an
+ * omission: the weights live in memory/RUBRIC.md, a file in the repo, so editing
+ * them from a web form needs either a write path into the working tree or a
+ * second source of truth that can disagree with the first.
+ *
+ * Until that is settled, tuning a weight is a commit — which is reviewable, and
+ * which RUBRIC.md's own tuning log already requires.
  */
 export default async function Settings() {
   const db = getDb();
@@ -68,10 +70,11 @@ export default async function Settings() {
       </section>
 
       <p className="mt-7 max-w-prose text-caption text-faint">
-        These values are read from the code, not from a database, so this page cannot drift from what
-        the pipeline actually does. Editing them means editing{" "}
-        <code className="font-mono text-data">memory/RUBRIC.md</code> and the modules that read it —
-        weight sliders arrive in Phase 6, when the learning loop starts proposing changes.
+        These values are read from the code, not from a database, so this page cannot drift from
+        what the pipeline actually does. Changing one means editing{" "}
+        <code className="font-mono text-data">memory/RUBRIC.md</code> and the module that reads it,
+        then bumping the rubric version so old scores stay interpretable. That is deliberate: a
+        weight change is a commit someone can review, which is what the tuning log asks for.
       </p>
     </main>
   );

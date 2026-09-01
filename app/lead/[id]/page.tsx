@@ -117,8 +117,9 @@ export default async function LeadDetail({ params }: { params: Promise<{ id: str
           </div>
         </dl>
         <p className="mt-4 max-w-prose text-caption text-faint">
-          The angle and the proof points come from the copywriter in Phase 5. Nothing here is
-          generated — every field above is read from the posting or computed from it.
+          Nothing above is generated — every field is read from the posting or computed from it.
+          The angle and the proof points are chosen by the copywriter during /daily-run, and appear
+          on the draft page once one exists.
         </p>
       </section>
 
