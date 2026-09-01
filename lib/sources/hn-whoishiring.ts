@@ -120,21 +120,28 @@ export const hnWhoIsHiring: SourceAdapter<HnComment> = {
     if (!storyRes.ok) throw new Error(`HN story lookup failed: ${storyRes.status}`);
     const stories = (await storyRes.json()) as { hits: { objectID: string; title: string }[] };
 
-    const thread = stories.hits.find((h) => /who is hiring/i.test(h.title));
-    if (!thread) return [];
+    // Both recent threads, not just the newest. The harvest window is 45 days,
+    // so on any day after the 1st the previous month's thread still contains
+    // postings the filter would accept — and early in a month the current
+    // thread is nearly empty. `since` does the actual date filtering, so
+    // reading two costs nothing but a request.
+    const threads = stories.hits.filter((h) => /who is hiring/i.test(h.title)).slice(0, 2);
+    if (!threads.length) return [];
 
     const out: HnComment[] = [];
-    // One request per second, per the adapter contract.
-    for (let page = 0; page < 5; page++) {
-      const res = await fetch(
-        `${ALGOLIA}/search_by_date?tags=comment,story_${thread.objectID}&hitsPerPage=100&page=${page}`,
-        { headers: { "User-Agent": UA } },
-      );
-      if (!res.ok) break;
-      const data = (await res.json()) as { hits: HnComment[]; nbPages: number };
-      out.push(...data.hits.filter((h) => new Date(h.created_at) >= since));
-      if (page + 1 >= data.nbPages) break;
-      await new Promise((r) => setTimeout(r, 1000));
+    for (const thread of threads) {
+      // One request per second, per the adapter contract.
+      for (let page = 0; page < 5; page++) {
+        const res = await fetch(
+          `${ALGOLIA}/search_by_date?tags=comment,story_${thread.objectID}&hitsPerPage=100&page=${page}`,
+          { headers: { "User-Agent": UA } },
+        );
+        if (!res.ok) break;
+        const data = (await res.json()) as { hits: HnComment[]; nbPages: number };
+        out.push(...data.hits.filter((h) => new Date(h.created_at) >= since));
+        if (page + 1 >= data.nbPages) break;
+        await new Promise((r) => setTimeout(r, 1000));
+      }
     }
 
     // Replies are conversation, not postings. Only top-level comments are jobs.

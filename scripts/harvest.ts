@@ -6,9 +6,14 @@ import { adapters } from "../lib/sources";
 import { contentHash } from "../lib/sources/hash";
 import { overlapHours } from "../lib/sources/overlap";
 import type { NormalisedLead } from "../lib/sources/types";
+import { MAX_AGE_DAYS } from "../lib/scoring/disqualify";
 
-/** How far back to look. Postings older than this are not worth an email. */
-const LOOKBACK_DAYS = 21;
+/**
+ * One window, not two. This used to be 21 while the disqualifier accepted 45,
+ * so harvest quietly dropped rows the filter would have kept — a narrower funnel
+ * than anyone had chosen, invisible because both numbers looked deliberate.
+ */
+const LOOKBACK_DAYS = MAX_AGE_DAYS;
 
 function toRow(sourceId: string, lead: NormalisedLead) {
   return {
