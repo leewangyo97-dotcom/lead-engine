@@ -1,0 +1,94 @@
+import { z } from "zod";
+
+/**
+ * The model's output contract, and the reason nothing downstream trusts prose.
+ *
+ * Every one of these is validated before a single row is written. A malformed
+ * batch fails loudly at the boundary rather than half-applying — a partially
+ * written scoring run is worse than none, because the funnel counts stop meaning
+ * anything and the next run cannot tell what was already done.
+ */
+
+/** Scoring. `reason` is capped hard: prose in a scoring response is pure waste. */
+export const ScoreItem = z.object({
+  id: z.string().min(1),
+  score: z.number().int().min(0).max(100),
+  tier: z.enum(["live", "warn", "cold"]),
+  reason: z.string().max(120),
+});
+
+export const ScoreBatch = z.object({
+  scores: z.array(ScoreItem).min(1),
+});
+
+/**
+ * Drafting. `proofUsed` is required and non-empty on purpose: a draft that
+ * cannot say which PROFILE.md proof points it leaned on is either unfounded or
+ * unauditable, and the verifier has nothing to check it against. The learning
+ * loop needs `angle` for the same reason — without it, "what worked" is
+ * unanswerable.
+ */
+export const DraftItem = z.object({
+  leadId: z.string().min(1),
+  subject: z.string().min(1).max(120),
+  body: z.string().min(1),
+  angle: z.string().min(1).max(60),
+  proofUsed: z.array(z.string().min(1)).min(1),
+});
+
+export const DraftBatch = z.object({
+  drafts: z.array(DraftItem).min(1),
+});
+
+/**
+ * Verification. A pass is the absence of violations, not a claim of quality —
+ * so `ok: true` with a non-empty `violations` array is rejected as incoherent
+ * rather than quietly treated as a pass.
+ */
+export const VerdictItem = z
+  .object({
+    leadId: z.string().min(1),
+    ok: z.boolean(),
+    violations: z.array(z.string().max(200)),
+  })
+  .refine((v) => !v.ok || v.violations.length === 0, {
+    message: "a verdict cannot be ok and carry violations",
+  });
+
+export const VerdictBatch = z.object({
+  verdicts: z.array(VerdictItem).min(1),
+});
+
+export type ScoreItem = z.infer<typeof ScoreItem>;
+export type DraftItem = z.infer<typeof DraftItem>;
+export type VerdictItem = z.infer<typeof VerdictItem>;
+
+/** Reads a JSON payload from stdin and validates it, or exits non-zero. */
+export async function readValidatedStdin<T>(schema: z.ZodType<T>): Promise<T> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of process.stdin) chunks.push(Buffer.from(chunk));
+  const raw = Buffer.concat(chunks).toString("utf8").trim();
+
+  if (!raw) {
+    console.error("no input on stdin");
+    process.exit(1);
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    console.error("stdin is not valid JSON");
+    process.exit(1);
+  }
+
+  const result = schema.safeParse(parsed);
+  if (!result.success) {
+    console.error("payload failed validation:");
+    for (const issue of result.error.issues) {
+      console.error(`  ${issue.path.join(".") || "(root)"}: ${issue.message}`);
+    }
+    process.exit(1);
+  }
+  return result.data;
+}

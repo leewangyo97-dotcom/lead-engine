@@ -163,3 +163,35 @@ fake draft is the most dangerous thing that could be in this repo: the entire
 point of the verifier is that no unverified claim reaches a Gmail draft, and a
 mock is an unverified claim rendered convincingly.
 
+---
+
+## 00X — Gmail is reached with fetch, not the googleapis SDK
+
+**Date:** 2026-09-01
+
+Two endpoints are needed: refresh a token, create a draft. `googleapis` is tens
+of megabytes and pulls a large transitive tree to provide them. This client holds
+a refresh token, so its dependency surface is a thing that has to be trusted —
+smaller is the whole argument.
+
+Scope is `gmail.compose` and nothing wider. It can create drafts and cannot read
+the mailbox. `lib/gmail/client.ts` has no send function and must not acquire one.
+
+---
+
+## 00X — the promotion threshold lives in code, never in a prompt
+
+**Date:** 2026-09-01
+
+`/daily-run` asks the model for a score and a reason. It does not ask the model
+to decide what happens next. `apply-scores.ts` reads `NEEDS_DRAFT_THRESHOLD` and
+promotes or parks accordingly.
+
+A threshold stated in a prompt is a threshold that drifts — it gets reworded, or
+the model rounds it, and nothing fails. Keeping it in code means changing it is a
+diff someone can review.
+
+The same reasoning puts the verified-only Gmail rule in a `WHERE` clause rather
+than an `if`: an unverified row is never fetched, so no later edit to that file
+can let one through by accident.
+

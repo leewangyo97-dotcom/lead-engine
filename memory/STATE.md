@@ -3,33 +3,32 @@
 **Cap: 150 lines.** When it exceeds that, roll closed items into `DECISIONS.md`
 and truncate. This file is read every session; every line costs tokens repeatedly.
 
-Last updated: 2026-09-01 · Phase: **4 — complete**
+Last updated: 2026-09-01 · Phase: **5 — code complete, Gmail unauthorised**
 
 ## Right now
 
-Phases 0-4 are done. The nightly workflow ran green end to end from CI on
-2026-09-01 (dispatch), writing to Neon with nobody at a terminal.
+Phases 0-4 are done. Phase 5's plumbing is written and tested, but it has never
+run end to end, because two things it needs cannot be done from a terminal
+session: Google OAuth consent, and the model calls themselves.
 
-The UI is built: inbox with keyboard triage, lead detail with the rubric
-breakdown, a draft-review placeholder, and read-only settings. All four render
-200 against live data.
+What exists: Zod contracts for score/draft/verify, payload emitters that project
+fields rather than selecting rows whole, three apply-scripts that validate before
+writing, the Gmail draft client, and `pnpm tokens`.
 
-Phase 3's exit test is the only thing still open, and it finishes itself —
-it wants two *scheduled* runs, not dispatched ones.
+What has never executed: any model call, and anything touching Gmail.
 
 ## Next three actions
 
-1. Watch the 20:00 UTC cron go green twice. Nothing to do but look.
-2. Phase 5: `lib/model/`, Gmail OAuth with `gmail.compose` only, and
-   `/daily-run`. This is the first phase with model calls in it — read
-   `docs/05-TOKEN-BUDGET.md` before writing any of it.
-3. Decide the settings question: rubric weights live in `memory/RUBRIC.md`, a
-   file, so editable sliders need either a write path into the repo or a second
-   source of truth. See the note in `app/settings/page.tsx`.
+1. Create a Google Cloud OAuth client (Web application, redirect
+   `http://localhost:53682/callback`), put the id and secret in `.env.local`,
+   then `pnpm gmail:auth`.
+2. Run `/daily-run` for real. There is exactly one lead at `needs_scoring`, so
+   this is a cheap first pass — expect well under the 25k target.
+3. Phase 6: outcome logging, the weekly rollup, and the follow-up ladder.
 
 ## Blocked
 
-Nothing.
+Phase 5's exit test needs Gmail authorised. Nothing else is blocked.
 
 ## Open questions for Joshua
 
@@ -40,6 +39,8 @@ Nothing.
 
 ## Recently done
 
+- 2026-09-01 — Phase 5 plumbing: model contracts, payload emitters, apply
+  scripts, Gmail draft client, `pnpm tokens`. Untested against a real model.
 - 2026-09-01 — Phase 4: inbox, lead detail, draft placeholder, settings.
   Keyboard triage per the UI spec: j/k/enter/e/a/x/f and the ? overlay.
 - 2026-09-01 — Nightly workflow green from CI end to end.

@@ -8,32 +8,49 @@ Run the morning pipeline. Target: under 25,000 tokens, three model calls, ten mi
 
 1. Read `memory/STATE.md` and `memory/RUBRIC.md`. Nothing else yet.
 
-2. Query the pre-filtered leads:
-   ```sql
-   SELECT id, company, title, region, remote_scope, is_contract, is_direct,
-          pay_raw, pay_min_usd_hr, stack, summary, trigger_event, overlap_hours
-   FROM leads WHERE status = 'needs_scoring'
-   ORDER BY (SELECT pre_score FROM scores WHERE lead_id = leads.id) DESC;
+2. Get the scoring payload:
+   ```bash
+   pnpm leads:scoring > /tmp/leads.json
    ```
-   Expect 15–25 rows. **If more than 40, stop** — the pre-filter has regressed.
-   Report it and fix that before spending tokens.
+   It emits projected fields only — never the raw posting. It refuses to run
+   above 40 rows, because that means the pre-filter has regressed and the fix is
+   there, not here.
 
-3. Delegate to the `scorer` subagent. **One batched call** with all rows. Persist
-   `modelScore`, `tier`, `reason`, `rubricVersion`.
+3. Delegate to the `scorer` subagent. **One batched call** with all rows. Feed
+   its JSON straight back:
+   ```bash
+   cat scores.json | pnpm apply:scores
+   ```
+   That validates against the Zod schema, rejects ids not awaiting scoring, and
+   promotes at 75 or parks. The threshold lives in code, not in the prompt.
 
-4. Promote: `score >= 75` → `status = 'needs_draft'`. Everything else → `'parked'`.
+4. Get the drafting payload for the survivors:
+   ```bash
+   pnpm leads:drafting > /tmp/drafts-in.json
+   ```
 
-5. Delegate to the `copywriter` subagent. One batched call over the survivors.
-   Persist to `outreach` with `angle` and `proofUsed` populated — a draft missing
-   either teaches the learning loop nothing.
+5. Delegate to the `copywriter` subagent. One batched call. Persist with:
+   ```bash
+   cat drafts.json | pnpm apply:drafts
+   ```
+   `angle` and `proofUsed` are required by the schema — a draft missing either
+   teaches the learning loop nothing, so it is rejected rather than stored.
 
-6. Delegate to the `verifier` subagent. One call. Set `verifiedAt` on passes.
+6. Delegate to the `verifier` subagent. One call. Apply with:
+   ```bash
+   cat verdicts.json | pnpm apply:verdicts
+   ```
+   This is the only writer of `verifiedAt` anywhere in the repo.
 
 7. For failures: return to `copywriter` **once** with the violations. If it fails
-   again, leave `status = 'needs_draft'` and surface it for a human. Do not loop.
+   again, leave the lead as it is and surface it for a human. Do not loop.
 
-8. Create Gmail drafts — only for rows where `verifiedAt IS NOT NULL`. Store
-   `gmailDraftId`. Log a `draft_created` event per lead.
+8. Create Gmail drafts:
+   ```bash
+   pnpm gmail:drafts
+   ```
+   Verified-only is enforced in the WHERE clause, so an unverified row is never
+   fetched in the first place.
 
 9. Write `run_metrics`: counts at each funnel stage, tokens in/out, duration.
 
@@ -56,4 +73,4 @@ Do not paste email bodies into the report. They are in Gmail.
 - Steps 3, 5 and 6 are **subagents**. Their bulk context must not enter this thread.
 - Never call a model inside a loop.
 - Never create a Gmail draft for an unverified row. Filter in SQL.
-- If `pnpm tokens` reports over 40,000, treat it as a failing test.
+- If `pnpm tokens` reports over 40,000 it exits non-zero. Treat that as a failing test.

@@ -17,7 +17,15 @@
     "prefilter": "tsx scripts/prefilter.ts",
     "keepalive": "tsx scripts/keepalive.ts",
     "report": "tsx scripts/report-run.ts",
-    "retention": "tsx scripts/retention.ts"
+    "retention": "tsx scripts/retention.ts",
+    "leads:scoring": "tsx scripts/leads-for-scoring.ts",
+    "leads:drafting": "tsx scripts/leads-for-drafting.ts",
+    "apply:scores": "tsx scripts/apply-scores.ts",
+    "apply:drafts": "tsx scripts/apply-drafts.ts",
+    "apply:verdicts": "tsx scripts/apply-verdicts.ts",
+    "gmail:auth": "tsx scripts/gmail-auth.ts",
+    "gmail:drafts": "tsx scripts/create-gmail-drafts.ts",
+    "tokens": "tsx scripts/tokens.ts"
   },
   "dependencies": {
     "@neon/config": "^1.1.0",
