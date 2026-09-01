@@ -1,7 +1,7 @@
-import { and, eq, gte, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { getDb } from "../lib/db";
 import { loadLocalEnv } from "../lib/env";
-import { events, leads, outreach, scores } from "../lib/db/schema";
+import { events, leads, outreach, runMetrics, scores } from "../lib/db/schema";
 import { CONTACT_COOLDOWN_DAYS, disqualify, fromLead as toDisqualifyInput } from "../lib/scoring/disqualify";
 import { NEEDS_DRAFT_THRESHOLD, RUBRIC_VERSION, fromLead as toPrescoreInput, prescore } from "../lib/scoring/prescore";
 
@@ -109,6 +109,17 @@ async function main() {
       .update(leads)
       .set({ status: "parked" })
       .where(inArray(leads.id, parked.map((p) => p.id)));
+  }
+
+  // Record the stage this script owns. Harvest cannot know it — the filters run
+  // here — and without it the funnel jumps from "new" straight to "scored" with
+  // the largest saving in the system invisible between them.
+  const [latestRun] = await db.select().from(runMetrics).orderBy(desc(runMetrics.runAt)).limit(1);
+  if (latestRun) {
+    await db
+      .update(runMetrics)
+      .set({ afterFilter: survivors.length })
+      .where(eq(runMetrics.id, latestRun.id));
   }
 
   const overflow = ranked.filter((s) => s.score >= PRESCORE_GATE).length - promoted.length;

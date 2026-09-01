@@ -26,7 +26,7 @@ async function main() {
     const stamp = r.runAt.toISOString().slice(0, 16).replace("T", " ");
     const measured = r.tokensIn == null && r.tokensOut == null ? " (not measured)" : "";
     console.log(
-      `${stamp}  raw=${r.rawCount} unique=${r.afterHash} filtered=${r.afterFilter} ` +
+      `${stamp}  raw=${r.rawCount} new=${r.afterHash} survived=${r.afterFilter} ` +
         `scored=${r.scoredCount} drafted=${r.draftedCount} tokens=${total}${measured}`,
     );
   }

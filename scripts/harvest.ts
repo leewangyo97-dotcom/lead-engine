@@ -105,10 +105,15 @@ async function main() {
     inserted = result.length;
   }
 
+  // Stages, per the funnel in docs/05-TOKEN-BUDGET.md: raw items fetched, then
+  // what survived the content hash. `afterHash` is what is NEW — the whole point
+  // of the hash is that most of a night exits here, and recording the deduped
+  // total instead hid that saving completely. afterFilter belongs to prefilter,
+  // which is the stage that applies the filters.
   await db.insert(runMetrics).values({
     rawCount,
-    afterHash: unique.length,
-    afterFilter: inserted,
+    afterHash: inserted,
+    afterFilter: 0,
     scoredCount: 0,
     draftedCount: 0,
     durationMs: Date.now() - startedAt,

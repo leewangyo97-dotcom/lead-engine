@@ -31,7 +31,7 @@ async function main() {
 
   if (latest) {
     console.log(
-      `funnel: raw=${latest.rawCount} unique=${latest.afterHash} inserted=${latest.afterFilter} in ${latest.durationMs}ms`,
+      `funnel: raw=${latest.rawCount} new=${latest.afterHash} survived=${latest.afterFilter} in ${latest.durationMs}ms`,
     );
   } else {
     console.log("funnel: no run recorded yet");
