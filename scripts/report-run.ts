@@ -1,3 +1,4 @@
+import { appendFileSync } from "node:fs";
 import { count, desc, eq, gte, sql } from "drizzle-orm";
 import { getDb } from "../lib/db";
 import { loadLocalEnv } from "../lib/env";
@@ -49,6 +50,32 @@ async function main() {
 
   // A broken source must fail the step, not sit green in the log where nobody
   // reads it. Exit non-zero so the run goes red.
+  // GitHub renders this above the log, so the night's result is visible without
+  // opening a job. A funnel buried in step output is a funnel nobody reads.
+  const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+  if (summaryPath) {
+    const waiting = byStatus.find((r) => r.status === "needs_scoring")?.n ?? 0;
+    const lines = [
+      `## Nightly harvest`,
+      "",
+      latest
+        ? `Funnel: **${latest.rawCount}** raw, ${latest.afterHash} unique, **${latest.afterFilter}** new.`
+        : "No run recorded.",
+      "",
+      waiting > 0
+        ? `**${waiting} lead(s) waiting at \`needs_scoring\`** — run \`/daily-run\`.`
+        : "Nothing reached `needs_scoring`. No action.",
+      "",
+      "| status | count |",
+      "|---|---|",
+      ...byStatus.sort((a, b) => b.n - a.n).map((r) => `| ${r.status} | ${r.n} |`),
+      "",
+      ...sourceRows.map((s) => `- ${s.id}: ${s.lastOk ? "ok" : `**failed** — ${s.lastError ?? "unknown"}`}`),
+      "",
+    ];
+    appendFileSync(summaryPath, lines.join("\n"));
+  }
+
   const broken = sourceRows.filter((s) => !s.lastOk);
   if (broken.length) {
     console.error(`${broken.length} source(s) failed on the last run`);
