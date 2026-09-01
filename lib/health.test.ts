@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { pipelineFaults, STALE_HOURS, type SourceHealth } from "./health";
+import { pipelineFaults, pipelineWarnings, STALE_HOURS, type SourceHealth } from "./health";
 
 const NOW = new Date("2026-09-01T12:00:00Z");
 const hoursAgo = (h: number) => new Date(NOW.getTime() - h * 3_600_000);
@@ -65,22 +65,35 @@ describe("a single source going silent", () => {
   const NOW2 = new Date("2026-09-01T12:00:00Z");
   const recent = new Date(NOW2.getTime() - 3_600_000);
 
-  it("flags an adapter returning nothing while others work", () => {
-    // A site redesign kills one adapter; the others carry on and the total
-    // stays healthy, so nothing else would notice.
-    const faults = pipelineFaults({
+  it("warns rather than fails, since an empty feed is a real outcome", () => {
+    const state = {
       latestRawCount: 190,
       sources: [
         { id: "hn", lastRunAt: recent, lastOk: true, lastRawCount: 173 },
         { id: "remoteok", lastRunAt: recent, lastOk: true, lastRawCount: 0 },
       ],
       now: NOW2,
-    });
-    expect(faults).toHaveLength(1);
-    expect(faults[0]).toContain("remoteok");
+    };
+    // RemoteOK yields 3-4 engineering roles from 100 items; zero is a slow day,
+    // not a dead adapter, and a red run for it would train the alert away.
+    expect(pipelineFaults(state)).toEqual([]);
+    expect(pipelineWarnings(state)[0]).toContain("remoteok");
   });
 
-  it("does not double-report when every source is silent", () => {
+  it("flags an adapter returning nothing while others work", () => {
+    // A site redesign kills one adapter; the others carry on and the total
+    // stays healthy, so nothing else would notice.
+    const warnings = pipelineWarnings({
+      sources: [
+        { id: "hn", lastRunAt: recent, lastOk: true, lastRawCount: 173 },
+        { id: "remoteok", lastRunAt: recent, lastOk: true, lastRawCount: 0 },
+      ],
+    });
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain("remoteok");
+  });
+
+  it("says nothing when every source is silent — that is the starvation fault", () => {
     // That is the outage case, already covered by the starvation check.
     const faults = pipelineFaults({
       latestRawCount: 0,
@@ -95,15 +108,12 @@ describe("a single source going silent", () => {
   });
 
   it("accepts a source that is simply low-volume", () => {
-    // RemoteOK legitimately yields 3-4 engineering roles per fetch.
     expect(
-      pipelineFaults({
-        latestRawCount: 197,
+      pipelineWarnings({
         sources: [
           { id: "hn", lastRunAt: recent, lastOk: true, lastRawCount: 173 },
           { id: "remoteok", lastRunAt: recent, lastOk: true, lastRawCount: 4 },
         ],
-        now: NOW2,
       }),
     ).toEqual([]);
   });
@@ -111,10 +121,8 @@ describe("a single source going silent", () => {
   it("says nothing when counts have never been recorded", () => {
     // Sources that ran before this column existed report null, not zero.
     expect(
-      pipelineFaults({
-        latestRawCount: 200,
+      pipelineWarnings({
         sources: [{ id: "hn", lastRunAt: recent, lastOk: true, lastRawCount: null }],
-        now: NOW2,
       }),
     ).toEqual([]);
   });

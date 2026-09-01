@@ -3,7 +3,7 @@ import { count, desc, eq, gte, sql } from "drizzle-orm";
 import { getDb } from "../lib/db";
 import { loadLocalEnv } from "../lib/env";
 import { leads, runMetrics, sources } from "../lib/db/schema";
-import { pipelineFaults } from "../lib/health";
+import { pipelineFaults, pipelineWarnings } from "../lib/health";
 
 /**
  * The funnel, printed into the Actions log. This is the only place a quiet
@@ -50,6 +50,18 @@ async function main() {
       `source ${s.id}: ${state} · ${s.lastRawCount ?? "?"} raw (last run ${s.lastRunAt?.toISOString() ?? "never"})`,
     );
   }
+
+  const health = {
+    sources: sourceRows.map((r) => ({
+      id: r.id,
+      lastRunAt: r.lastRunAt,
+      lastOk: r.lastOk,
+      lastError: r.lastError,
+      lastRawCount: r.lastRawCount,
+    })),
+  };
+
+  for (const warning of pipelineWarnings(health)) console.log(`warning: ${warning}`);
 
   const faults = pipelineFaults({
     latestRawCount: latest?.rawCount ?? null,

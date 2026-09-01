@@ -45,23 +45,6 @@ export function pipelineFaults({ latestRawCount, sources, now = new Date() }: Pi
     faults.push("every source returned zero items — the pipeline has starved, not settled");
   }
 
-  // One source returning nothing while others work means that adapter died —
-  // a site redesign, a moved endpoint. Distinct from every source returning
-  // nothing, which is the outage case handled above, and stated as an absolute
-  // rather than a percentage: harvest volume swings legitimately with thread age
-  // and feed rotation, so a drop-off threshold would cry wolf.
-  const productive = sources.filter((s) => (s.lastRawCount ?? 0) > 0);
-  if (productive.length > 0) {
-    const silent = sources.filter((s) => s.lastRawCount === 0);
-    if (silent.length) {
-      faults.push(
-        `${silent.length} source(s) returned nothing while others worked: ${silent
-          .map((s) => s.id)
-          .join(", ")}`,
-      );
-    }
-  }
-
   const stale = sources.filter(
     (s) => !s.lastRunAt || now.getTime() - s.lastRunAt.getTime() > STALE_HOURS * 3_600_000,
   );
@@ -72,4 +55,30 @@ export function pipelineFaults({ latestRawCount, sources, now = new Date() }: Pi
   }
 
   return faults;
+}
+
+/**
+ * Worth saying, not worth failing the run for.
+ *
+ * A source returning nothing while others work usually means that adapter died.
+ * But RemoteOK legitimately yields three or four engineering roles from a
+ * hundred items, and zero on a slow day is a real outcome rather than a fault —
+ * so failing on it would produce exactly the red-for-no-reason runs that train
+ * a person to stop reading them.
+ *
+ * It is reported every time and escalates to a fault only via a human noticing
+ * the same name twice.
+ */
+export function pipelineWarnings({ sources }: Pick<PipelineState, "sources">): string[] {
+  const productive = sources.filter((s) => (s.lastRawCount ?? 0) > 0);
+  if (!productive.length) return [];
+
+  const silent = sources.filter((s) => s.lastRawCount === 0);
+  if (!silent.length) return [];
+
+  return [
+    `${silent.length} source(s) returned nothing while others worked: ${silent
+      .map((s) => s.id)
+      .join(", ")} — normal for a low-volume feed, a dead adapter if it repeats`,
+  ];
 }
