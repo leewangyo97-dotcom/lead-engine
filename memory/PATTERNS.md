@@ -75,3 +75,16 @@ carrying two identical conflict targets, so `harvest.ts` collapses rows through 
 `Map` keyed by hash first. Without it the whole run fails on a duplicate rather
 than skipping one row.
 
+## Policy constants live in `lib/`, never in a script
+
+Every script in `scripts/` calls `main()` at the top level, so importing one
+runs it. A test that imported `scripts/retention.ts` for its status list issued
+a live `DELETE` against whatever `DATABASE_URL` pointed at. Constants a test or
+another module needs go in `lib/`; the script imports them.
+
+## `report-run.ts` exits non-zero when a source failed
+
+An adapter that returns nothing still exits 0, so without an explicit check the
+workflow stays green while the pipeline starves. The funnel line is printed for
+a human, but the exit code is what actually surfaces a broken source.
+

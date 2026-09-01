@@ -14,6 +14,9 @@ on:
   schedule:
     # 20:00 UTC Mon-Fri = 04:00 Manila (UTC+8)
     - cron: '0 20 * * 1-5'
+    # Monthly retention. The `retention` job below is gated on this exact
+    # string, so it must be declared here or that job never runs at all.
+    - cron: '0 20 1 * *'
   workflow_dispatch: {}
 
 concurrency:
@@ -24,6 +27,9 @@ jobs:
   harvest:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # The monthly cron exists only to trigger retention. On a weekday the 1st
+    # fires both schedules, and the weekday one already covers the harvest.
+    if: github.event.schedule != '0 20 1 * *'
 
     steps:
       - uses: actions/checkout@v4
@@ -41,26 +47,26 @@ jobs:
       # Harvest: fetch, normalise, content-hash, upsert.
       # One adapter failing must not fail the run — handled inside harvest.ts.
       - name: Harvest sources
-        run: pnpm tsx scripts/harvest.ts
+        run: pnpm harvest
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       # Pre-filter: hard disqualifiers + deterministic rule scoring.
       # Survivors are marked needs_scoring. Target: 15-25 rows.
       - name: Pre-filter and pre-score
-        run: pnpm tsx scripts/prefilter.ts
+        run: pnpm prefilter
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       # GitHub disables scheduled workflows after 60 days of repo inactivity.
       # This write keeps the repo active so the schedule survives quiet periods.
       - name: Keepalive
-        run: pnpm tsx scripts/keepalive.ts
+        run: pnpm keepalive
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Report funnel
-        run: pnpm tsx scripts/report-run.ts
+        run: pnpm report
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
@@ -77,6 +83,6 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm tsx scripts/retention.ts
+      - run: pnpm retention
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

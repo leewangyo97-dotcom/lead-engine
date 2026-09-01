@@ -3,25 +3,25 @@
 **Cap: 150 lines.** When it exceeds that, roll closed items into `DECISIONS.md`
 and truncate. This file is read every session; every line costs tokens repeatedly.
 
-Last updated: 2026-09-01 · Phase: **2 — complete**
+Last updated: 2026-09-01 · Phase: **3 — code complete, awaiting a scheduled run**
 
 ## Right now
 
-Phases 0-2 are done. Deployed at `lead-engine-one-beige.vercel.app`. The whole
-mechanical pipeline runs and contains no model calls: `pnpm harvest` is
-idempotent, and `pnpm prefilter` hard-rejects, pre-scores and gates.
+Phases 0-3 are written. The nightly workflow now has every script it calls:
+`harvest`, `prefilter`, `keepalive`, `report`, and a monthly `retention`. All
+five run green locally against Neon.
 
-Live numbers on the August HN thread: 24 harvested, 7 disqualified, 16 parked,
-1 promoted to `needs_scoring`. That thread is mostly US-only full-time work, so
-one survivor is the filter working, not the filter broken — the top parked rows
-sit at 52 and 49, held back by US-only scope and no contract option.
+Phase 3's exit test cannot be finished from here — it requires two green
+scheduled runs, which means `DATABASE_URL` in GitHub secrets and then waiting
+for the cron.
 
 ## Next three actions
 
-1. Add `DATABASE_URL` to GitHub repo secrets. Nothing in Phase 3 runs without it.
-2. Phase 3: `scripts/keepalive.ts` and `scripts/report-run.ts` — `nightly.yml`
-   already calls both and will fail on schedule until they exist.
-3. Watch two green scheduled runs, then start Phase 4 against `docs/04-UI-SPEC.md`.
+1. Add `DATABASE_URL` to GitHub repo secrets, then trigger the workflow once by
+   hand (`workflow_dispatch`) to prove it before waiting on the cron.
+2. Watch two scheduled runs go green and confirm rows appear in Neon without
+   anyone touching a terminal.
+3. Phase 4: the UI, against `docs/04-UI-SPEC.md`. Read it then, not now.
 
 ## Blocked
 
@@ -36,6 +36,8 @@ Nothing.
 
 ## Recently done
 
+- 2026-09-01 — Phase 3: keepalive, report-run and retention scripts; nightly
+  workflow fixed to declare the monthly cron its retention job was gated on.
 - 2026-09-01 — Phase 2: `disqualify.ts`, `prescore.ts`, `scripts/prefilter.ts`,
   13 tests. Exit test passes: 1 of 24 reaches `needs_scoring`.
 - 2026-09-01 — Phase 1: full schema migrated, `hn-whoishiring` adapter, stack
