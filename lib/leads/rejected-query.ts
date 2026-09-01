@@ -20,7 +20,9 @@ export interface RejectedRow {
  * nothing to do", which is the question that matters when the funnel is dry —
  * and the one a status column alone cannot answer.
  */
-export async function getRejected(limit = 200): Promise<RejectedRow[]> {
+export const REJECTED_PAGE_SIZE = 50;
+
+export async function getRejected(limit = REJECTED_PAGE_SIZE): Promise<RejectedRow[]> {
   const db = getDb();
 
   const rows = await db
@@ -79,3 +81,37 @@ export async function getRejected(limit = 200): Promise<RejectedRow[]> {
       (r.status === "parked" && r.score != null ? `scored ${r.score}, under the ${GATE} gate` : null),
   }));
 }
+
+/**
+ * The tally, counted in SQL over every rejected lead.
+ *
+ * Rendering all of them to derive it produced a 757 KB page — fine on a desktop,
+ * wasteful on a phone, and the tally is the part worth reading. The list is
+ * capped; the counts are not.
+ */
+export async function getRejectedTally(): Promise<{ reason: string; n: number }[]> {
+  const db = getDb();
+  const rows = await db.execute(sql`
+    select coalesce(
+             case when l.status = 'parked' then 'scored under the gate' end,
+             (select e.meta->>'reason' from events e
+              where e.lead_id = l.id and e.type = 'disqualified'
+              order by e.created_at desc limit 1),
+             'no reason recorded'
+           ) as reason,
+           count(*)::int as n
+    from leads l
+    where l.status in ('disqualified', 'parked')
+    group by 1 order by n desc
+  `);
+  return rows.rows as { reason: string; n: number }[];
+}
+
+export async function getRejectedCount(): Promise<number> {
+  const db = getDb();
+  const rows = await db.execute(
+    sql`select count(*)::int as n from leads where status in ('disqualified','parked')`,
+  );
+  return (rows.rows[0] as { n: number })?.n ?? 0;
+}
+

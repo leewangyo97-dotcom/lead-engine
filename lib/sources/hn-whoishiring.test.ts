@@ -72,6 +72,15 @@ describe("hn-whoishiring", () => {
     expect(isDirectContact("someone@greenhouse.io")).toBe(false);
   });
 
+  it("never calls a posting onsite when it also offers remote", () => {
+    // The largest rejection bucket is onsite_no_contract (33 of 44), so a false
+    // positive here silently discards viable work. Audited against 36 onsite
+    // leads in the live corpus: none had "remote" anywhere in its region.
+    expect(detectRemoteScope("Acme | Eng | ONSITE NYC or REMOTE (US/Can)")).toBe("us");
+    expect(detectRemoteScope("Acme | Eng | Hybrid Berlin, REMOTE within EU")).toBe("emea");
+    expect(detectRemoteScope("Acme | Eng | ONSITE or REMOTE worldwide")).toBe("worldwide");
+  });
+
   it("reads remote scope from the header, not the body", () => {
     expect(detectRemoteScope("Acme | Eng | REMOTE (Worldwide)")).toBe("worldwide");
     expect(detectRemoteScope("Acme | Eng | REMOTE (US/Can)")).toBe("us");

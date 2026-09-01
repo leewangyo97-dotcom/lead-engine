@@ -307,3 +307,29 @@ change, because the weights are measuring what they claim to measure.
 Do not act on this yet: four rejections is not evidence, and Phase 6's rollup is
 the thing designed to answer it.
 
+---
+
+## 00X — the filter is not too strict; the market is onsite
+
+**Date:** 2026-09-02
+
+With September data in, the funnel still produces nothing above 75, so the
+obvious suspicion was that the disqualifier over-rejects. Audited rather than
+assumed.
+
+Hard rejections: `onsite_no_contract` 33, `disqualified_stack` 7,
+`non_engineering_role` 2, `unpaid_or_equity_only` 1, `language_required` 1.
+
+A sample of the largest bucket: Seattle WA, New York NY, Astoria NYC,
+NYC (ONSITE), Amsterdam, ONSITE/HYBRID New York 3x/week. Every one genuinely
+onsite with no contract option, and unreachable from Manila.
+
+Checked for the failure that would matter — a posting offering remote being
+scoped onsite anyway: **zero contradictions across 36 onsite-scoped leads**.
+
+So the rejections are correct and the thin funnel is a fact about these sources,
+not a bug in the filter. The remaining constraint is the one that has been open
+since the start: 20 points for contract terms against a market advertising
+full-time roles. That is a decision about what work Joshua wants, not a
+threshold to tune.
+

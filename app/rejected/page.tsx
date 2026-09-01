@@ -1,18 +1,21 @@
-import { getRejected } from "@/lib/leads/rejected-query";
+import {
+  getRejected,
+  getRejectedCount,
+  getRejectedTally,
+  REJECTED_PAGE_SIZE,
+} from "@/lib/leads/rejected-query";
 import { Pill } from "@/app/components/pills";
 
 export const dynamic = "force-dynamic";
 
 export default async function Rejected() {
-  const rows = await getRejected();
-  // Parked leads each carry their own score in the reason, so they are tallied
-  // as one bucket rather than 121 buckets of one.
-  const bucket = (r: (typeof rows)[number]) =>
-    r.status === "parked" ? "scored under the gate" : (r.reason ?? "no reason recorded");
-
-  const byReason = new Map<string, number>();
-  for (const r of rows) byReason.set(bucket(r), (byReason.get(bucket(r)) ?? 0) + 1);
-  const summary = [...byReason.entries()].sort((a, b) => b[1] - a[1]);
+  // The tally is counted in SQL over every rejected lead; only the list is
+  // capped. Rendering all 187 rows to derive the counts made this page 757 KB.
+  const [rows, summary, total] = await Promise.all([
+    getRejected(),
+    getRejectedTally(),
+    getRejectedCount(),
+  ]);
 
   return (
     <main className="mx-auto max-w-content px-6 py-8">
@@ -27,7 +30,8 @@ export default async function Rejected() {
         Turned away
       </h1>
       <p className="mt-2 max-w-prose text-body text-secondary">
-        {rows.length} lead(s) the filter rejected or parked. The inbox answers what to do today;
+        {total} lead(s) the filter rejected or parked, newest-scoring first. The inbox answers what
+        to do today;
         this answers why there is nothing to do, which is the question worth asking when the funnel
         is dry.
       </p>
@@ -35,10 +39,13 @@ export default async function Rejected() {
       <section className="mt-7">
         <h2 className="mb-4 text-label uppercase text-muted">By reason</h2>
         <ul className="flex flex-wrap gap-3">
-          {summary.map(([reason, n]) => (
-            <li key={reason} className="rounded-sm border border-rule bg-surface px-4 py-2 text-body-sm">
-              <span className="text-secondary">{reason}</span>{" "}
-              <span className="font-mono tabular-nums text-primary">{n}</span>
+          {summary.map((row) => (
+            <li
+              key={row.reason}
+              className="rounded-sm border border-rule bg-surface px-4 py-2 text-body-sm"
+            >
+              <span className="text-secondary">{row.reason}</span>{" "}
+              <span className="font-mono tabular-nums text-primary">{row.n}</span>
             </li>
           ))}
         </ul>
@@ -66,6 +73,14 @@ export default async function Rejected() {
           </li>
         ))}
       </ul>
+
+      {total > rows.length && (
+        <p className="mt-5 text-caption text-faint">
+          Showing the {REJECTED_PAGE_SIZE} highest-scoring of {total}. The counts above cover all of
+          them — the list is capped because rendering every row made this page 757 KB, which is a
+          poor trade on a phone.
+        </p>
+      )}
     </main>
   );
 }
