@@ -1,7 +1,7 @@
 import { and, eq, gte, inArray, sql } from "drizzle-orm";
 import { getDb } from "../lib/db";
 import { loadLocalEnv } from "../lib/env";
-import { leads, outreach, scores } from "../lib/db/schema";
+import { events, leads, outreach, scores } from "../lib/db/schema";
 import { CONTACT_COOLDOWN_DAYS, disqualify, fromLead as toDisqualifyInput } from "../lib/scoring/disqualify";
 import { NEEDS_DRAFT_THRESHOLD, RUBRIC_VERSION, fromLead as toPrescoreInput, prescore } from "../lib/scoring/prescore";
 
@@ -46,7 +46,10 @@ async function main() {
     if (!prev || row.at > prev) lastContacted.set(key, row.at);
   }
 
-  const rejected: string[] = [];
+  // The rule that rejected a lead, not just the fact that something did.
+  // Without it the only answer to "why did nothing qualify tonight?" is to
+  // re-run the filter by hand and watch.
+  const rejected: { id: string; reason: string }[] = [];
   const survivors: { id: string; score: number; tier: string }[] = [];
 
   for (const lead of pending) {
@@ -55,7 +58,7 @@ async function main() {
       now,
     );
     if (reason) {
-      rejected.push(lead.id);
+      rejected.push({ id: lead.id, reason });
       continue;
     }
 
@@ -82,7 +85,18 @@ async function main() {
   const parked = ranked.filter((s) => !promotedIds.has(s.id));
 
   if (rejected.length) {
-    await db.update(leads).set({ status: "disqualified" }).where(inArray(leads.id, rejected));
+    await db
+      .update(leads)
+      .set({ status: "disqualified" })
+      .where(inArray(leads.id, rejected.map((r) => r.id)));
+
+    await db.insert(events).values(
+      rejected.map((r) => ({
+        leadId: r.id,
+        type: "disqualified",
+        meta: { reason: r.reason, by: "prefilter" },
+      })),
+    );
   }
   if (promoted.length) {
     await db

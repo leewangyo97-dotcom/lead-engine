@@ -54,6 +54,10 @@ export default async function Inbox() {
 
       <p className="mt-7 text-caption text-faint">
         <kbd className="rounded-xs bg-sunk px-2 py-1 font-mono text-data-sm">?</kbd> for shortcuts ·{" "}
+        <a className="text-accent underline underline-offset-2" href="/rejected">
+          turned away
+        </a>{" "}
+        ·{" "}
         <a className="text-accent underline underline-offset-2" href="/followups">
           follow-ups
         </a>{" "}
