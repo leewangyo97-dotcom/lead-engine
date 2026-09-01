@@ -2,6 +2,7 @@ import {
   getRejected,
   getRejectedCount,
   getRejectedTally,
+  getScoreBands,
   REJECTED_PAGE_SIZE,
 } from "@/lib/leads/rejected-query";
 import { Pill } from "@/app/components/pills";
@@ -11,11 +12,13 @@ export const dynamic = "force-dynamic";
 export default async function Rejected() {
   // The tally is counted in SQL over every rejected lead; only the list is
   // capped. Rendering all 187 rows to derive the counts made this page 757 KB.
-  const [rows, summary, total] = await Promise.all([
+  const [rows, summary, total, bands] = await Promise.all([
     getRejected(),
     getRejectedTally(),
     getRejectedCount(),
+    getScoreBands(),
   ]);
+  const peak = Math.max(1, ...bands.map((b) => b.n));
 
   return (
     <main className="mx-auto max-w-content px-6 py-8">
@@ -51,7 +54,29 @@ export default async function Rejected() {
         </ul>
       </section>
 
-      <ul className="mt-8 flex flex-col gap-2">
+      <section className="mt-9">
+        <h2 className="mb-4 text-label uppercase text-muted">How close they came</h2>
+        <ul className="max-w-prose">
+          {bands.map((b) => (
+            <li key={b.band} className="flex items-center gap-3 py-1 text-body-sm">
+              <span className="w-14 shrink-0 font-mono tabular-nums text-muted">{b.band}</span>
+              <span
+                aria-hidden
+                className="h-2 rounded-xs bg-accent"
+                style={{ width: `${Math.round((b.n / peak) * 70)}%` }}
+              />
+              <span className="font-mono tabular-nums text-secondary">{b.n}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 max-w-prose text-caption text-faint">
+          Scored leads only — a hard rejection never gets a score. The draft threshold is 75. A
+          funnel bunched just below it would be a threshold problem; one peaking well below is a
+          supply problem, and only the second is fixed by adding sources.
+        </p>
+      </section>
+
+      <ul className="mt-9 flex flex-col gap-2">
         {rows.map((row) => (
           <li key={row.id} className="rounded-md border border-rule bg-surface p-5">
             <div className="flex flex-wrap items-baseline justify-between gap-3">

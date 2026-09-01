@@ -115,3 +115,26 @@ export async function getRejectedCount(): Promise<number> {
   return (rows.rows[0] as { n: number })?.n ?? 0;
 }
 
+/**
+ * Score distribution of everything the gate turned away.
+ *
+ * A tally by reason says what was rejected; this says how close any of it came.
+ * The difference matters: a funnel clustered just under the gate is a threshold
+ * problem, and one peaking twenty points below is a supply problem. Guessing
+ * between those two is how a rubric gets tuned on a hunch.
+ */
+export async function getScoreBands(): Promise<{ band: string; n: number }[]> {
+  const db = getDb();
+  const rows = await db.execute(sql`
+    select (width_bucket(coalesce(s.model_score, s.pre_score), 0, 100, 10) - 1) * 10 as low,
+           count(*)::int as n
+    from leads l join scores s on s.lead_id = l.id
+    where l.status in ('parked', 'disqualified')
+    group by 1 order by 1
+  `);
+  return (rows.rows as { low: number; n: number }[]).map((r) => ({
+    band: `${r.low}-${r.low + 9}`,
+    n: r.n,
+  }));
+}
+
