@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
 import type { InboxRow } from "@/lib/leads/queries";
@@ -147,7 +148,17 @@ export function InboxList({ rows }: { rows: InboxRow[] }) {
               <Score value={row.score} />
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-baseline justify-between gap-3">
-                  <span className="text-subhead text-primary">{row.company}</span>
+                  {/* A real link, not just a row handler. The keyboard path is
+                      j/k/enter, but that leaves touch with only double-tap, and
+                      a div with onClick is invisible to a screen reader and has
+                      no URL to share. */}
+                  <Link
+                    href={`/lead/${row.id}` as Route}
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-subhead text-primary underline-offset-4 hover:underline"
+                  >
+                    {row.company}
+                  </Link>
                   <span className="text-body-sm text-secondary">{row.title}</span>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-4 text-body-sm text-muted">
