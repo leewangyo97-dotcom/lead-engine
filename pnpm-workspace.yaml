@@ -1,7 +1,6 @@
+# pnpm 11 reads build-script approval from here, not package.json.
+# esbuild (via vitest and drizzle-kit) ships a prebuilt binary that its install
+# script unpacks. Without this, `pnpm install` exits 1 on
+# ERR_PNPM_IGNORED_BUILDS and vitest cannot run.
 allowBuilds:
-  esbuild: set this to true or false
-# pnpm 10.16+ reads build-script allowlisting from here, not package.json.
-# esbuild ships prebuilt binaries and needs its install script to run; without
-# this, `pnpm install` exits 1 with ERR_PNPM_IGNORED_BUILDS and vitest cannot run.
-onlyBuiltDependencies:
-  - esbuild
+  esbuild: true
