@@ -23,6 +23,12 @@ concurrency:
   group: nightly
   cancel-in-progress: false
 
+# Only what the notification step needs. The harvest itself writes nothing to
+# GitHub, so the default read-only token is right for everything else.
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   harvest:
     runs-on: ubuntu-latest
@@ -66,9 +72,33 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Report funnel
+        id: funnel
         run: pnpm report
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      # A run summary is only seen by someone who opens the run. This opens an
+      # issue instead, which GitHub emails — so the morning triage starts by
+      # being told, not by remembering to check.
+      #
+      # One open issue at a time: a nightly job that files a new issue every day
+      # trains you to ignore them.
+      - name: Notify when leads are waiting
+        if: steps.funnel.outputs.needs_scoring != '0' && steps.funnel.outputs.needs_scoring != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WAITING: ${{ steps.funnel.outputs.needs_scoring }}
+        run: |
+          existing=$(gh issue list --label triage --state open --json number --jq '.[0].number')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$WAITING lead(s) waiting at \`needs_scoring\` as of $(date -u +%Y-%m-%d). Run \`/daily-run\`."
+          else
+            gh issue create --label triage               --title "$WAITING lead(s) ready to triage"               --body "The nightly harvest left $WAITING lead(s) at \`needs_scoring\`.
+
+          Run \`/daily-run\` in Claude Code to score, draft and verify them.
+
+          Close this issue once the queue is clear; the next night will open a new one."
+          fi
 
   # Monthly retention: prune dead rows so storage stays flat inside Neon's 0.5 GB.
   retention:

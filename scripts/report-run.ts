@@ -76,6 +76,14 @@ async function main() {
     appendFileSync(summaryPath, lines.join("\n"));
   }
 
+  // Exposed as a step output so the workflow can decide whether to notify.
+  // Without this the funnel is visible only to somebody who thought to look.
+  const outputPath = process.env.GITHUB_OUTPUT;
+  if (outputPath) {
+    const waiting = byStatus.find((r) => r.status === "needs_scoring")?.n ?? 0;
+    appendFileSync(outputPath, `needs_scoring=${waiting}\n`);
+  }
+
   const broken = sourceRows.filter((s) => !s.lastOk);
   if (broken.length) {
     console.error(`${broken.length} source(s) failed on the last run`);
