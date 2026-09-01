@@ -7,31 +7,36 @@ Last updated: 2026-09-01 · Phase: **6 — complete. Pipeline proven; funnel is 
 
 ## Right now
 
-All six phases are built, deployed and running unattended. Nothing is in flight.
+All six phases built, deployed, and running unattended. Nothing in flight.
 
-Verified against real infrastructure, not assumed: the nightly workflow runs
-green from CI; Gmail creates and deletes a draft (`pnpm gmail:smoke`); the
-verified-only gate refuses an unverified row and admits a verified one; and the
-draft/verify write path has nine integration assertions (`pnpm test:integration`,
-scratch branch required).
+166 leads across three sources. 5 reach stage 2; none scores 75 on merit, so no
+outreach draft has ever been written. That is the whole of what is unfinished.
 
-The one thing that has never happened is a real outreach draft. No lead has
-scored 75 on merit. Current funnel: 164 harvested, 41 disqualified, 117 parked,
-6 waiting at needs_scoring — and those 6 were already judged and parked once, so
-re-scoring them will reach the same answer.
+Since the last checkpoint the work has been operational rather than functional —
+every item below was found by running the thing, not by reading it:
+
+- one failed Algolia page was silently discarding up to 79% of a harvest
+- the score breakdown showed job maxima against founder scores ("25 / 10")
+- the UI still promised features that had already shipped
+- rows were openable only by double-click; the disqualify prompt was invisible
+  to screen readers
+- 155 of 161 leads were unviewable, and the disqualify reason was computed then
+  thrown away
+
+Monitoring now covers four silent failures — a source erroring, all sources
+silent, one source silent, the scheduler stopping — each tested and each having
+fired at least once for real. Further alerting would be speculative.
 
 ## Next three actions
 
-1. **Answer the contract vs full-time question.** PROFILE.md records it as an
-   unresolved inconsistency and it is now the binding constraint: contract terms
-   are 20 points, so a full-time-only posting cannot reach 75 however good it is.
-   Atria sits at 68 — worldwide, direct contact, React — held back by nothing
-   else. Answering it is one weight in `memory/RUBRIC.md` plus a version bump.
-2. Run `pnpm nightly` daily for a fortnight and let the September threads fill.
-   One thin week is not a fair sample of the sources.
-3. Then decide on Launch HN. Stage 2 has rejected four of four founder leads as
-   deep-tech with no app surface. If that holds over a fortnight, filter the
-   domain in code; four is not evidence yet.
+1. **The contract weight.** `/rejected` now quantifies the two constraints:
+   31 of 41 hard rejections are `onsite_no_contract`, and the survivors stall at
+   68 because contract terms are worth 20 points. PROFILE.md still records
+   full-time vs contract as unresolved. One weight plus a version bump.
+2. Run `pnpm nightly` daily. The September HN thread was not posted as of
+   1 Sep 15:30 UTC; it fills through the month.
+3. Leave Launch HN alone for a fortnight. Stage 2 has rejected four of four as
+   deep-tech with no app surface — a pattern, not yet evidence.
 
 ## Blocked
 
@@ -49,6 +54,8 @@ Nothing.
 - 2026-09-01 — `remoteok` adapter added; harvest idempotent across both sources
   (30 raw, 28 unique, 0 inserted on the second run).
 - 2026-09-01 — Fixed: BD titles were clearing every hard reject.
+- 2026-09-01 — Operational hardening: per-source raw counts, fault/warning
+  split, /rejected view, fetch timeouts and retries, pagination recovery.
 - 2026-09-01 — Integration check for the draft/verify/Gmail-gate write path;
   its guard is identity, after two row-count heuristics failed opposite ways.
 - 2026-09-01 — Adapters given a 15s timeout and retry; `pnpm gate`;
