@@ -46,8 +46,24 @@ const LANGUAGE_REQUIRED =
 const CITIZENSHIP =
   /\b(us citizen|u\.s\. citizen|citizenship required|security clearance|ts\/sci|green card required|must be a citizen)\b/i;
 
+/**
+ * Titles that are unambiguously engineering. Checked first, because the list
+ * below is deliberately broad and would otherwise reject a "Growth Engineer".
+ */
+const ENGINEERING_TITLE =
+  /\b(engineer|engineering|developer|programmer|architect|sre|devops|full[- ]?stack|backend|back[- ]end|frontend|front[- ]end|mobile|android|ios|data scientist|tech lead|cto)\b/i;
+
+/**
+ * Non-engineering roles, matched on the title alone.
+ *
+ * Broad on purpose: these cost nothing to reject and a false negative sends a
+ * business-development posting to a model that then has to spend tokens working
+ * out it is not a job for a mobile contractor. "Founding Growth & Partnerships
+ * Lead" reached stage 2 on the first real run because `growth` and
+ * `partnerships` were missing here.
+ */
 const NON_ENGINEERING =
-  /\b(sales|account executive|marketing|growth marketer|recruit(er|ing)|talent acquisition|customer success|community manager|(?<!design )operations manager|ux designer|graphic designer|product designer|copywriter|content writer|paralegal|accountant)\b/i;
+  /\b(sales|account executive|account manager|business development|bizdev|partnerships?|growth|marketer|marketing|recruit(er|ing)|talent acquisition|customer success|community manager|operations manager|ux designer|graphic designer|product designer|copywriter|content writer|paralegal|accountant|chief of staff|office manager)\b/i;
 
 const UNPAID = /\b(unpaid|equity[- ]only|revenue[- ]share|profit[- ]share|volunteer|no salary|sweat equity)\b/i;
 
@@ -89,7 +105,10 @@ export function disqualify(input: DisqualifyInput, now = new Date()): Disqualify
 
   if (LANGUAGE_REQUIRED.test(haystack)) return "language_required";
   if (CITIZENSHIP.test(haystack)) return "citizenship_or_clearance";
-  if (NON_ENGINEERING.test(input.title)) return "non_engineering_role";
+  // An engineering title wins outright: "Growth Engineer" is engineering.
+  if (!ENGINEERING_TITLE.test(input.title) && NON_ENGINEERING.test(input.title)) {
+    return "non_engineering_role";
+  }
   if (UNPAID.test(haystack)) return "unpaid_or_equity_only";
 
   if (input.postedAt) {

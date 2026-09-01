@@ -50,8 +50,23 @@ describe("disqualify", () => {
 
   it("rejects non-engineering roles by title, not by body", () => {
     expect(disqualify({ ...base, title: "Account Executive" }, NOW)).toBe("non_engineering_role");
+    // Reached stage 2 on the first real run because `growth` and `partnerships`
+    // were missing from the list.
+    expect(disqualify({ ...base, title: "Founding Growth & Partnerships Lead" }, NOW)).toBe(
+      "non_engineering_role",
+    );
+    expect(disqualify({ ...base, title: "Head of Business Development" }, NOW)).toBe(
+      "non_engineering_role",
+    );
     // "sales" appearing in the body of an engineering role is not a reason.
     expect(disqualify({ ...base, summary: "You will build our sales dashboard" }, NOW)).toBeNull();
+  });
+
+  it("keeps engineering titles that contain a rejected word", () => {
+    // The list is broad, so an explicit engineering signal has to win outright.
+    expect(disqualify({ ...base, title: "Growth Engineer" }, NOW)).toBeNull();
+    expect(disqualify({ ...base, title: "Marketing Platform Developer" }, NOW)).toBeNull();
+    expect(disqualify({ ...base, title: "Partnerships Integrations Engineer" }, NOW)).toBeNull();
   });
 
   it("rejects postings older than the cutoff, and keeps ones just inside it", () => {
