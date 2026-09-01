@@ -13,7 +13,8 @@
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
-    "harvest": "tsx scripts/harvest.ts"
+    "harvest": "tsx scripts/harvest.ts",
+    "prefilter": "tsx scripts/prefilter.ts"
   },
   "dependencies": {
     "@neon/config": "^1.1.0",

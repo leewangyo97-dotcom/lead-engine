@@ -109,3 +109,25 @@ platform binary. Nothing else is approved. If a future dependency demands a buil
 script, read what the script does before adding it here — this is the one place
 in the repo where installing a package runs arbitrary code.
 
+---
+
+## 00X — stage 2 is gated at 60 and hard-capped at 25 leads
+
+**Date:** 2026-09-01
+
+Two separate limits, for two separate reasons.
+
+**The gate is 60**, derived rather than chosen: the `needs_draft` threshold is 75
+and stage 2 may adjust by at most +/-15, so a lead below 60 cannot reach 75 no
+matter how well it reads. Sending it to a model spends tokens on a foregone
+conclusion. If either number in `memory/RUBRIC.md` changes, the gate moves with
+it — it is computed in `prefilter.ts`, not typed in.
+
+**The cap is 25 leads per run.** Stage-2 cost scales with this number and nothing
+else. On a good day the gate may pass 60 candidates, and without a ceiling the
+bill triples with no one deciding that it should. Overflow parks and is reported
+in the run line, so a capped run is visible rather than silent.
+
+Parked leads still get a `scores` row. Phase 6 needs to be able to ask what the
+gate turned away; discarding the evidence would make the rubric untunable.
+
