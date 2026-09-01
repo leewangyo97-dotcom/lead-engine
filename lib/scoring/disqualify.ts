@@ -76,7 +76,7 @@ const ENGINEERING_TITLE =
  * `partnerships` were missing here.
  */
 const NON_ENGINEERING =
-  /\b(sales|account executive|account manager|business development|bizdev|partnerships?|growth|marketer|marketing|recruit(er|ing)|talent acquisition|customer success|community manager|operations manager|ux designer|graphic designer|product designer|copywriter|content writer|paralegal|accountant|chief of staff|office manager)\b/i;
+  /\b(sales|account executive|account manager|business development|bizdev|partnerships?|growth|marketer|marketing|recruit(er|ing)|talent acquisition|customer success|community manager|operations manager|product manager|project manager|program manager|product owner|scrum master|delivery manager|ux designer|graphic designer|product designer|copywriter|content writer|paralegal|accountant|chief of staff|office manager)\b/i;
 
 const UNPAID = /\b(unpaid|equity[- ]only|revenue[- ]share|profit[- ]share|volunteer|no salary|sweat equity)\b/i;
 

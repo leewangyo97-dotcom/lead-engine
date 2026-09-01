@@ -35,6 +35,14 @@ pnpm tokens     # token spend per run; exits non-zero over 40k
 
 ---
 
+## When something breaks
+
+`docs/08-RUNBOOK.md` covers every fault the system raises, what it means, and
+whether it needs you. Short version: a failed source is almost always a transient
+upstream error and the next run recovers, because the content hash re-collects
+whatever was missed. Gmail's `invalid_grant` means the 7-day Testing-mode token
+expired — re-run `pnpm gmail:auth`.
+
 ## Status
 
 All six phases of `docs/00-PLAN.md` are built. The mechanical pipeline runs

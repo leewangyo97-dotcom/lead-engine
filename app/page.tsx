@@ -48,6 +48,13 @@ export default async function Inbox() {
               <li key={f}>{f}</li>
             ))}
           </ul>
+          {/* A fault that does not say what to do reads as an emergency. Most of
+              these are a transient upstream 500 and need nothing. */}
+          <p className="mt-3 text-caption text-muted">
+            Usually a transient upstream error, and the next run recovers on its own — the content
+            hash re-collects anything missed. It needs attention if the same source fails three
+            nights running. See <code className="font-mono text-data">docs/08-RUNBOOK.md</code>.
+          </p>
         </div>
       )}
 

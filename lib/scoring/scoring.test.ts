@@ -83,6 +83,16 @@ describe("disqualify", () => {
     expect(disqualify({ ...base, title: "Head of Business Development" }, NOW)).toBe(
       "non_engineering_role",
     );
+    // Reached the inbox at 67 on a real harvest: remote, contract, $96-118/hr,
+    // and not engineering work. Attractive terms are exactly why this needs a
+    // hard reject rather than a low score.
+    expect(disqualify({ ...base, title: "Senior Product Manager" }, NOW)).toBe(
+      "non_engineering_role",
+    );
+    expect(disqualify({ ...base, title: "Technical Program Manager" }, NOW)).toBe(
+      "non_engineering_role",
+    );
+    expect(disqualify({ ...base, title: "Scrum Master" }, NOW)).toBe("non_engineering_role");
     // "sales" appearing in the body of an engineering role is not a reason.
     expect(disqualify({ ...base, summary: "You will build our sales dashboard" }, NOW)).toBeNull();
   });
@@ -92,6 +102,8 @@ describe("disqualify", () => {
     expect(disqualify({ ...base, title: "Growth Engineer" }, NOW)).toBeNull();
     expect(disqualify({ ...base, title: "Marketing Platform Developer" }, NOW)).toBeNull();
     expect(disqualify({ ...base, title: "Partnerships Integrations Engineer" }, NOW)).toBeNull();
+    // An engineering title wins even next to a rejected word.
+    expect(disqualify({ ...base, title: "Engineering Manager, Mobile" }, NOW)).toBeNull();
   });
 
   it("rejects postings older than the cutoff, and keeps ones just inside it", () => {
