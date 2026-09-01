@@ -41,6 +41,7 @@ export function InboxList({ rows }: { rows: InboxRow[] }) {
   const [showHelp, setShowHelp] = useState(false);
   const [pending, startTransition] = useTransition();
   const refs = useRef<(HTMLLIElement | null)[]>([]);
+  const overlayRef = useRef<HTMLDivElement | null>(null);
 
   const current = rows[cursor];
 
@@ -60,6 +61,14 @@ export function InboxList({ rows }: { rows: InboxRow[] }) {
   useEffect(() => {
     refs.current[cursor]?.scrollIntoView({ block: "nearest" });
   }, [cursor]);
+
+  // Move focus to an overlay when it opens. Without this the reason prompt —
+  // which is one keystroke from disqualifying a lead — appears silently for
+  // anyone using a screen reader, since nothing announces a panel that never
+  // receives focus.
+  useEffect(() => {
+    if (askReason || showHelp) overlayRef.current?.focus();
+  }, [askReason, showHelp]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -187,7 +196,10 @@ export function InboxList({ rows }: { rows: InboxRow[] }) {
 
       {askReason && (
         <div
+          ref={overlayRef}
           role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
           aria-label="Disqualify reason"
           className="fixed inset-x-0 bottom-0 border-t border-rule bg-surface p-5 shadow-overlay"
         >
@@ -208,7 +220,9 @@ export function InboxList({ rows }: { rows: InboxRow[] }) {
 
       {showHelp && (
         <div
+          ref={overlayRef}
           role="dialog"
+          tabIndex={-1}
           aria-label="Keyboard shortcuts"
           className="fixed inset-x-0 bottom-0 border-t border-rule bg-surface p-5 shadow-overlay"
         >
