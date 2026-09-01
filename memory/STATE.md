@@ -3,26 +3,33 @@
 **Cap: 150 lines.** When it exceeds that, roll closed items into `DECISIONS.md`
 and truncate. This file is read every session; every line costs tokens repeatedly.
 
-Last updated: 2026-09-01 · Phase: **6 — complete. All six phases built.**
+Last updated: 2026-09-01 · Phase: **6 — complete. Pipeline proven; funnel is dry.**
 
 ## Right now
 
-All six phases are built. Gmail is authorised — token exchange and the drafts
-endpoint both verified on 2026-09-01.
+All six phases are built and the mechanical pipeline has been run against live
+data end to end. Two sources are live: `hn-whoishiring` and `remoteok`.
 
-The loop that has never run: score, draft, verify, create drafts. Nothing has
-been sent, so the review page and the follow-up ladder are both correctly empty
-rather than untested — their logic is covered by 10 unit tests.
+The first real attempt at `/daily-run` found a filter leak: "Founding Growth &
+Partnerships Lead" reached the scorer with a pre-score of 63, because the
+non-engineering rule matched `sales` but not `growth` or `partnerships`. Fixed
+and tested in both directions.
+
+**Nothing currently qualifies.** After the fix, 0 of 28 leads clear the gate of
+60. The best is 52 — a kdb+/q contract role, which is worldwide and contract but
+matches none of the stack. Everything else is US-only full-time. That is the
+filter working, not failing, and it is the honest state: the two live sources
+are not producing Kotlin/React Native contract work this week.
 
 ## Next three actions
 
-1. Run `/daily-run`. One lead sits at `needs_scoring`, so the first pass is cheap.
-   It ends with a real Gmail draft.
-2. Send it by hand, then log the send on the lead detail page. Nothing in the
-   learning loop works until sends are recorded — an unlogged send makes every
-   reply rate below it wrong.
-3. Add a second source once the first end-to-end run works. Not before: a wider
-   funnel in front of an unproven filter only costs more.
+1. Wait a day or two and re-run `pnpm harvest && pnpm prefilter`. The September
+   HN thread was not up at the time of writing; RemoteOK turns over daily.
+2. When something clears 60, run `/daily-run` for the first genuine end-to-end
+   pass. It ends in a real Gmail draft.
+3. If a week passes with nothing clearing, the question is the source mix, not
+   the rubric. Do not lower the gate to manufacture a lead — that spends tokens
+   to email people who were never a fit.
 
 ## Blocked
 
@@ -37,6 +44,9 @@ Nothing.
 
 ## Recently done
 
+- 2026-09-01 — `remoteok` adapter added; harvest idempotent across both sources
+  (30 raw, 28 unique, 0 inserted on the second run).
+- 2026-09-01 — Fixed: BD titles were clearing every hard reject.
 - 2026-09-01 — Phase 6: outcome logging, weekly rollup with evidence gates, the
   follow-up ladder, /review and /followups. 10 tests.
 - 2026-09-01 — Gmail authorised; token exchange and drafts endpoint verified.

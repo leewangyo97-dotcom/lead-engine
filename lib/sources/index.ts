@@ -1,4 +1,5 @@
 import { hnWhoIsHiring } from "./hn-whoishiring";
+import { remoteOk } from "./remoteok";
 import type { SourceAdapter } from "./types";
 
 /**
@@ -6,6 +7,9 @@ import type { SourceAdapter } from "./types";
  * Do not add more sources until Phase 5 works end to end — a broader funnel in
  * front of an unfinished filter just costs more.
  */
-export const adapters: SourceAdapter<never>[] = [hnWhoIsHiring as SourceAdapter<never>];
+export const adapters: SourceAdapter<never>[] = [
+  hnWhoIsHiring as SourceAdapter<never>,
+  remoteOk as SourceAdapter<never>,
+];
 
-export { hnWhoIsHiring };
+export { hnWhoIsHiring, remoteOk };
