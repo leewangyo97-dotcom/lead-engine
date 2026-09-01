@@ -3,6 +3,7 @@ import { count, desc, eq, gte, sql } from "drizzle-orm";
 import { getDb } from "../lib/db";
 import { loadLocalEnv } from "../lib/env";
 import { leads, runMetrics, sources } from "../lib/db/schema";
+import { pipelineFaults } from "../lib/health";
 
 /**
  * The funnel, printed into the Actions log. This is the only place a quiet
@@ -48,45 +49,20 @@ async function main() {
     console.log(`source ${s.id}: ${state} (last run ${s.lastRunAt?.toISOString() ?? "never"})`);
   }
 
-  // A broken source must fail the step, not sit green in the log where nobody
-  // reads it. Exit non-zero so the run goes red.
-  // GitHub renders this above the log, so the night's result is visible without
-  // opening a job. A funnel buried in step output is a funnel nobody reads.
-  const summaryPath = process.env.GITHUB_STEP_SUMMARY;
-  if (summaryPath) {
-    const waiting = byStatus.find((r) => r.status === "needs_scoring")?.n ?? 0;
-    const lines = [
-      `## Nightly harvest`,
-      "",
-      latest
-        ? `Funnel: **${latest.rawCount}** raw, ${latest.afterHash} unique, **${latest.afterFilter}** new.`
-        : "No run recorded.",
-      "",
-      waiting > 0
-        ? `**${waiting} lead(s) waiting at \`needs_scoring\`** — run \`/daily-run\`.`
-        : "Nothing reached `needs_scoring`. No action.",
-      "",
-      "| status | count |",
-      "|---|---|",
-      ...byStatus.sort((a, b) => b.n - a.n).map((r) => `| ${r.status} | ${r.n} |`),
-      "",
-      ...sourceRows.map((s) => `- ${s.id}: ${s.lastOk ? "ok" : `**failed** — ${s.lastError ?? "unknown"}`}`),
-      "",
-    ];
-    appendFileSync(summaryPath, lines.join("\n"));
-  }
+  const faults = pipelineFaults({
+    latestRawCount: latest?.rawCount ?? null,
+    sources: sourceRows.map((r) => ({
+      id: r.id,
+      lastRunAt: r.lastRunAt,
+      lastOk: r.lastOk,
+      lastError: r.lastError,
+    })),
+  });
 
-  // Exposed as a step output so the workflow can decide whether to notify.
-  // Without this the funnel is visible only to somebody who thought to look.
-  const outputPath = process.env.GITHUB_OUTPUT;
-  if (outputPath) {
-    const waiting = byStatus.find((r) => r.status === "needs_scoring")?.n ?? 0;
-    appendFileSync(outputPath, `needs_scoring=${waiting}\n`);
-  }
-
-  const broken = sourceRows.filter((s) => !s.lastOk);
-  if (broken.length) {
-    console.error(`${broken.length} source(s) failed on the last run`);
+  // Exit non-zero so the run goes red. A fault printed into a log that nobody
+  // opens is a fault nobody knows about.
+  if (faults.length) {
+    for (const fault of faults) console.error(fault);
     process.exit(1);
   }
 }
