@@ -3,25 +3,29 @@
 **Cap: 150 lines.** When it exceeds that, roll closed items into `DECISIONS.md`
 and truncate. This file is read every session; every line costs tokens repeatedly.
 
-Last updated: 2026-09-01 · Phase: **3 — code complete, awaiting a scheduled run**
+Last updated: 2026-09-01 · Phase: **4 — complete**
 
 ## Right now
 
-Phases 0-3 are written. The nightly workflow now has every script it calls:
-`harvest`, `prefilter`, `keepalive`, `report`, and a monthly `retention`. All
-five run green locally against Neon.
+Phases 0-4 are done. The nightly workflow ran green end to end from CI on
+2026-09-01 (dispatch), writing to Neon with nobody at a terminal.
 
-Phase 3's exit test cannot be finished from here — it requires two green
-scheduled runs, which means `DATABASE_URL` in GitHub secrets and then waiting
-for the cron.
+The UI is built: inbox with keyboard triage, lead detail with the rubric
+breakdown, a draft-review placeholder, and read-only settings. All four render
+200 against live data.
+
+Phase 3's exit test is the only thing still open, and it finishes itself —
+it wants two *scheduled* runs, not dispatched ones.
 
 ## Next three actions
 
-1. Add `DATABASE_URL` to GitHub repo secrets, then trigger the workflow once by
-   hand (`workflow_dispatch`) to prove it before waiting on the cron.
-2. Watch two scheduled runs go green and confirm rows appear in Neon without
-   anyone touching a terminal.
-3. Phase 4: the UI, against `docs/04-UI-SPEC.md`. Read it then, not now.
+1. Watch the 20:00 UTC cron go green twice. Nothing to do but look.
+2. Phase 5: `lib/model/`, Gmail OAuth with `gmail.compose` only, and
+   `/daily-run`. This is the first phase with model calls in it — read
+   `docs/05-TOKEN-BUDGET.md` before writing any of it.
+3. Decide the settings question: rubric weights live in `memory/RUBRIC.md`, a
+   file, so editable sliders need either a write path into the repo or a second
+   source of truth. See the note in `app/settings/page.tsx`.
 
 ## Blocked
 
@@ -36,6 +40,9 @@ Nothing.
 
 ## Recently done
 
+- 2026-09-01 — Phase 4: inbox, lead detail, draft placeholder, settings.
+  Keyboard triage per the UI spec: j/k/enter/e/a/x/f and the ? overlay.
+- 2026-09-01 — Nightly workflow green from CI end to end.
 - 2026-09-01 — Phase 3: keepalive, report-run and retention scripts; nightly
   workflow fixed to declare the monthly cron its retention job was gated on.
 - 2026-09-01 — Phase 2: `disqualify.ts`, `prescore.ts`, `scripts/prefilter.ts`,

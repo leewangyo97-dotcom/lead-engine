@@ -131,3 +131,35 @@ in the run line, so a capped run is visible rather than silent.
 Parked leads still get a `scores` row. Phase 6 needs to be able to ask what the
 gate turned away; discarding the evidence would make the rubric untunable.
 
+---
+
+## 00X — the UI uses Ember & Paper tokens, not the palette in 04-UI-SPEC.md
+
+**Date:** 2026-09-01
+
+`docs/04-UI-SPEC.md` specifies ground `#EDF1EF`, Archivo, and semantics
+`#17734F` / `#8C5D08` / `#5B6C73`. The Ember & Paper foundations wired in Phase 0
+specify `paper/200 #F2F1EA`, Instrument Sans, and `go/500 #2F6B4F`. Both agree on
+ember `#C2451F` as the accent.
+
+Ember & Paper wins, because it is the palette that exists in the Figma file and
+in `app/globals.css`, and because its contrast pairs were computed rather than
+estimated — two of its greys were darkened after measuring. Adopting the spec's
+palette would mean redoing that work for values with no source.
+
+Everything else in the UI spec is followed as written: the screen list, the
+keyboard model, the row anatomy, and the rule that the left stripe is a severity
+encoding.
+
+---
+
+## 00X — the draft screen shows nothing rather than a mock
+
+**Date:** 2026-09-01
+
+`/lead/[id]/draft` exists so the `e` shortcut has somewhere to land, but it
+renders an explanation instead of a sample email. A screen showing a plausible
+fake draft is the most dangerous thing that could be in this repo: the entire
+point of the verifier is that no unverified claim reaches a Gmail draft, and a
+mock is an unverified claim rendered convincingly.
+
