@@ -117,6 +117,25 @@ report, not a filter: it cannot tell whether an unusual title is wrong, only tha
 it deserves a glance. Worth running after adding a source, which is when a new
 vocabulary of job titles arrives.
 
+## You changed a rule and want it applied to existing leads
+
+A disqualifier or rubric edit only affects future harvests — the content hash
+means today's leads are never re-fetched, so they keep whatever the old rule
+decided and the funnel counts describe a filter that no longer exists.
+
+```bash
+pnpm refilter
+pnpm prefilter
+```
+
+`refilter` returns judged leads to `harvested` and clears their scores and
+disqualify reasons; `prefilter` then judges them under the current rules.
+
+It will not touch anything drafted, in Gmail, answered, won or lost — those carry
+outcome history, and re-judging them could mark a lead disqualified after an
+email had already gone out. It refuses outright if any outreach row exists.
+`--force` exists and you should need a reason to type it.
+
 ## A run cost more than expected
 
 ```bash
