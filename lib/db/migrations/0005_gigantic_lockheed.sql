@@ -1,0 +1,2 @@
+CREATE INDEX "outreach_prospect_idx" ON "outreach" USING btree ("prospect_id");--> statement-breakpoint
+ALTER TABLE "outreach" ADD CONSTRAINT "outreach_exactly_one_owner" CHECK (("outreach"."lead_id" is not null) <> ("outreach"."prospect_id" is not null));

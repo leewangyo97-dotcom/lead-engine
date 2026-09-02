@@ -1,6 +1,8 @@
 import { createId } from "@paralleldrive/cuid2";
+import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   index,
   integer,
   jsonb,
@@ -127,7 +129,24 @@ export const outreach = pgTable(
     sentAt: timestamp("sent_at"), // set by hand when Joshua sends
     dueAt: timestamp("due_at"), // follow-up scheduling
   },
-  (t) => [index("outreach_lead_idx").on(t.leadId)],
+  (t) => [
+    index("outreach_lead_idx").on(t.leadId),
+    index("outreach_prospect_idx").on(t.prospectId),
+    /*
+     * Exactly one owner, enforced by the database.
+     *
+     * Three bugs came from queries forgetting that this table holds both job
+     * applications and messages to businesses: the inbox counted prospect
+     * drafts as job drafts, follow-ups skipped prospects entirely, and a written
+     * draft silenced a company for 90 days. Each was fixed by remembering to
+     * filter. This is the version that does not rely on remembering — a row with
+     * both owners, or neither, cannot exist.
+     */
+    check(
+      "outreach_exactly_one_owner",
+      sql`(${t.leadId} is not null) <> (${t.prospectId} is not null)`,
+    ),
+  ],
 );
 
 /* ── events — raw material for the learning loop ─────── */
