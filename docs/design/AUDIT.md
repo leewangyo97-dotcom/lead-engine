@@ -28,6 +28,19 @@ tiles labelled HARVESTED / DRAFTED / SENT / REPLIED / SCORE AVG, a three-tab row
 keyboard hints, 48px data rows and a footer tip. The implementation carries all
 of these, in that order.
 
+`lead-detail-lg` (3:968) specifies two things the app did not have: a count
+beside each sidebar section that holds work, and an engine-health line at the
+foot of the sidebar. Both are now implemented from data the app already had —
+the counts in one query rather than one per section, and the health dot from the
+`sources` table, so a source that has been dead for two days can no longer sit
+behind the words "All systems normal".
+
+Its nav names differ from the app's (Verified Leads, Email Drafts, Analytics
+against All leads, Follow-ups, Weekly review) and it lays the lead view out as a
+list beside a detail panel where the app uses a page per lead. Those are not
+treated as drift: the design predates the features, and the nav has since grown
+a prospects section the design has no concept of.
+
 ## Drift found and fixed
 
 **Ten dead utility classes.** The project replaces Tailwind's spacing scale with
