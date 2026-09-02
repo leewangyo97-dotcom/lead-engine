@@ -9,6 +9,8 @@ interface Props {
   email: { available: boolean; reason?: string };
   contacted: boolean;
   declined: boolean;
+  /** The prospect's own status: with no events table, it is the whole record. */
+  status: string;
 }
 
 /**
@@ -18,7 +20,7 @@ interface Props {
  * logged is exactly what is opened. It also lets the server refuse: a prospect
  * on the do-not-contact list must not be reachable by clicking faster.
  */
-export function ProspectContact({ id, whatsapp, email, contacted, declined }: Props) {
+export function ProspectContact({ id, whatsapp, email, contacted, declined, status }: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -83,6 +85,26 @@ export function ProspectContact({ id, whatsapp, email, contacted, declined }: Pr
     );
   }
 
+  async function record(outcome: string) {
+    setBusy(outcome);
+    setError(null);
+    try {
+      const res = await fetch(`/api/prospects/${id}/outcome`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ outcome }),
+      });
+      if (!res.ok) setError("could not record that");
+      else router.refresh();
+    } catch {
+      setError("could not reach the server");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  const answered = status === "replied" || status === "won" || status === "lost";
+
   return (
     <div className="flex flex-col items-start gap-1">
       <div className="flex gap-2">
@@ -136,7 +158,38 @@ export function ProspectContact({ id, whatsapp, email, contacted, declined }: Pr
         </button>
       )}
 
-      {contacted && <span className="text-caption text-muted">contacted</span>}
+      {/* Outcomes only after a message has gone out: there is nothing to record
+          about a conversation that never started. */}
+      {contacted && !answered && (
+        <span className="flex flex-wrap items-center gap-2 text-caption">
+          <span className="text-muted">contacted — </span>
+          {(["replied", "won", "lost"] as const).map((o) => (
+            <button
+              key={o}
+              type="button"
+              onClick={() => record(o)}
+              disabled={busy !== null}
+              className="text-secondary underline underline-offset-2 hover:text-primary disabled:opacity-50"
+            >
+              {busy === o ? "…" : o}
+            </button>
+          ))}
+        </span>
+      )}
+
+      {answered && (
+        <span className="flex items-center gap-2 text-caption">
+          <span className={status === "lost" ? "text-muted" : "text-go"}>{status}</span>
+          <button
+            type="button"
+            onClick={() => record("reopen")}
+            disabled={busy !== null}
+            className="text-faint underline underline-offset-2 hover:text-secondary disabled:opacity-50"
+          >
+            undo
+          </button>
+        </span>
+      )}
       {!whatsapp.available && whatsapp.reason && (
         <span className="text-caption text-faint">{whatsapp.reason}</span>
       )}

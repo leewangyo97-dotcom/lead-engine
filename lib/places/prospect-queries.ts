@@ -26,6 +26,7 @@ export interface ProspectRow {
   contacted: boolean;
   /** On the do-not-contact list, so the row offers no way to message them. */
   declined: boolean;
+  status: string;
   tier: "hot" | "warm" | "cold";
   /** Why the score is what it is, largest contribution first. */
   scoreReasons: [string, number][];

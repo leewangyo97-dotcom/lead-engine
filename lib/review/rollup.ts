@@ -1,6 +1,6 @@
 import { and, eq, gte, inArray, sql } from "drizzle-orm";
 import { getDb } from "../db";
-import { events, leads, outreach } from "../db/schema";
+import { events, leads, outreach, prospects } from "../db/schema";
 import { REPLIED_TYPES } from "../followups";
 
 /**
@@ -92,13 +92,26 @@ export async function buildRollup(since?: Date): Promise<Rollup> {
     for (const token of row.stack ?? []) bump("stack", token, isReply);
   }
 
+  // Prospect outreach counts too. Leaving it out meant "what works" was answered
+  // from job applications alone while half the messages went to businesses, and
+  // the angles differ completely between the two.
+  const prospectSends = await prospectRollupRows(since);
+  for (const row of prospectSends) {
+    bump("angle", row.angle ?? "unrecorded", row.replied);
+    bump("source", row.source, row.replied);
+    if (row.sentAt) bump("day", DAYS[new Date(row.sentAt).getUTCDay()], row.replied);
+    bump("stack", row.category, row.replied);
+  }
+
   const cutsFor = (dimension: string): Cut[] =>
     [...(tally.get(dimension) ?? new Map()).entries()]
       .map(([key, v]) => toCut(key, v.sends, v.replies))
       .sort((a, b) => b.sends - a.sends);
 
-  const totalSends = sent.length;
-  const totalReplies = sent.filter((s) => repliedLeads.has(s.leadId)).length;
+  const totalSends = sent.length + prospectSends.length;
+  const totalReplies =
+    sent.filter((s) => repliedLeads.has(s.leadId)).length +
+    prospectSends.filter((p) => p.replied).length;
 
   return {
     totalSends,
@@ -138,4 +151,39 @@ export function proposeChange(byAngle: Cut[], totalSends: number): string | null
     `${bottom.replies}/${bottom.sends}. Consider leading with "${top.key}" more often. ` +
     `Accept to log this in DECISIONS.md — nothing is applied automatically.`
   );
+}
+
+/**
+ * Prospect sends, shaped like lead sends so one tally can hold both.
+ *
+ * "Replied" is read from the prospect's own status, because nothing else
+ * records it: a won or lost outcome is still a reply for the purposes of asking
+ * whether an angle got an answer.
+ */
+async function prospectRollupRows(since?: Date) {
+  const db = getDb();
+
+  const rows = await db
+    .select({
+      angle: outreach.angle,
+      sentAt: outreach.sentAt,
+      channel: outreach.channel,
+      category: prospects.category,
+      status: prospects.status,
+    })
+    .from(outreach)
+    .innerJoin(prospects, eq(prospects.id, outreach.prospectId))
+    .where(
+      since
+        ? and(sql`${outreach.sentAt} is not null`, gte(outreach.sentAt, since))
+        : sql`${outreach.sentAt} is not null`,
+    );
+
+  return rows.map((r) => ({
+    angle: r.angle,
+    sentAt: r.sentAt,
+    category: r.category,
+    source: `prospects:${r.channel}`,
+    replied: r.status === "replied" || r.status === "won" || r.status === "lost",
+  }));
 }
