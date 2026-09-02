@@ -9,7 +9,8 @@ import type { Lead } from "../db/schema";
  */
 export type DisqualifyReason =
   | "disqualified_stack"
-  | "onsite_no_contract"
+  | "requires_presence"
+  | "remote_region_locked"
   | "language_required"
   | "citizenship_or_clearance"
   | "non_engineering_role"
@@ -55,6 +56,31 @@ const DISQUALIFIED_PRIMARY_LANGUAGE =
 /** Languages Joshua does not speak, when the posting requires them. */
 const LANGUAGE_REQUIRED =
   /\b(german|deutsch|japanese|日本語|korean|한국어|french|français|mandarin)\b[^.]{0,40}\b(required|fluent|native|speaker|proficien\w+|mandatory)\b|\b(fluent|native)\b[^.]{0,20}\b(german|japanese|korean|french)\b/i;
+
+/**
+ * Places Joshua can physically be. Anything onsite or hybrid elsewhere is not a
+ * job he can take, whatever the contract says.
+ */
+const HOME_REGION = /\b(philippines|cebu|manila|makati|taguig|bgc|davao|mandaue|lapu[- ]?lapu)\b/i;
+
+/**
+ * Remote roles that are only remote inside a country or bloc.
+ *
+ * "Remote (US)" is not remote for someone in Cebu. This is the replacement for
+ * the old contract-versus-full-time rule: employment type never decided whether
+ * he could apply — location and work authorisation did.
+ */
+const REMOTE_REGION_LOCKED =
+  /\b(us[- ]only|usa[- ]only|u\.s\.[- ]only|us[- ]based(?: only)?|based in the (?:us|usa|united states|uk|eu)|remote[, (]+(?:us|usa|united states|uk|eu|canada|australia)\b[^)]*\)?|within the (?:us|usa|united states|uk|eu|eea)|eu[- ]only|uk[- ]only|must (?:reside|be located|live) in|residing in the (?:us|uk|eu)|authoriz(?:ed|ation) to work in the (?:us|uk|eu)|work permit for)\b/i;
+
+/**
+ * Phrases that reopen a region-locked posting: a role open worldwide, or one
+ * that names Asia or the Philippines, is one he can take.
+ */
+const MULTI_COUNTRY = /(\+\s*\d+\s*(?:more\s+)?countries|\d+\s*other countries|many countries|most countries|\d+\+\s*countries)/i;
+
+const GLOBALLY_OPEN =
+  /\b(worldwide|anywhere|globally distributed|fully distributed|any timezone|apac|asia[- ]pacific|southeast asia|philippines)\b/i;
 
 const CITIZENSHIP =
   /\b(us citizen|u\.s\. citizen|citizenship required|security clearance|ts\/sci|green card required|must be a citizen)\b/i;
@@ -113,9 +139,38 @@ export function disqualify(input: DisqualifyInput, now = new Date()): Disqualify
   if (DISQUALIFIED_STACK.some((s) => haystack.includes(s))) return "disqualified_stack";
   if (DISQUALIFIED_PRIMARY_LANGUAGE.test(input.title)) return "disqualified_stack";
 
-  // Onsite is only fatal when there is no contract option — a contract that
-  // happens to be onsite-preferred is still worth an email.
-  if (input.remoteScope === "onsite" && !input.isContract) return "onsite_no_contract";
+  // The real gate is whether he can apply at all from the Philippines, not
+  // whether the role is contract. Full-time is fine; being required in an
+  // office in Berlin is not, and no contract clause changes that.
+  const location = `${input.region ?? ""} ${haystack}`;
+  if (
+    (input.remoteScope === "onsite" || input.remoteScope === "hybrid") &&
+    !HOME_REGION.test(input.region ?? "")
+  ) {
+    return "requires_presence";
+  }
+
+  // A remote role fenced to one country is not open to him, unless it also says
+  // it is open worldwide — postings often carry both, and the wider claim wins
+  // because it is the one a recruiter will honour.
+  // The harvester classifies scope into regions. "us" and "emea" mean remote
+  // within that bloc, which is as closed to him as an office is — unless the
+  // posting also says it hires more widely.
+  const blocScope = input.remoteScope === "us" || input.remoteScope === "emea";
+  if (blocScope && !GLOBALLY_OPEN.test(location) && !MULTI_COUNTRY.test(location)) {
+    return "remote_region_locked";
+  }
+
+  // "Remote (US + 18 countries)" may well include this one. A hard reject has
+  // to be certain, so anything that hints at a longer list survives to the
+  // judgement stage rather than being thrown away here.
+  if (
+    REMOTE_REGION_LOCKED.test(location) &&
+    !GLOBALLY_OPEN.test(location) &&
+    !MULTI_COUNTRY.test(location)
+  ) {
+    return "remote_region_locked";
+  }
 
   if (LANGUAGE_REQUIRED.test(haystack)) return "language_required";
   if (CITIZENSHIP.test(haystack)) return "citizenship_or_clearance";

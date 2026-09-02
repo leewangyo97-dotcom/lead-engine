@@ -13,11 +13,19 @@ pre-filled WhatsApp or email message. First real search (Cebu City — veterinar
 clinics, dentists) found 151 businesses: 23 reachable, 4 with a website, 3
 enriched, 1 refused by its own robots.txt.
 
-The market fact that shapes the whole feature: **phones outnumber emails roughly
-7:1 here, and almost nobody has a website.** The spec ordered channels
-email-first; that would contact nearly nobody, so `chooseChannel` picks per
-prospect and prefers WhatsApp. Site-health scoring is correct but nearly inert
-until a market with better web coverage.
+Two markets, measured, and they behave nothing alike:
+
+| Search | rows | websites | phones | emails |
+|---|---|---|---|---|
+| Cebu City — vets, clinics, dentists | 151 | 4 | 21 | 8 |
+| Austin — contractors, trades, pro services | 108 | 71 | 70 | 18 |
+| Sydney — contractors, trades, specialists | 187 | 75 | 64 | 21 |
+
+In the Philippines almost nobody has a website, so WhatsApp is the only channel
+that reaches anyone and site-health scoring is inert. Abroad the opposite holds:
+US contractors had 33 websites in 37 rows, enrichment pulled real addresses off
+them, and the pitch has something to point at. `chooseChannel` picks per
+prospect for exactly this reason.
 
 Commands: `pnpm search:run "<place>" <categories>` · `pnpm enrich` ·
 `pnpm prospects:score` · `pnpm prospects:refresh` · `pnpm prospects:enhance` →

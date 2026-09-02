@@ -56,11 +56,111 @@ describe("disqualify", () => {
     expect(disqualify({ ...base, title: "Android Engineer", stack: ["kotlin", "rust"] }, NOW)).toBeNull();
   });
 
-  it("rejects onsite only when there is no contract option", () => {
-    expect(disqualify({ ...base, remoteScope: "onsite", isContract: false }, NOW)).toBe(
-      "onsite_no_contract",
+  it("rejects a role that requires being somewhere he is not", () => {
+    // Employment type never decided whether he could apply — location did. A
+    // contract clause does not let someone in Cebu attend a Berlin office.
+    for (const isContract of [true, false]) {
+      expect(
+        disqualify({ ...base, region: "Berlin, Germany", remoteScope: "onsite", isContract }, NOW),
+      ).toBe("requires_presence");
+      expect(
+        disqualify({ ...base, region: "London, UK", remoteScope: "hybrid", isContract }, NOW),
+      ).toBe("requires_presence");
+    }
+  });
+
+  it("keeps full-time remote work, which he is happy to take", () => {
+    expect(
+      disqualify({ ...base, remoteScope: "remote", isContract: false }, NOW),
+    ).toBeNull();
+  });
+
+  it("keeps onsite work at home", () => {
+    for (const region of ["Cebu City, Philippines", "Makati, Metro Manila"]) {
+      expect(disqualify({ ...base, region, remoteScope: "onsite", isContract: false }, NOW)).toBeNull();
+    }
+  });
+
+  it("rejects remote roles fenced to another country", () => {
+    // "Remote (US)" is not remote for someone in Cebu.
+    const cases = [
+      "Remote (US only)",
+      "Fully remote, must reside in the United States",
+      "Remote — EU only",
+      "You must be authorized to work in the US",
+    ];
+    for (const summary of cases) {
+      // The fixture's region says "Worldwide", which legitimately overrides a
+      // lock, so this case has to state a region that does not.
+      expect(
+        disqualify({ ...base, region: "Remote", remoteScope: "remote", summary }, NOW),
+      ).toBe("remote_region_locked");
+    }
+  });
+
+  it("keeps a role that is region-locked but also open worldwide", () => {
+    // Postings often carry both claims; the wider one is what a recruiter
+    // honours, and rejecting on the narrower one loses real work.
+    expect(
+      disqualify(
+        {
+          ...base,
+          region: "Remote",
+          remoteScope: "remote",
+          summary: "Remote (US) — we also hire worldwide, any timezone",
+        },
+        NOW,
+      ),
+    ).toBeNull();
+    expect(
+      disqualify({ ...base, region: "Remote", remoteScope: "remote", summary: "Remote, APAC or US" }, NOW),
+    ).toBeNull();
+  });
+
+  it("keeps a founder-titled lead, because those are funding leads to pitch", () => {
+    // Every founder-titled row in the database is kind=funding: a funded
+    // startup whose founder is the person to email, not a job posting.
+    expect(disqualify({ ...base, title: "Founder — humanoid robots" }, NOW)).toBeNull();
+  });
+
+  it("treats a bloc-scoped remote role as closed", () => {
+    // The harvester marks these "us" or "emea": remote, but only inside a bloc
+    // he is not in, which is as closed to him as an office.
+    expect(
+      disqualify({ ...base, region: "London, UK or NYC", remoteScope: "emea" }, NOW),
+    ).toBe("remote_region_locked");
+    expect(disqualify({ ...base, region: "Remote (US)", remoteScope: "us" }, NOW)).toBe(
+      "remote_region_locked",
     );
-    expect(disqualify({ ...base, remoteScope: "onsite", isContract: true }, NOW)).toBeNull();
+  });
+
+  it("keeps a bloc-scoped role that also hires more widely", () => {
+    expect(
+      disqualify(
+        { ...base, region: "REMOTE (US + 18 countries)", remoteScope: "us" },
+        NOW,
+      ),
+    ).toBeNull();
+    expect(
+      disqualify({ ...base, region: "Remote EMEA, or anywhere", remoteScope: "emea" }, NOW),
+    ).toBeNull();
+  });
+
+  it("keeps a posting whose country list is longer than the one it names", () => {
+    // "Remote (US + 18 countries)" may well include this one. A hard reject has
+    // to be certain, so ambiguity goes to the judgement stage instead.
+    for (const region of ["REMOTE (US + 18 countries)", "Remote (US, UK + 12 more countries)"]) {
+      expect(disqualify({ ...base, region, remoteScope: "remote" }, NOW)).toBeNull();
+    }
+  });
+
+  it("does not reject a plain remote posting that merely mentions a US office", () => {
+    expect(
+      disqualify(
+        { ...base, region: "Remote", remoteScope: "remote", summary: "Our office is in Austin, Texas" },
+        NOW,
+      ),
+    ).toBeNull();
   });
 
   it("rejects language, citizenship and unpaid postings", () => {
