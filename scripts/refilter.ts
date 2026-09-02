@@ -1,4 +1,4 @@
-import { inArray, sql } from "drizzle-orm";
+import { inArray, isNotNull, sql } from "drizzle-orm";
 import { getDb } from "../lib/db";
 import { loadLocalEnv } from "../lib/env";
 import { events, leads, outreach, scores } from "../lib/db/schema";
@@ -42,11 +42,15 @@ async function main() {
 
   const [{ n: outreachCount }] = await db
     .select({ n: sql<number>`count(*)::int` })
-    .from(outreach);
+    // Job rows only. This table also holds messages sent to businesses, and a
+    // WhatsApp message to a clinic says nothing about whether job leads can be
+    // re-judged — counting those would block this script for an unrelated reason.
+    .from(outreach)
+    .where(isNotNull(outreach.leadId));
 
   if (outreachCount > 0 && !force) {
     console.error(
-      `refusing: ${outreachCount} outreach row(s) exist.\n` +
+      `refusing: ${outreachCount} job outreach row(s) exist.\n` +
         "Re-judging a corpus that has already produced drafts can mark a lead\n" +
         "disqualified after an email went out. Pass --force only if you have\n" +
         "read that sentence and still mean it.",
