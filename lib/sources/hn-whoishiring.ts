@@ -16,6 +16,8 @@ export interface HnComment {
 }
 
 const ALGOLIA = "https://hn.algolia.com/api/v1";
+import { cleanEmail } from "./email";
+
 const UA = "lead-engine/0.1 (personal job-search tool; contact via HN)";
 
 /** Postings are one line of pipe-separated fields, then an HTML body. */
@@ -220,7 +222,7 @@ export const hnWhoIsHiring: SourceAdapter<HnComment> = {
     if (!company || !title || company.length > 120) return null;
 
     const body = rest.join(" ").trim();
-    const email = text.match(/[\w.+-]+@[\w-]+\.[\w.]{2,}/)?.[0];
+    const email = cleanEmail(text.match(/[\w.+-]+@[\w-]+\.[\w.]{2,}/)?.[0]) ?? undefined;
     const pay = parseHourlyUsd(headerLine);
 
     return {

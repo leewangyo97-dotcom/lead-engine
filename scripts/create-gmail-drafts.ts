@@ -1,3 +1,4 @@
+import { cleanEmail } from "../lib/sources/email";
 import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { getDb } from "../lib/db";
 import { loadLocalEnv } from "../lib/env";
@@ -50,7 +51,9 @@ async function main() {
   for (const row of ready) {
     try {
       const draftId = await createDraft(accessToken, {
-        to: row.contact!,
+        // Cleaned again here: rows harvested before the extractor was fixed
+        // still hold sentence punctuation, and Gmail refuses the whole draft.
+        to: cleanEmail(row.contact)!,
         subject: row.subject,
         body: row.body,
       });

@@ -1,4 +1,4 @@
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, isNull } from "drizzle-orm";
 import { getDb } from "../lib/db";
 import { loadLocalEnv } from "../lib/env";
 import { events, leads, outreach } from "../lib/db/schema";
@@ -18,6 +18,16 @@ async function main() {
     .from(leads)
     .where(eq(leads.status, "needs_draft"));
   const allowed = new Set(awaiting.map((r) => r.id));
+
+  // A lead whose latest draft failed verification is already at "drafted", so
+  // it would be refused here — which made the single retry the verifier is
+  // built around impossible to actually apply. A draft still carrying no
+  // `verifiedAt` is one nothing has accepted, so a rewrite is welcome.
+  const retryable = await db
+    .select({ id: outreach.leadId })
+    .from(outreach)
+    .where(isNull(outreach.verifiedAt));
+  for (const row of retryable) if (row.id) allowed.add(row.id);
 
   const unknown = drafts.filter((d) => !allowed.has(d.leadId));
   if (unknown.length) {
