@@ -4,6 +4,7 @@ import { getInboxStats } from "@/lib/leads/stats";
 import { Shell } from "./components/shell";
 import { StatTiles } from "./components/stat-tiles";
 import { InboxList } from "./components/inbox-list";
+import { EmptyInbox } from "./components/empty-inbox";
 
 // Triage state changes on every keystroke, so nothing here may be cached.
 export const dynamic = "force-dynamic";
@@ -14,6 +15,29 @@ const TABS = [
   { key: "week", label: "This week", days: 7 },
   { key: "all", label: "All", days: null },
 ] as const;
+
+/**
+ * When the nightly run fires next, in the reader's terms.
+ *
+ * The cron is 20:00 UTC Monday to Friday, which is 04:00 the next morning in
+ * Manila. On a Friday evening the next run is Monday, and saying "tomorrow"
+ * then would simply be wrong.
+ */
+function nextRunPhrase(now = new Date()): string {
+  const day = now.getUTCDay();
+  const ranToday = now.getUTCHours() >= 20;
+
+  // The weekend gap. Monday's 20:00 UTC run lands at 04:00 Tuesday in Manila,
+  // so "Monday" would be a day early — the offset is the whole point of saying
+  // it in Manila time at all.
+  const weekendAhead = day === 6 || day === 0 || (day === 5 && ranToday);
+  if (weekendAhead) return "Tuesday at 4am";
+
+  // Otherwise it is always the next Manila morning, whether tonight's run has
+  // fired yet or not: before 20:00 UTC it fires tonight, after it fires
+  // tomorrow night — both land at 4am on the following Manila day.
+  return "tomorrow at 4am";
+}
 
 function relativeTime(d: Date | null): string {
   if (!d) return "never";
@@ -126,7 +150,16 @@ export default async function Inbox({
         </p>
 
         <div className="mt-4">
-          <InboxList rows={rows} judged={judged} />
+          {rows.length === 0 ? (
+            <EmptyInbox
+              judged={judged}
+              harvested={stats.harvested}
+              drafted={stats.drafted}
+              nextRun={nextRunPhrase()}
+            />
+          ) : (
+            <InboxList rows={rows} judged={judged} />
+          )}
         </div>
 
         <p className="mt-5 text-caption text-faint">

@@ -34,7 +34,7 @@ function daysAgo(d: Date | null): string | null {
   return n === 1 ? "1 day ago" : `${n} days ago`;
 }
 
-export function InboxList({ rows, judged = 0 }: { rows: InboxRow[]; judged?: number }) {
+export function InboxList({ rows }: { rows: InboxRow[]; judged?: number }) {
   const router = useRouter();
   const [cursor, setCursor] = useState(0);
   const [askReason, setAskReason] = useState(false);
@@ -127,27 +127,9 @@ export function InboxList({ rows, judged = 0 }: { rows: InboxRow[]; judged?: num
     return () => window.removeEventListener("keydown", onKey);
   }, [act, askReason, current, router, rows.length]);
 
-  if (!rows.length) {
-    // Two different empty states. "Nothing harvested yet" is a reason to wait;
-    // "everything was rejected" is a reason to look at the rubric, and saying
-    // the run will fill this would be wrong — it already did.
-    return (
-      <div className="rounded-md border border-rule bg-surface p-7 text-body text-muted">
-        <p>Nothing to triage.</p>
-        {judged > 0 ? (
-          <p className="mt-3">
-            {judged} lead{judged === 1 ? " was" : "s were"} harvested and set aside by the filter.{" "}
-            <a className="text-accent underline underline-offset-2" href="/rejected">
-              See what was turned away
-            </a>{" "}
-            if that looks wrong. The next run adds more at 04:00 Manila.
-          </p>
-        ) : (
-          <p className="mt-3">The nightly run fills this at 04:00 Manila.</p>
-        )}
-      </div>
-    );
-  }
+  // The empty case belongs to the page: Figma 3:1212 gives it a centred mark
+  // and real numbers, which this component has no access to.
+  if (!rows.length) return null;
 
   return (
     <>
