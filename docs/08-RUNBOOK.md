@@ -148,6 +148,19 @@ against its usual value before looking anywhere else.
 
 ---
 
+## Retention deleted something you wanted
+
+It cannot delete a lead that was ever written to. Anything with an outreach row
+is kept regardless of status or age, because `outreach` and `events` cascade from
+`leads` and those outcomes are the whole input to the weekly review.
+
+What it does remove: leads at `disqualified`, `parked` or `closed`, older than 45
+days, that never produced a message. Those are reconstructible — the same posting
+would be harvested again if it reappeared.
+
+The monthly run prints both numbers, so "deleted 40 ... kept 3 that carry
+outreach history" is the expected shape.
+
 ## The nightly run did not happen
 
 GitHub queues scheduled workflows and drops them under load — it skipped 2
