@@ -25,9 +25,21 @@ export async function getInboxStats(): Promise<InboxStats> {
     select
       (select count(*)::int from leads
          where harvested_at >= date_trunc('week', now())) as harvested,
-      (select count(*)::int from outreach where verified_at is null) as drafted,
+      -- Leads whose newest draft is still unverified.
+      --
+      -- Two things this avoids. Prospect messages share this table, so counting
+      -- every unverified row made an enhanced WhatsApp message look like a job
+      -- application awaiting review. And a draft the verifier rejected stays in
+      -- the table as the record of what was refused; once a rewrite passes, that
+      -- older row is history, not work.
+      (select count(*)::int from (
+         select distinct on (lead_id) lead_id, verified_at
+         from outreach
+         where lead_id is not null
+         order by lead_id, created_at desc
+       ) latest where latest.verified_at is null) as drafted,
       (select count(*)::int from outreach
-         where sent_at >= date_trunc('week', now())) as sent,
+         where sent_at >= date_trunc('week', now()) and lead_id is not null) as sent,
       (select count(distinct lead_id)::int from events
          where type in ('reply','call','won')) as replied,
       (select round(avg(coalesce(s.model_score, s.pre_score)))::int
