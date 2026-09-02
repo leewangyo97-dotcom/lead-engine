@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { sql } from "drizzle-orm";
 import { getDb } from "./db";
 
@@ -75,3 +76,19 @@ export function classifyHealth(
   }
   return { health: "ok", healthLabel: "All systems normal" };
 }
+
+/**
+ * One query per request, however many badges ask for it.
+ *
+ * React's `cache` dedupes the call across the six nav items and the health line;
+ * without it a sidebar would cost seven round trips to a database that
+ * autosuspends. A failure returns null rather than throwing: a sidebar without
+ * counts is worth more than a page that will not render.
+ */
+export const cachedNavStatus = cache(async (): Promise<NavStatus | null> => {
+  try {
+    return await getNavStatus();
+  } catch {
+    return null;
+  }
+});

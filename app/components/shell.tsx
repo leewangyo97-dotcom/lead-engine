@@ -1,5 +1,5 @@
 import { Suspense, type ReactNode } from "react";
-import { getNavStatus, type NavStatus } from "@/lib/nav-status";
+import { cachedNavStatus } from "@/lib/nav-status";
 
 /**
  * The app shell from `inbox-populated-lg` (Figma 3:787): a 56px topbar over a
@@ -81,43 +81,13 @@ const NAV = [
   { href: "/settings", label: "Settings", icon: "settings" },
 ] as const;
 
-export function Shell({ current, children }: { current: string; children: ReactNode }) {
-  return (
-    <Suspense fallback={<ShellFrame current={current}>{children}</ShellFrame>}>
-      <ShellWithStatus current={current}>{children}</ShellWithStatus>
-    </Suspense>
-  );
-}
-
 /**
- * The counts come from the database, and `loading.tsx` renders this shell too.
- * Fetching inside the frame would make every skeleton wait on a query, so the
- * frame renders without them and this streams them in.
+ * The counts come from the database, and `loading.tsx` renders this shell too,
+ * so the query must not block the frame. Only the sidebar status suspends:
+ * wrapping the whole shell would put `children` in both the fallback tree and
+ * the resolved one, and render every page's queries twice.
  */
-async function ShellWithStatus({ current, children }: { current: string; children: ReactNode }) {
-  let status: NavStatus | null = null;
-  try {
-    status = await getNavStatus();
-  } catch {
-    // A sidebar without counts is worth more than a page that will not render.
-    status = null;
-  }
-  return (
-    <ShellFrame current={current} status={status}>
-      {children}
-    </ShellFrame>
-  );
-}
-
-function ShellFrame({
-  current,
-  status,
-  children,
-}: {
-  current: string;
-  status?: NavStatus | null;
-  children: ReactNode;
-}) {
+export function Shell({ current, children }: { current: string; children: ReactNode }) {
   return (
     <div className="min-h-screen bg-canvas">
       <header className="flex h-[56px] items-center gap-3 border-b border-rule bg-surface px-6">
@@ -136,7 +106,6 @@ function ShellFrame({
           <ul className="flex overflow-x-auto md:block">
             {NAV.map((item) => {
               const active = item.href === current;
-              const count = status?.counts[item.href];
               return (
                 <li key={item.href}>
                   <a
@@ -150,11 +119,9 @@ function ShellFrame({
                   >
                     <Icon d={item.icon} />
                     {item.label}
-                    {count ? (
-                      <span className="ml-auto hidden rounded-xs bg-sunk px-2 py-0.5 font-mono text-data-sm tabular-nums text-muted md:inline">
-                        {count}
-                      </span>
-                    ) : null}
+                    <Suspense fallback={null}>
+                      <NavCount href={item.href} />
+                    </Suspense>
                   </a>
                 </li>
               );
@@ -164,25 +131,44 @@ function ShellFrame({
           {/* Figma 3:1004 puts the engine's health at the foot of the sidebar.
               It is the one place a dead source is visible without opening the
               Actions log. */}
-          {status && (
-            <p className="mt-5 hidden items-center gap-2 px-5 md:flex">
-              <span
-                aria-hidden="true"
-                className={`h-2 w-2 rounded-full ${
-                  status.health === "ok"
-                    ? "bg-go"
-                    : status.health === "warn"
-                      ? "bg-hold"
-                      : "bg-stop"
-                }`}
-              />
-              <span className="text-caption text-faint">{status.healthLabel}</span>
-            </p>
-          )}
+          <Suspense fallback={null}>
+            <EngineHealth />
+          </Suspense>
         </nav>
 
         <main className="min-w-0 flex-1 px-6 py-6 md:px-8">{children}</main>
       </div>
     </div>
+  );
+}
+
+/**
+ * One query serves every badge: `getNavStatus` is called once per request and
+ * React caches it, so six of these cost one round trip rather than six.
+ */
+async function NavCount({ href }: { href: string }) {
+  const status = await cachedNavStatus();
+  const count = status?.counts[href];
+  if (!count) return null;
+  return (
+    <span className="ml-auto hidden rounded-xs bg-sunk px-2 py-0.5 font-mono text-data-sm tabular-nums text-muted md:inline">
+      {count}
+    </span>
+  );
+}
+
+async function EngineHealth() {
+  const s = await cachedNavStatus();
+  if (!s) return null;
+  return (
+    <p className="mt-5 hidden items-center gap-2 px-5 md:flex">
+      <span
+        aria-hidden="true"
+        className={`h-2 w-2 rounded-full ${
+          s.health === "ok" ? "bg-go" : s.health === "warn" ? "bg-hold" : "bg-stop"
+        }`}
+      />
+      <span className="text-caption text-faint">{s.healthLabel}</span>
+    </p>
   );
 }
