@@ -142,6 +142,44 @@ async function run(query: string, timeoutMs: number, requested: PlaceCategory[])
   }
 }
 
+/**
+ * Builds a lookup by source id, for refreshing places already known.
+ *
+ * Refresh cannot reuse the radius query: a business that moved out of the radius
+ * or lost the tag that matched the category would come back empty and look
+ * deleted. Asking for the element by id says whether it still exists.
+ */
+export function buildIdQuery(sourceIds: string[], timeoutS = 60): string {
+  const byType: Record<string, number[]> = { node: [], way: [], relation: [] };
+
+  for (const sourceId of sourceIds) {
+    const m = sourceId.match(/^osm:(node|way|relation)\/(\d+)$/);
+    if (m) byType[m[1]].push(Number(m[2]));
+  }
+
+  const parts = Object.entries(byType)
+    .filter(([, ids]) => ids.length > 0)
+    .map(([type, ids]) => `${type}(id:${ids.join(",")});`);
+
+  return `[out:json][timeout:${timeoutS}];(${parts.join("")});out center tags;`;
+}
+
+/**
+ * Re-reads known places from OpenStreetMap, keyed by source id.
+ *
+ * An id absent from the result is absent from the map — either deleted or no
+ * longer tagged as this kind of business. Both are facts worth showing rather
+ * than errors.
+ */
+export async function fetchByIds(
+  sourceIds: string[],
+  categories: PlaceCategory[],
+): Promise<Map<string, RawPlace>> {
+  if (sourceIds.length === 0) return new Map();
+  const places = await run(buildIdQuery(sourceIds), 60_000, categories);
+  return new Map(places.map((p) => [p.sourceId, p]));
+}
+
 export const overpassProvider: PlaceProvider = {
   name: "overpass",
 

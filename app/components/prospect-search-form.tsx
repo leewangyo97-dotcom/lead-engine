@@ -11,10 +11,20 @@ function label(category: string): string {
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
 
-export function ProspectSearchForm({ defaultQuery = "" }: { defaultQuery?: string }) {
+export function ProspectSearchForm({
+  defaultQuery = "",
+  defaultCategories,
+}: {
+  defaultQuery?: string;
+  defaultCategories?: string[];
+}) {
   const router = useRouter();
   const [query, setQuery] = useState(defaultQuery);
-  const [selected, setSelected] = useState<string[]>(["clinics"]);
+  // Showing the categories of the search on screen, so the form describes what
+  // is in the table rather than contradicting it.
+  const [selected, setSelected] = useState<string[]>(
+    defaultCategories?.length ? defaultCategories : ["clinics"],
+  );
   const [radiusKm, setRadiusKm] = useState(15);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

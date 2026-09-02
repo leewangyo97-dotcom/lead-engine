@@ -15,6 +15,8 @@ export interface ProspectRow {
   enrichmentStatus: string;
   lastRefreshedAt: Date | null;
   score: number | null;
+  /** Field names a person corrected by hand, so the table can mark them. */
+  overridden: string[];
   /** Precomputed here so the table does not parse phone numbers per render. */
   whatsappReady: boolean;
 }
@@ -46,6 +48,7 @@ export async function getProspects(searchId: string, limit = 200): Promise<Prosp
       enrichmentStatus: prospects.enrichmentStatus,
       lastRefreshedAt: prospects.lastRefreshedAt,
       score: prospects.score,
+      manualOverrides: prospects.manualOverrides,
     })
     .from(prospects)
     .where(eq(prospects.searchId, searchId))
@@ -59,9 +62,10 @@ export async function getProspects(searchId: string, limit = 200): Promise<Prosp
     )
     .limit(limit);
 
-  return rows.map((r) => ({
+  return rows.map(({ manualOverrides, ...r }) => ({
     ...r,
     whatsappReady: isWhatsAppCapable(r.whatsappE164 ?? r.phoneE164),
+    overridden: Object.keys(manualOverrides ?? {}),
   }));
 }
 

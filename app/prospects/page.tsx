@@ -1,6 +1,10 @@
 import { Shell } from "@/app/components/shell";
 import { ProspectSearchForm } from "@/app/components/prospect-search-form";
 import {
+  ProspectRowActions,
+  RefreshAllButton,
+} from "@/app/components/prospect-row-actions";
+import {
   getProspectStats,
   getProspects,
   getSearch,
@@ -50,7 +54,10 @@ export default async function Prospects({
         </p>
 
         <div className="mt-5">
-          <ProspectSearchForm defaultQuery={active?.query ?? ""} />
+          <ProspectSearchForm
+            defaultQuery={active?.query ?? ""}
+            defaultCategories={active?.categories ?? undefined}
+          />
         </div>
 
         {recent.length > 0 && (
@@ -82,6 +89,7 @@ export default async function Prospects({
               <span className="text-go">{stats.withPhone} with a phone</span>
               <span>{stats.withEmail} with an email</span>
               <span>{stats.withWebsite} with a website</span>
+              <RefreshAllButton searchId={active.id} count={stats.total} />
             </div>
 
             {active.status === "failed" && (
@@ -98,7 +106,7 @@ export default async function Prospects({
               </p>
             ) : (
               <div className="mt-6 overflow-x-auto rounded-md border border-rule bg-surface">
-                <table className="w-full min-w-[46rem] text-body-sm">
+                <table className="w-full min-w-[62rem] text-body-sm">
                   <thead>
                     <tr className="border-b border-rule text-label uppercase text-muted">
                       <th className="px-4 py-3 text-left font-normal">Business</th>
@@ -106,6 +114,9 @@ export default async function Prospects({
                       <th className="px-4 py-3 text-left font-normal">Reach</th>
                       <th className="px-4 py-3 text-left font-normal">Phone</th>
                       <th className="px-4 py-3 text-left font-normal">Site</th>
+                      <th className="px-4 py-3 text-left font-normal">
+                        <span className="sr-only">Actions</span>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -138,6 +149,14 @@ export default async function Prospects({
                           ) : (
                             <span className="text-faint">none</span>
                           )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <ProspectRowActions
+                            id={p.id}
+                            email={p.email}
+                            phoneE164={p.phoneE164}
+                            overridden={p.overridden}
+                          />
                         </td>
                       </tr>
                     ))}
