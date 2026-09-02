@@ -114,3 +114,23 @@ export async function readValidatedStdin<T>(schema: z.ZodType<T>): Promise<T> {
   }
   return result.data;
 }
+
+/**
+ * Enhanced prospect messages.
+ *
+ * `usedSignals` is required for the same reason `proofUsed` is required for
+ * drafts: a message that cannot name the facts it leaned on is either invented
+ * or unauditable, and the person sending it has no way to check it before it
+ * reaches a stranger's phone.
+ */
+export const EnhanceItem = z.object({
+  prospectId: z.string().min(1),
+  /** Capped where WhatsApp readability stops, not where the model runs out. */
+  message: z.string().min(1).max(500),
+  angle: z.string().min(1).max(60),
+  usedSignals: z.array(z.string().min(1)).min(1),
+});
+
+export const EnhanceBatch = z.object({
+  enhanced: z.array(EnhanceItem).min(1),
+});

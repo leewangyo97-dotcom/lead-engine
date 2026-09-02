@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, gte, inArray } from "drizzle-orm";
 import { getDb } from "../db";
 import { outreach, prospects, suppressions } from "../db/schema";
 import { rootDomain } from "./normalize";
@@ -15,6 +15,14 @@ import { chooseChannel, type Channel } from "./contact";
  * alternative, leaving it null, would make every follow-up query think nobody
  * has been contacted.
  */
+
+/**
+ * The step number of a message waiting for a person to approve it.
+ *
+ * Negative so it can never be mistaken for a touch that happened: the follow-up
+ * sequence counts 0, 1, 2, and a draft is not a contact.
+ */
+export const DRAFT_STEP = -1;
 
 export interface SuppressionHit {
   kind: string;
@@ -101,7 +109,16 @@ export async function logContact(
     };
   }
 
-  const plan = chooseChannel(place);
+  // An enhanced message that a person accepted wins over the generated one.
+  // Ignoring it would mean the review step changed nothing, which is worse than
+  // not offering the review at all.
+  const [draft] = await db
+    .select({ id: outreach.id, body: outreach.body, angle: outreach.angle })
+    .from(outreach)
+    .where(and(eq(outreach.prospectId, prospectId), eq(outreach.step, DRAFT_STEP)))
+    .limit(1);
+
+  const plan = chooseChannel(place, draft?.body);
   const option = channel === "whatsapp" ? plan.whatsapp : plan.email;
   if (!option.available || !option.href) {
     return { ok: false, blocked: option.reason ?? "channel unavailable" };
@@ -112,7 +129,7 @@ export async function logContact(
   const previous = await db
     .select({ step: outreach.step })
     .from(outreach)
-    .where(eq(outreach.prospectId, prospectId))
+    .where(and(eq(outreach.prospectId, prospectId), gte(outreach.step, 0)))
     .orderBy(desc(outreach.step))
     .limit(1);
   const step = previous.length ? previous[0].step + 1 : 0;
@@ -126,9 +143,13 @@ export async function logContact(
       subject: channel === "whatsapp" ? `WhatsApp to ${place.name}` : `A quick idea for ${place.name}`,
       body: plan.message,
       sentAt: now(),
-      angle: place.website ? "site-improvement" : "no-website",
+      angle: draft?.angle ?? (place.website ? "site-improvement" : "no-website"),
     })
     .returning({ id: outreach.id });
+
+  // The draft has become a real message; leaving it would offer the same text
+  // for review again after it was already sent.
+  if (draft) await db.delete(outreach).where(eq(outreach.id, draft.id));
 
   await db
     .update(prospects)
@@ -145,6 +166,6 @@ export async function contactedIds(prospectIds: string[]): Promise<Set<string>> 
   const rows = await db
     .select({ prospectId: outreach.prospectId })
     .from(outreach)
-    .where(and(inArray(outreach.prospectId, prospectIds)));
+    .where(and(inArray(outreach.prospectId, prospectIds), gte(outreach.step, 0)));
   return new Set(rows.map((r) => r.prospectId).filter((id): id is string => id !== null));
 }

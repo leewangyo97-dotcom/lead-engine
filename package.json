@@ -40,7 +40,9 @@
     "db:migrate:check": "tsx scripts/migrate-check.ts",
     "places:probe": "tsx scripts/places-probe.ts",
     "search:run": "tsx scripts/search-run.ts",
-    "enrich": "tsx scripts/enrich.ts"
+    "enrich": "tsx scripts/enrich.ts",
+    "prospects:enhance": "tsx scripts/prospects-for-enhance.ts",
+    "apply:enhance": "tsx scripts/apply-enhance.ts"
   },
   "dependencies": {
     "@neon/config": "^1.1.0",

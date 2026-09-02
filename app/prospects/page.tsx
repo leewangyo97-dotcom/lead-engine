@@ -1,6 +1,7 @@
 import { Shell } from "@/app/components/shell";
 import { ProspectSearchForm } from "@/app/components/prospect-search-form";
 import { ProspectContact } from "@/app/components/prospect-contact";
+import { ProspectEnhance } from "@/app/components/prospect-enhance";
 import {
   ProspectRowActions,
   RefreshAllButton,
@@ -167,6 +168,9 @@ export default async function Prospects({
                             phoneE164={p.phoneE164}
                             overridden={p.overridden}
                           />
+                          <div className="mt-2">
+                            <ProspectEnhance id={p.id} name={p.name} />
+                          </div>
                         </td>
                       </tr>
                     ))}
