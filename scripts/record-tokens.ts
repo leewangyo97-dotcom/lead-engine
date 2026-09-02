@@ -31,8 +31,24 @@ async function main() {
   const tokensIn = arg("in");
   const tokensOut = arg("out");
 
-  if (tokensIn === undefined || tokensOut === undefined) {
-    console.error("usage: pnpm tokens:record --in <n> --out <n> [--scored <n>] [--drafted <n>]");
+  const scored = arg("scored");
+  const drafted = arg("drafted");
+
+  // Counts can be recorded without token numbers. The apply scripts now attach
+  // the counts themselves, so this is for correcting a run by hand — and being
+  // forced to supply token figures nobody measured would mean inventing them,
+  // which is the one thing a metrics table must never contain.
+  if (
+    tokensIn === undefined &&
+    tokensOut === undefined &&
+    scored === undefined &&
+    drafted === undefined
+  ) {
+    console.error("usage: pnpm tokens:record [--in <n> --out <n>] [--scored <n>] [--drafted <n>]");
+    process.exit(1);
+  }
+  if ((tokensIn === undefined) !== (tokensOut === undefined)) {
+    console.error("give both --in and --out, or neither: half a measurement is not one");
     process.exit(1);
   }
 
@@ -44,22 +60,26 @@ async function main() {
     process.exit(1);
   }
 
-  const scored = arg("scored");
-  const drafted = arg("drafted");
-
   await db
     .update(runMetrics)
     .set({
-      tokensIn,
-      tokensOut,
+      ...(tokensIn !== undefined ? { tokensIn, tokensOut } : {}),
       ...(scored !== undefined ? { scoredCount: scored } : {}),
       ...(drafted !== undefined ? { draftedCount: drafted } : {}),
     })
     .where(eq(runMetrics.id, latest.id));
 
-  const total = tokensIn + tokensOut;
+  const at = latest.runAt.toISOString();
+  if (tokensIn === undefined) {
+    console.log(
+      `tokens:record: counts updated against the run at ${at}; tokens left unmeasured`,
+    );
+    return;
+  }
+
+  const total = tokensIn + tokensOut!;
   console.log(
-    `tokens:record: ${total} tokens against the run at ${latest.runAt.toISOString()}` +
+    `tokens:record: ${total} tokens against the run at ${at}` +
       (total > 25_000 ? " — over the 25,000 target" : ""),
   );
 }

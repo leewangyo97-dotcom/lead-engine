@@ -5,6 +5,7 @@ import { loadLocalEnv } from "../lib/env";
 import { events, leads, outreach } from "../lib/db/schema";
 import { DraftBatch, readValidatedStdin } from "../lib/model/schemas";
 import { verifyClaims } from "../lib/model/profile-claims";
+import { addRunCounts } from "../lib/leads/run-metrics";
 
 /**
  * Persists drafts. `verifiedAt` is deliberately left null — nothing here may set
@@ -76,6 +77,8 @@ async function main() {
     .update(leads)
     .set({ status: "drafted" })
     .where(inArray(leads.id, drafts.map((d) => d.leadId)));
+
+  await addRunCounts({ drafted: drafts.length });
 
   console.log(`apply-drafts: wrote ${drafts.length} draft(s), all unverified`);
 }

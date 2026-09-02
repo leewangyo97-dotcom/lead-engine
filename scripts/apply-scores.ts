@@ -4,6 +4,7 @@ import { loadLocalEnv } from "../lib/env";
 import { events, leads, scores } from "../lib/db/schema";
 import { ScoreBatch, readValidatedStdin } from "../lib/model/schemas";
 import { NEEDS_DRAFT_THRESHOLD, RUBRIC_VERSION } from "../lib/scoring/prescore";
+import { addRunCounts } from "../lib/leads/run-metrics";
 
 /**
  * Takes validated model scores on stdin and promotes or parks each lead.
@@ -63,6 +64,8 @@ async function main() {
       meta: { status: i.score >= NEEDS_DRAFT_THRESHOLD ? "needs_draft" : "parked", score: i.score, by: "scorer" },
     })),
   );
+
+  await addRunCounts({ scored: items.length });
 
   console.log(
     `apply-scores: scored=${items.length} promoted=${promoted.length} parked=${parked.length} (threshold ${NEEDS_DRAFT_THRESHOLD})`,
