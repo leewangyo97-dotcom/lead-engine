@@ -26,7 +26,7 @@ export function EmptyInbox({
     <div className="flex flex-col items-center rounded-md border border-rule bg-surface px-6 py-16 text-center">
       <span
         aria-hidden
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-sunk text-muted"
+        className="flex h-[56px] w-[56px] items-center justify-center rounded-full bg-sunk text-muted"
       >
         <svg
           width="26"

@@ -175,7 +175,7 @@ export function InboxList({ rows }: { rows: InboxRow[]; judged?: number }) {
                   {row.payRaw ?? "rate unstated"} · {row.isContract ? "contract" : "full-time"}
                 </span>
                 {row.overlapHours != null && (
-                  <span className="w-20 text-right font-mono text-data-sm tabular-nums text-go">
+                  <span className="w-[80px] text-right font-mono text-data-sm tabular-nums text-go">
                     {row.overlapHours}h overlap
                   </span>
                 )}

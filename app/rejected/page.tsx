@@ -61,7 +61,7 @@ export default async function Rejected() {
         <ul className="max-w-prose">
           {bands.map((b) => (
             <li key={b.band} className="flex items-center gap-3 py-1 text-body-sm">
-              <span className="w-14 shrink-0 font-mono tabular-nums text-muted">{b.band}</span>
+              <span className="w-[56px] shrink-0 font-mono tabular-nums text-muted">{b.band}</span>
               <span
                 aria-hidden
                 className="h-2 rounded-xs bg-accent"

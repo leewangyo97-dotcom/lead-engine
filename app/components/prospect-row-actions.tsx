@@ -88,14 +88,14 @@ export function ProspectRowActions({ id, email, phoneE164, overridden }: Props) 
           value={draft.email}
           placeholder="email"
           onChange={(e) => setDraft({ ...draft, email: e.target.value })}
-          className="w-44 rounded-xs border border-rule bg-sunk px-2 py-1 text-body-sm text-primary"
+          className="w-[176px] rounded-xs border border-rule bg-sunk px-2 py-1 text-body-sm text-primary"
         />
         <input
           aria-label="Phone"
           value={draft.phoneE164}
           placeholder="+63…"
           onChange={(e) => setDraft({ ...draft, phoneE164: e.target.value })}
-          className="w-44 rounded-xs border border-rule bg-sunk px-2 py-1 font-mono text-data-sm text-primary"
+          className="w-[176px] rounded-xs border border-rule bg-sunk px-2 py-1 font-mono text-data-sm text-primary"
         />
         <div className="flex gap-2">
           <button

@@ -17,7 +17,7 @@ function CutTable({ title, cuts }: { title: string; cuts: Cut[] }) {
               <td className="py-3 text-right font-mono tabular-nums text-primary">
                 {c.replies}/{c.sends}
               </td>
-              <td className="w-24 py-3 text-right font-mono tabular-nums">
+              <td className="w-[96px] py-3 text-right font-mono tabular-nums">
                 {c.replyRate == null ? (
                   <span className="text-faint">—</span>
                 ) : (

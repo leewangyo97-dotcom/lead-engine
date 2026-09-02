@@ -22,6 +22,11 @@ const config: Config = {
       10: "56px",
       11: "72px",
       12: "96px",
+      // Deliberately stops here. Figma's scale runs 0,4,8,12,16,24,32,40,48,64,
+      // 80,128,160 while ours interleaves 2px and 20px, so the indices do not
+      // line up. Adding the missing large steps as 13-17 was tried and reverted:
+      // `h-14` had been resolving to Tailwind's default 56px, and defining key
+      // 14 silently made the topbar 64px. Sizes above 96px use arbitrary values.
     },
     screens: {
       sm: "600px",
@@ -64,11 +69,13 @@ const config: Config = {
     // Radius is by role. Never apply one radius everywhere.
     borderRadius: {
       none: "0",
+      // xs has no Figma counterpart: it is the pill radius for chips, which the
+      // design draws at 3px inside components rather than as a scale step.
       xs: "3px",
-      sm: "5px",
+      sm: "4px",
       md: "8px",
       lg: "12px",
-      xl: "20px",
+      xl: "16px",
       full: "999px",
     },
     // Three levels, not five. Depth is mostly the job of hairline rules.

@@ -83,7 +83,7 @@ const NAV = [
 export function Shell({ current, children }: { current: string; children: ReactNode }) {
   return (
     <div className="min-h-screen bg-canvas">
-      <header className="flex h-14 items-center gap-3 border-b border-rule bg-surface px-6">
+      <header className="flex h-[56px] items-center gap-3 border-b border-rule bg-surface px-6">
         <LogoMark />
         <span className="text-body-sm text-primary">Lead Engine</span>
       </header>
