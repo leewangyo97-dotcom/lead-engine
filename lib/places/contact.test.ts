@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { chooseChannel, firstMessage } from "./contact";
+import { isSharedHost } from "./outreach-log";
 
 const vet = {
   name: "Cebu Vet",
@@ -84,5 +85,25 @@ describe("firstMessage", () => {
   it("stays short enough to read on a phone", () => {
     // A cold WhatsApp message is read between customers. Length is the message.
     expect(firstMessage({ ...vet }).length).toBeLessThan(400);
+  });
+});
+
+describe("isSharedHost", () => {
+  it("recognises platform domains that many businesses share", () => {
+    // Suppressing one of these on a single "no" would block every other
+    // business using the same site builder.
+    for (const d of ["weebly.com", "wixsite.com", "business.site", "blogspot.com"]) {
+      expect(isSharedHost(d)).toBe(true);
+    }
+  });
+
+  it("leaves a business's own domain alone", () => {
+    for (const d of ["chonghua.com.ph", "vetcebu.ph", "lynnettechu.com"]) {
+      expect(isSharedHost(d)).toBe(false);
+    }
+  });
+
+  it("does not care about case", () => {
+    expect(isSharedHost("WEEBLY.COM")).toBe(true);
   });
 });

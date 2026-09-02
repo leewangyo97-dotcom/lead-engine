@@ -24,6 +24,8 @@ export interface ProspectRow {
   whatsapp: ContactOption;
   emailChannel: ContactOption;
   contacted: boolean;
+  /** On the do-not-contact list, so the row offers no way to message them. */
+  declined: boolean;
   tier: "hot" | "warm" | "cold";
   /** Why the score is what it is, largest contribution first. */
   scoreReasons: [string, number][];
@@ -59,6 +61,7 @@ export async function getProspects(searchId: string, limit = 200): Promise<Prosp
       whatsappE164: prospects.whatsappE164,
       enrichmentStatus: prospects.enrichmentStatus,
       lastRefreshedAt: prospects.lastRefreshedAt,
+      status: prospects.status,
       score: prospects.score,
       scoreReasons: prospects.scoreReasons,
       siteSignals: prospects.siteSignals,
@@ -71,6 +74,9 @@ export async function getProspects(searchId: string, limit = 200): Promise<Prosp
     // rows sort last rather than as zero: not yet judged is not the same as
     // judged badly.
     .orderBy(
+      // People who said no sink to the bottom whatever they score: the top of
+      // this list is a work queue, and they are not in it.
+      sql`(${prospects.status} = 'do_not_contact')`,
       sql`${prospects.score} desc nulls last`,
       desc(sql`(${prospects.whatsappE164} is not null)`),
       prospects.name,
@@ -96,6 +102,7 @@ export async function getProspects(searchId: string, limit = 200): Promise<Prosp
       whatsapp: plan.whatsapp,
       emailChannel: plan.email,
       contacted: contacted.has(r.id),
+      declined: r.status === "do_not_contact",
     };
   });
 }

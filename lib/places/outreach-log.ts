@@ -76,6 +76,85 @@ export async function suppress(kind: string, value: string, reason?: string): Pr
     .onConflictDoNothing();
 }
 
+/**
+ * Domains that belong to a hosting platform rather than to a business.
+ *
+ * Suppressing one of these would silently block every other business that
+ * happens to use the same builder — a single "no" from one Weebly site taking
+ * out every Weebly site in the country. Found by declining a real prospect and
+ * reading what went on the list.
+ */
+const SHARED_DOMAINS = new Set([
+  "weebly.com",
+  "wixsite.com",
+  "wix.com",
+  "squarespace.com",
+  "blogspot.com",
+  "wordpress.com",
+  "business.site",
+  "google.com",
+  "facebook.com",
+  "sites.google.com",
+  "myshopify.com",
+  "webflow.io",
+  "godaddysites.com",
+  "netlify.app",
+  "vercel.app",
+  "github.io",
+]);
+
+export function isSharedHost(domain: string): boolean {
+  return SHARED_DOMAINS.has(domain.toLowerCase());
+}
+
+export interface DeclineResult {
+  ok: boolean;
+  /** Which identifiers were suppressed, so the UI can say what it did. */
+  suppressed: { kind: string; value: string }[];
+  error?: string;
+}
+
+/**
+ * Records that someone asked not to be contacted.
+ *
+ * Every identifier they own goes on the list, not just the one they replied on.
+ * A person who says no by WhatsApp has said no to email as well, and a tool that
+ * needs to be told twice is a tool that will contact them twice.
+ *
+ * The row itself is marked rather than deleted: deleting it means the next
+ * search finds the same business, knows nothing, and offers it again.
+ */
+export async function decline(
+  prospectId: string,
+  reason?: string,
+  now: () => Date = () => new Date(),
+): Promise<DeclineResult> {
+  const db = getDb();
+
+  const [place] = await db.select().from(prospects).where(eq(prospects.id, prospectId)).limit(1);
+  if (!place) return { ok: false, suppressed: [], error: "no such prospect" };
+
+  const domain = place.rootDomain ?? (place.website ? rootDomain(place.website) : null);
+  const entries = [
+    place.email ? { kind: "email", value: place.email } : null,
+    place.phoneE164 ? { kind: "phone", value: place.phoneE164 } : null,
+    place.whatsappE164 ? { kind: "phone", value: place.whatsappE164 } : null,
+    // A platform domain identifies the builder, not the business.
+    domain && !isSharedHost(domain) ? { kind: "domain", value: domain } : null,
+  ].filter((e): e is { kind: string; value: string } => e !== null);
+
+  for (const entry of entries) {
+    await suppress(entry.kind, entry.value, reason ?? "asked not to be contacted");
+  }
+
+  await db
+    .update(prospects)
+    .set({ status: "do_not_contact", updatedAt: now() })
+    .where(eq(prospects.id, prospectId));
+
+  return { ok: true, suppressed: entries };
+}
+
 export interface LogContactResult {
   ok: boolean;
   outreachId?: string;
@@ -100,6 +179,10 @@ export async function logContact(
 
   const [place] = await db.select().from(prospects).where(eq(prospects.id, prospectId)).limit(1);
   if (!place) return { ok: false, blocked: "no such prospect" };
+
+  if (place.status === "do_not_contact") {
+    return { ok: false, blocked: "marked do-not-contact" };
+  }
 
   const hit = await findSuppression(prospectId);
   if (hit) {

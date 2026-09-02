@@ -8,6 +8,7 @@ interface Props {
   whatsapp: { available: boolean; reason?: string };
   email: { available: boolean; reason?: string };
   contacted: boolean;
+  declined: boolean;
 }
 
 /**
@@ -17,10 +18,29 @@ interface Props {
  * logged is exactly what is opened. It also lets the server refuse: a prospect
  * on the do-not-contact list must not be reachable by clicking faster.
  */
-export function ProspectContact({ id, whatsapp, email, contacted }: Props) {
+export function ProspectContact({ id, whatsapp, email, contacted, declined }: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Confirmation is inline rather than a window.confirm: native dialogs are
+  // suppressed in some mobile webviews, and a button that silently does nothing
+  // is worse than one that asks. It needs asking — undoing this means editing
+  // the suppression list by hand.
+  const [confirming, setConfirming] = useState(false);
+
+  async function markDeclined() {
+    setBusy("decline");
+    setError(null);
+    try {
+      const res = await fetch(`/api/prospects/${id}/decline`, { method: "POST" });
+      if (!res.ok) setError("could not record that");
+      else router.refresh();
+    } catch {
+      setError("could not reach the server");
+    } finally {
+      setBusy(null);
+    }
+  }
 
   async function open(channel: "whatsapp" | "email") {
     setBusy(channel);
@@ -55,6 +75,14 @@ export function ProspectContact({ id, whatsapp, email, contacted }: Props) {
     }
   }
 
+  if (declined) {
+    return (
+      <span title="On the do-not-contact list" className="text-body-sm text-faint">
+        do not contact
+      </span>
+    );
+  }
+
   return (
     <div className="flex flex-col items-start gap-1">
       <div className="flex gap-2">
@@ -77,6 +105,36 @@ export function ProspectContact({ id, whatsapp, email, contacted }: Props) {
           {busy === "email" ? "Opening…" : "Email"}
         </button>
       </div>
+
+      {confirming ? (
+        <span className="flex items-center gap-2 text-caption">
+          <span className="text-muted">Add their number, email and domain to the list?</span>
+          <button
+            type="button"
+            onClick={markDeclined}
+            disabled={busy !== null}
+            className="text-stop underline underline-offset-2 disabled:opacity-50"
+          >
+            {busy === "decline" ? "saving…" : "yes"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirming(false)}
+            className="text-secondary underline underline-offset-2"
+          >
+            cancel
+          </button>
+        </span>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setConfirming(true)}
+          title="They asked not to be contacted"
+          className="text-caption text-faint underline underline-offset-2 hover:text-secondary"
+        >
+          they said no
+        </button>
+      )}
 
       {contacted && <span className="text-caption text-muted">contacted</span>}
       {!whatsapp.available && whatsapp.reason && (

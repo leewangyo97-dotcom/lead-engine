@@ -102,6 +102,24 @@ describe("scoreProspect", () => {
   });
 });
 
+describe("do-not-contact", () => {
+  it("is never hot, however reachable and promising", () => {
+    const base = { name: "Cebu Vet", whatsappE164: "+639171234567", city: "Cebu City", category: "veterinary" };
+    expect(scoreProspect(base).tier).toBe("hot");
+    // Same prospect, after they asked not to be contacted.
+    expect(scoreProspect({ ...base, status: "do_not_contact" }).tier).toBe("cold");
+  });
+
+  it("keeps the score, which still records what was known about them", () => {
+    const out = scoreProspect({
+      name: "Cebu Vet",
+      whatsappE164: "+639171234567",
+      status: "do_not_contact",
+    });
+    expect(out.score).toBeGreaterThan(0);
+  });
+});
+
 describe("isScoreProvisional", () => {
   it("flags a prospect whose site has never been read", () => {
     expect(

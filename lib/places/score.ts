@@ -23,6 +23,7 @@ export interface ScorableProspect {
   whatsappE164?: string | null;
   enrichmentStatus?: string | null;
   siteSignals?: Record<string, unknown> | null;
+  status?: string | null;
 }
 
 export interface ScoreResult {
@@ -94,9 +95,13 @@ export function scoreProspect(place: ScorableProspect): ScoreResult {
 
   // Reachability is a gate, not a weight. A business with no phone and no email
   // cannot be contacted at all, so however good a prospect it looks on paper it
-  // must never outrank one that can actually be messaged today.
+  // must never outrank one that can actually be messaged today. Someone who
+  // asked not to be contacted is the same case for a stronger reason: they are
+  // reachable and must not be reached.
   const reachable = !!(number || place.email);
-  const tier = !reachable ? "cold" : score >= HOT_AT ? "hot" : score >= WARM_AT ? "warm" : "cold";
+  const allowed = place.status !== "do_not_contact";
+  const tier =
+    !reachable || !allowed ? "cold" : score >= HOT_AT ? "hot" : score >= WARM_AT ? "warm" : "cold";
 
   return { score, reasons, tier };
 }

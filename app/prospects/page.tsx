@@ -165,6 +165,7 @@ export default async function Prospects({
                             whatsapp={p.whatsapp}
                             email={p.emailChannel}
                             contacted={p.contacted}
+                            declined={p.declined}
                           />
                         </td>
                         <td className="px-4 py-3">
