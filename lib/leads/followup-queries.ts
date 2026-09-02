@@ -1,4 +1,4 @@
-import { desc, eq, inArray, isNotNull } from "drizzle-orm";
+import { desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import { getDb } from "../db";
 import { events, leads, outreach } from "../db/schema";
 import { MAX_STEP, REPLIED_TYPES, isDue } from "../followups";
@@ -27,7 +27,9 @@ export async function getDueFollowups(now = new Date()): Promise<FollowupRow[]> 
 
   const sent = await db
     .select({
-      leadId: outreach.leadId,
+      // The inner join to leads guarantees this is present; outreach.leadId is
+      // nullable only because a row may instead belong to a geo prospect.
+      leadId: sql<string>`${outreach.leadId}`,
       step: outreach.step,
       sentAt: outreach.sentAt,
       subject: outreach.subject,

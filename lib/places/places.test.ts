@@ -8,6 +8,7 @@ import {
 } from "./overpass";
 import { toGeocodedPlace } from "./nominatim";
 import { RateLimiter } from "./rate-limit";
+import { normalizeName, rootDomain } from "./normalize";
 
 describe("overpass queries", () => {
   it("always sets an explicit timeout", () => {
@@ -149,5 +150,41 @@ describe("rate limiter", () => {
     await expect(limiter.run(async () => Promise.reject(new Error("boom")))).rejects.toThrow("boom");
     // A broken chain would reject every later call for the life of the process.
     await expect(limiter.run(async () => "fine")).resolves.toBe("fine");
+  });
+});
+
+describe("dedupe identity", () => {
+  it("collapses legal-form noise so one business is one lead", () => {
+    expect(normalizeName("Cordova Veterinary Clinic, Inc.")).toBe("cordova veterinary clinic");
+    expect(normalizeName("The Pet's Point Co.")).toBe("pet s point");
+    expect(normalizeName("Gorre  Animal   Health")).toBe("gorre animal health");
+  });
+
+  it("keeps category words, which distinguish real businesses", () => {
+    // "Santos Clinic" and "Santos Pharmacy" are not the same practice.
+    expect(normalizeName("Santos Clinic")).not.toBe(normalizeName("Santos Pharmacy"));
+  });
+
+  it("normalises accents and ampersands", () => {
+    expect(normalizeName("Café & Co")).toBe(normalizeName("Cafe and"));
+  });
+
+  it("reduces a chain's branches to one registrable domain", () => {
+    expect(rootDomain("https://www.vetclinic.com/cebu")).toBe("vetclinic.com");
+    expect(rootDomain("http://branch2.vetclinic.com")).toBe("vetclinic.com");
+    expect(rootDomain("vetclinic.com")).toBe("vetclinic.com");
+  });
+
+  it("keeps two-level public suffixes intact", () => {
+    // Trimming to "com.ph" would merge every Philippine business into one lead.
+    expect(rootDomain("https://clinic.com.ph")).toBe("clinic.com.ph");
+    expect(rootDomain("https://www.branch.clinic.com.ph")).toBe("clinic.com.ph");
+  });
+
+  it("returns null rather than guessing at unusable input", () => {
+    expect(rootDomain(null)).toBeNull();
+    expect(rootDomain("")).toBeNull();
+    expect(rootDomain("not a url")).toBeNull();
+    expect(rootDomain("localhost")).toBeNull();
   });
 });

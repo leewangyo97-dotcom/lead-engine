@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync } from "node:fs";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { getDb } from "../lib/db";
 import { loadLocalEnv } from "../lib/env";
 import { events, leads, outreach } from "../lib/db/schema";
@@ -34,7 +34,7 @@ async function main() {
       proofUsed: outreach.proofUsed,
       createdAt: outreach.createdAt,
       sentAt: outreach.sentAt,
-      leadId: outreach.leadId,
+      leadId: sql<string>`${outreach.leadId}`,
       step: outreach.step,
     })
     .from(outreach)

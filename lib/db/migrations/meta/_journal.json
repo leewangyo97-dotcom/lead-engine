@@ -22,6 +22,13 @@
       "when": 1788275553466,
       "tag": "0002_tricky_shocker",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788347514144,
+      "tag": "0003_magical_captain_flint",
+      "breakpoints": true
     }
   ]
 }

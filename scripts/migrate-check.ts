@@ -22,10 +22,13 @@ const EXPECTED_TABLES = [
   "events",
   "leads",
   "outreach",
+  "prospects",
   "run_metrics",
   "runs",
   "scores",
+  "searches",
   "sources",
+  "suppressions",
 ];
 
 function runMigrate(url: string): Promise<number> {

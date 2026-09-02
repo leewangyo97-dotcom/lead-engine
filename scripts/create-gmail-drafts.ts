@@ -1,4 +1,4 @@
-import { and, eq, isNotNull, isNull } from "drizzle-orm";
+import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { getDb } from "../lib/db";
 import { loadLocalEnv } from "../lib/env";
 import { events, leads, outreach } from "../lib/db/schema";
@@ -21,7 +21,9 @@ async function main() {
   const ready = await db
     .select({
       outreachId: outreach.id,
-      leadId: outreach.leadId,
+      // Inner joined to leads below, so always present. outreach.leadId is
+      // nullable only because a row may belong to a geo prospect instead.
+      leadId: sql<string>`${outreach.leadId}`,
       subject: outreach.subject,
       body: outreach.body,
       contact: leads.contact,

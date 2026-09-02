@@ -46,7 +46,9 @@ export async function buildRollup(since?: Date): Promise<Rollup> {
 
   const sent = await db
     .select({
-      leadId: outreach.leadId,
+      // Inner joined to leads, so present; nullable in the schema only because
+      // an outreach row may belong to a geo prospect instead.
+      leadId: sql<string>`${outreach.leadId}`,
       angle: outreach.angle,
       sentAt: outreach.sentAt,
       sourceId: leads.sourceId,
