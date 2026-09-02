@@ -3,40 +3,35 @@
 **Cap: 150 lines.** When it exceeds that, roll closed items into `DECISIONS.md`
 and truncate. This file is read every session; every line costs tokens repeatedly.
 
-Last updated: 2026-09-01 · Phase: **6 — complete. Pipeline proven; funnel is dry.**
+Last updated: 2026-09-01 · Phase: **all six complete. Every exit test passed except a real draft.**
 
 ## Right now
 
-All six phases built, deployed, and running unattended. Nothing in flight.
+**The working copy is `C:\dev\lead-engine`.** `F:\lead-engine` suffered NTFS
+corruption on 2026-09-02 — 91 tracked files zero-filled, 51 missing, some turned
+into undeletable directory entries dated 1601, and git's object store unreadable.
+Nothing was lost: every commit was already pushed, and the tree was restored from
+the remote. What remains on F: cannot be deleted until `chkdsk F: /f /r` runs.
 
-166 leads across three sources. 5 reach stage 2; none scores 75 on merit, so no
-outreach draft has ever been written. That is the whole of what is unfinished.
+Phase 3's exit test passed on 2026-09-01: two scheduled runs, both green,
+unattended. The weekday cron harvested (382 raw, 26 new, 18 survived, 1 to stage
+2) and the monthly cron ran retention — each correctly skipping the other's job,
+which is the `if:` gating that was broken until the monthly cron was declared.
 
-Since the last checkpoint the work has been operational rather than functional —
-every item below was found by running the thing, not by reading it:
-
-- one failed Algolia page was silently discarding up to 79% of a harvest
-- the score breakdown showed job maxima against founder scores ("25 / 10")
-- the UI still promised features that had already shipped
-- rows were openable only by double-click; the disqualify prompt was invisible
-  to screen readers
-- 155 of 161 leads were unviewable, and the disqualify reason was computed then
-  thrown away
-
-Monitoring now covers four silent failures — a source erroring, all sources
-silent, one source silent, the scheduler stopping — each tested and each having
-fired at least once for real. Further alerting would be speculative.
+Every phase exit test now passes except one, and it is not a test the system can
+pass alone: no lead has scored 75 on merit, so no outreach draft has ever been
+written.
 
 ## Next three actions
 
-1. **The contract weight.** `/rejected` now quantifies the two constraints:
-   31 of 41 hard rejections are `onsite_no_contract`, and the survivors stall at
-   68 because contract terms are worth 20 points. PROFILE.md still records
-   full-time vs contract as unresolved. One weight plus a version bump.
-2. Run `pnpm nightly` daily. The September HN thread was not posted as of
-   1 Sep 15:30 UTC; it fills through the month.
-3. Leave Launch HN alone for a fortnight. Stage 2 has rejected four of four as
-   deep-tech with no app surface — a pattern, not yet evidence.
+1. `chkdsk F: /f /r`, then `rmdir /s /q F:\lead-engine`. Until then the wreck
+   sits there looking like a project.
+2. **The contract weight.** `/rejected` quantifies it: 1 lead qualifies today, 6
+   would if full-time counted as acceptable terms. One weight in
+   `memory/RUBRIC.md` plus a version bump. PROFILE.md still records the
+   full-time-vs-contract question as unresolved.
+3. Run `pnpm nightly` daily. The September thread is filling — 447 raw items and
+   36 leads scoring 50+ as of 2 Sep.
 
 ## Blocked
 
@@ -54,6 +49,11 @@ Nothing.
 - 2026-09-01 — `remoteok` adapter added; harvest idempotent across both sources
   (30 raw, 28 unique, 0 inserted on the second run).
 - 2026-09-01 — Fixed: BD titles were clearing every hard reject.
+- 2026-09-02 — Runtime docs audited end to end: agent output contracts against
+  their schemas, skills against the code, and the copywriter's angle/proof
+  vocabulary, which the learning loop groups by and nothing defined.
+- 2026-09-02 — F: corrupted; working copy restored to C:\dev\lead-engine.
+- 2026-09-01 — Phase 3 exit test passed: two green scheduled runs.
 - 2026-09-01 — Operational hardening: per-source raw counts, fault/warning
   split, /rejected view, fetch timeouts and retries, pagination recovery.
 - 2026-09-01 — Integration check for the draft/verify/Gmail-gate write path;
