@@ -1,5 +1,6 @@
 import { Shell } from "@/app/components/shell";
 import { ProspectSearchForm } from "@/app/components/prospect-search-form";
+import { ProspectContact } from "@/app/components/prospect-contact";
 import {
   ProspectRowActions,
   RefreshAllButton,
@@ -106,13 +107,14 @@ export default async function Prospects({
               </p>
             ) : (
               <div className="mt-6 overflow-x-auto rounded-md border border-rule bg-surface">
-                <table className="w-full min-w-[62rem] text-body-sm">
+                <table className="w-full min-w-[76rem] text-body-sm">
                   <thead>
                     <tr className="border-b border-rule text-label uppercase text-muted">
                       <th className="px-4 py-3 text-left font-normal">Business</th>
                       <th className="px-4 py-3 text-left font-normal">City</th>
                       <th className="px-4 py-3 text-left font-normal">Reach</th>
                       <th className="px-4 py-3 text-left font-normal">Phone</th>
+                      <th className="px-4 py-3 text-left font-normal">Contact</th>
                       <th className="px-4 py-3 text-left font-normal">Site</th>
                       <th className="px-4 py-3 text-left font-normal">
                         <span className="sr-only">Actions</span>
@@ -135,6 +137,14 @@ export default async function Prospects({
                         </td>
                         <td className="px-4 py-3 font-mono text-data-sm tabular-nums text-secondary">
                           {p.phoneE164 ?? "—"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <ProspectContact
+                            id={p.id}
+                            whatsapp={p.whatsapp}
+                            email={p.emailChannel}
+                            contacted={p.contacted}
+                          />
                         </td>
                         <td className="px-4 py-3">
                           {p.website ? (

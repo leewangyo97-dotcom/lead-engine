@@ -1,4 +1,8 @@
-import { parsePhoneNumberFromString, type CountryCode } from "libphonenumber-js";
+// The "max" metadata, not the default. The default bundle omits number-type
+// data, so getType() returns undefined for every Philippine number and a Cebu
+// landline reads as WhatsApp-capable — a link that fails only after the user
+// clicks it. The extra metadata is worth its size for that alone.
+import { parsePhoneNumberFromString, type CountryCode } from "libphonenumber-js/max";
 
 /**
  * Turns whatever OpenStreetMap holds into E.164, or nothing.
@@ -43,8 +47,9 @@ export function isWhatsAppCapable(e164: string | null | undefined): boolean {
   if (!parsed?.isValid()) return false;
 
   const type = parsed.getType();
-  // Undefined means the library cannot tell; many valid mobiles fall here, so
-  // treating unknown as "not mobile" would discard usable leads.
+  // Undefined still means the library cannot tell, which happens for countries
+  // with thin metadata; treating that as "not mobile" would discard usable
+  // leads, so unknown stays optimistic while a known landline does not.
   return type === undefined || type === "MOBILE" || type === "FIXED_LINE_OR_MOBILE";
 }
 

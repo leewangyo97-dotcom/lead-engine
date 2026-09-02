@@ -1,0 +1,150 @@
+import { and, desc, eq, inArray } from "drizzle-orm";
+import { getDb } from "../db";
+import { outreach, prospects, suppressions } from "../db/schema";
+import { rootDomain } from "./normalize";
+import { chooseChannel, type Channel } from "./contact";
+
+/**
+ * Recording that a prospect was contacted, and refusing when they asked not to
+ * be.
+ *
+ * Click-to-chat opens WhatsApp in another application, so nothing here can
+ * confirm the message was actually sent — only that the link was opened. The
+ * column is honest about that: `sentAt` is set on the click because opening a
+ * pre-filled chat is as close to a send as this side can observe, and the
+ * alternative, leaving it null, would make every follow-up query think nobody
+ * has been contacted.
+ */
+
+export interface SuppressionHit {
+  kind: string;
+  value: string;
+  reason: string | null;
+}
+
+/**
+ * Whether a prospect is on the do-not-contact list.
+ *
+ * Keyed loosely on purpose: someone who declined by email should not then get a
+ * WhatsApp message, and a second branch of the same company on the same domain
+ * counts as the same "no".
+ */
+export async function findSuppression(prospectId: string): Promise<SuppressionHit | null> {
+  const db = getDb();
+
+  const [row] = await db
+    .select({
+      email: prospects.email,
+      phoneE164: prospects.phoneE164,
+      whatsappE164: prospects.whatsappE164,
+      website: prospects.website,
+      rootDomain: prospects.rootDomain,
+    })
+    .from(prospects)
+    .where(eq(prospects.id, prospectId))
+    .limit(1);
+  if (!row) return null;
+
+  const domain = row.rootDomain ?? (row.website ? rootDomain(row.website) : null);
+  const values = [row.email, row.phoneE164, row.whatsappE164, domain]
+    .filter((v): v is string => !!v)
+    .map((v) => v.toLowerCase());
+  if (values.length === 0) return null;
+
+  const [hit] = await db
+    .select({ kind: suppressions.kind, value: suppressions.value, reason: suppressions.reason })
+    .from(suppressions)
+    .where(inArray(suppressions.value, values))
+    .limit(1);
+
+  return hit ?? null;
+}
+
+export async function suppress(kind: string, value: string, reason?: string): Promise<void> {
+  const db = getDb();
+  await db
+    .insert(suppressions)
+    .values({ kind, value: value.toLowerCase(), reason })
+    .onConflictDoNothing();
+}
+
+export interface LogContactResult {
+  ok: boolean;
+  outreachId?: string;
+  href?: string;
+  /** Set when the contact was refused, for showing rather than throwing. */
+  blocked?: string;
+}
+
+/**
+ * Logs one outreach and returns the link to open.
+ *
+ * The link is built here rather than in the browser so that what is recorded and
+ * what is opened are the same text. Building the message in two places is how
+ * the log quietly stops describing what was actually sent.
+ */
+export async function logContact(
+  prospectId: string,
+  channel: Channel,
+  now: () => Date = () => new Date(),
+): Promise<LogContactResult> {
+  const db = getDb();
+
+  const [place] = await db.select().from(prospects).where(eq(prospects.id, prospectId)).limit(1);
+  if (!place) return { ok: false, blocked: "no such prospect" };
+
+  const hit = await findSuppression(prospectId);
+  if (hit) {
+    return {
+      ok: false,
+      blocked: `on the do-not-contact list (${hit.kind}${hit.reason ? `: ${hit.reason}` : ""})`,
+    };
+  }
+
+  const plan = chooseChannel(place);
+  const option = channel === "whatsapp" ? plan.whatsapp : plan.email;
+  if (!option.available || !option.href) {
+    return { ok: false, blocked: option.reason ?? "channel unavailable" };
+  }
+
+  // Step counts what has already gone out, so the follow-up rules see a real
+  // sequence rather than a pile of first touches.
+  const previous = await db
+    .select({ step: outreach.step })
+    .from(outreach)
+    .where(eq(outreach.prospectId, prospectId))
+    .orderBy(desc(outreach.step))
+    .limit(1);
+  const step = previous.length ? previous[0].step + 1 : 0;
+
+  const [row] = await db
+    .insert(outreach)
+    .values({
+      prospectId,
+      channel,
+      step,
+      subject: channel === "whatsapp" ? `WhatsApp to ${place.name}` : `A quick idea for ${place.name}`,
+      body: plan.message,
+      sentAt: now(),
+      angle: place.website ? "site-improvement" : "no-website",
+    })
+    .returning({ id: outreach.id });
+
+  await db
+    .update(prospects)
+    .set({ status: "contacted", updatedAt: now() })
+    .where(eq(prospects.id, prospectId));
+
+  return { ok: true, outreachId: row.id, href: option.href };
+}
+
+/** Prospect ids already contacted, so the table can say so without a join per row. */
+export async function contactedIds(prospectIds: string[]): Promise<Set<string>> {
+  if (prospectIds.length === 0) return new Set();
+  const db = getDb();
+  const rows = await db
+    .select({ prospectId: outreach.prospectId })
+    .from(outreach)
+    .where(and(inArray(outreach.prospectId, prospectIds)));
+  return new Set(rows.map((r) => r.prospectId).filter((id): id is string => id !== null));
+}

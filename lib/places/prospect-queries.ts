@@ -2,6 +2,8 @@ import { desc, eq, sql } from "drizzle-orm";
 import { getDb } from "../db";
 import { prospects, searches } from "../db/schema";
 import { isWhatsAppCapable } from "./phone";
+import { chooseChannel, type ContactOption } from "./contact";
+import { contactedIds } from "./outreach-log";
 
 export interface ProspectRow {
   id: string;
@@ -17,6 +19,10 @@ export interface ProspectRow {
   score: number | null;
   /** Field names a person corrected by hand, so the table can mark them. */
   overridden: string[];
+  /** Whether each channel can be used, with the reason when it cannot. */
+  whatsapp: ContactOption;
+  emailChannel: ContactOption;
+  contacted: boolean;
   /** Precomputed here so the table does not parse phone numbers per render. */
   whatsappReady: boolean;
 }
@@ -62,11 +68,20 @@ export async function getProspects(searchId: string, limit = 200): Promise<Prosp
     )
     .limit(limit);
 
-  return rows.map(({ manualOverrides, ...r }) => ({
-    ...r,
-    whatsappReady: isWhatsAppCapable(r.whatsappE164 ?? r.phoneE164),
-    overridden: Object.keys(manualOverrides ?? {}),
-  }));
+  // One query for the contact history rather than one per row.
+  const contacted = await contactedIds(rows.map((r) => r.id));
+
+  return rows.map(({ manualOverrides, ...r }) => {
+    const plan = chooseChannel(r);
+    return {
+      ...r,
+      whatsappReady: isWhatsAppCapable(r.whatsappE164 ?? r.phoneE164),
+      overridden: Object.keys(manualOverrides ?? {}),
+      whatsapp: plan.whatsapp,
+      emailChannel: plan.email,
+      contacted: contacted.has(r.id),
+    };
+  });
 }
 
 export interface ProspectStats {
