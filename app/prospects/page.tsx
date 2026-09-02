@@ -59,7 +59,23 @@ export default async function Prospects({
           reachable they are — hover a score to see what it is made of.
         </p>
 
-        <div className="mt-5">
+        {/* On a phone the form is 22 category chips and a slider — the whole
+            first screen, before a single prospect. Searching is occasional;
+            working the queue is daily, so the form folds away on small screens
+            and stays open on desktop where there is room for both. */}
+        <details className="group mt-5 md:hidden">
+          <summary className="cursor-pointer rounded-sm border border-rule bg-surface px-4 py-3 text-body-sm text-secondary">
+            New search
+          </summary>
+          <div className="mt-3">
+            <ProspectSearchForm
+              defaultQuery={active?.query ?? ""}
+              defaultCategories={active?.categories ?? undefined}
+            />
+          </div>
+        </details>
+
+        <div className="mt-5 hidden md:block">
           <ProspectSearchForm
             defaultQuery={active?.query ?? ""}
             defaultCategories={active?.categories ?? undefined}
@@ -120,7 +136,45 @@ export default async function Prospects({
                   : "Nothing found here. Try a wider radius or another category."}
               </p>
             ) : (
-              <div className="mt-6 overflow-x-auto rounded-md border border-rule bg-surface">
+              <>
+              {/* Cards on a phone. The table is eight columns wide; scrolling it
+                  sideways to reach the WhatsApp button is not a way to work. */}
+              <ul className="mt-6 flex flex-col gap-3 md:hidden">
+                {rows.map((p) => (
+                  <li key={p.id} className="rounded-md border border-rule bg-surface p-4">
+                    <div className="flex items-baseline gap-3">
+                      <span
+                        className={`font-mono text-data tabular-nums ${
+                          p.tier === "hot" ? "text-go" : p.tier === "warm" ? "text-primary" : "text-muted"
+                        }`}
+                      >
+                        {p.score}
+                      </span>
+                      <span className="min-w-0 flex-1 text-primary">{p.name}</span>
+                    </div>
+                    <p className="mt-1 font-mono text-data-sm text-faint">
+                      {p.category}
+                      {p.city ? ` · ${p.city}` : ""}
+                      {p.phoneE164 ? ` · ${p.phoneE164}` : ""}
+                    </p>
+                    <div className="mt-3">
+                      <ProspectContact
+                        id={p.id}
+                        whatsapp={p.whatsapp}
+                        email={p.emailChannel}
+                        contacted={p.contacted}
+                        declined={p.declined}
+                        status={p.status}
+                      />
+                    </div>
+                    <div className="mt-3">
+                      <ProspectEnhance id={p.id} name={p.name} />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mt-6 hidden overflow-x-auto rounded-md border border-rule bg-surface md:block">
                 <table className="w-full min-w-[82rem] text-body-sm">
                   <thead>
                     <tr className="border-b border-rule text-label uppercase text-muted">
@@ -212,6 +266,7 @@ export default async function Prospects({
                   </tbody>
                 </table>
               </div>
+              </>
             )}
           </>
         )}
