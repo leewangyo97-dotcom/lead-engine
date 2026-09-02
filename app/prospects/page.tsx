@@ -51,8 +51,8 @@ export default async function Prospects({
           Find prospects
         </h1>
         <p className="mt-2 max-w-prose text-body-sm text-muted">
-          Businesses from OpenStreetMap. Discovery gives names, addresses and often a phone;
-          websites and emails are sparser, which is why the reachable ones are listed first.
+          Businesses from OpenStreetMap. Sorted by score, which is mostly a measure of how
+          reachable they are — hover a score to see what it is made of.
         </p>
 
         <div className="mt-5">
@@ -108,9 +108,10 @@ export default async function Prospects({
               </p>
             ) : (
               <div className="mt-6 overflow-x-auto rounded-md border border-rule bg-surface">
-                <table className="w-full min-w-[76rem] text-body-sm">
+                <table className="w-full min-w-[82rem] text-body-sm">
                   <thead>
                     <tr className="border-b border-rule text-label uppercase text-muted">
+                      <th className="px-4 py-3 text-left font-normal">Score</th>
                       <th className="px-4 py-3 text-left font-normal">Business</th>
                       <th className="px-4 py-3 text-left font-normal">City</th>
                       <th className="px-4 py-3 text-left font-normal">Reach</th>
@@ -125,6 +126,25 @@ export default async function Prospects({
                   <tbody>
                     {rows.map((p) => (
                       <tr key={p.id} className="border-t border-rule-soft hover:bg-hovered">
+                        <td className="px-4 py-3">
+                          <span
+                            title={p.scoreReasons.map(([k, v]) => `${k} +${v}`).join(", ")}
+                            className={`font-mono text-data-sm tabular-nums ${
+                              p.tier === "hot"
+                                ? "text-go"
+                                : p.tier === "warm"
+                                  ? "text-primary"
+                                  : "text-muted"
+                            }`}
+                          >
+                            {p.score}
+                            {p.provisional && (
+                              <span title="Their site has not been read yet — this is contacts only" className="ml-1 text-faint">
+                                ?
+                              </span>
+                            )}
+                          </span>
+                        </td>
                         <td className="px-4 py-3">
                           <span className="text-primary">{p.name}</span>
                           <span className="ml-2 font-mono text-data-sm text-faint">{p.category}</span>

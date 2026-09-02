@@ -270,7 +270,9 @@ export async function runEnrichment(
         emailConfidence: row.email ? row.emailConfidence : (result.emailConfidence ?? null),
         phoneE164: row.phoneE164 ?? result.phoneE164 ?? null,
         whatsappE164: row.whatsappE164 ?? result.whatsappE164 ?? null,
-        facebookUrl: row.facebookUrl ?? result.facebookUrl ?? null,
+        // Kept so scoring can read measured facts later without fetching again.
+      siteSignals: result.signals ? { ...result.signals } : null,
+      facebookUrl: row.facebookUrl ?? result.facebookUrl ?? null,
         instagramUrl: row.instagramUrl ?? result.instagramUrl ?? null,
         linkedinUrl: row.linkedinUrl ?? result.linkedinUrl ?? null,
       })

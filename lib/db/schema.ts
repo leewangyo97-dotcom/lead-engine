@@ -232,6 +232,12 @@ export const prospects = pgTable(
     lastEnrichedAt: timestamp("last_enriched_at"),
     lastRefreshedAt: timestamp("last_refreshed_at"),
 
+    /**
+     * What Stage B observed about their website, kept so scoring reads measured
+     * facts instead of fetching the site again every time weights change.
+     */
+    siteSignals: jsonb("site_signals").$type<Record<string, unknown>>(),
+
     score: integer("score"),
     scoreReasons: jsonb("score_reasons").$type<Record<string, number>>(),
 

@@ -3,6 +3,7 @@ import { getDb } from "../db";
 import { prospects, searches } from "../db/schema";
 import { isWhatsAppCapable } from "./phone";
 import { chooseChannel, type ContactOption } from "./contact";
+import { isScoreProvisional, scoreProspect } from "./score";
 import { contactedIds } from "./outreach-log";
 
 export interface ProspectRow {
@@ -23,6 +24,11 @@ export interface ProspectRow {
   whatsapp: ContactOption;
   emailChannel: ContactOption;
   contacted: boolean;
+  tier: "hot" | "warm" | "cold";
+  /** Why the score is what it is, largest contribution first. */
+  scoreReasons: [string, number][];
+  /** True when the site has never been read, so the score is contacts only. */
+  provisional: boolean;
   /** Precomputed here so the table does not parse phone numbers per render. */
   whatsappReady: boolean;
 }
@@ -54,16 +60,19 @@ export async function getProspects(searchId: string, limit = 200): Promise<Prosp
       enrichmentStatus: prospects.enrichmentStatus,
       lastRefreshedAt: prospects.lastRefreshedAt,
       score: prospects.score,
+      scoreReasons: prospects.scoreReasons,
+      siteSignals: prospects.siteSignals,
       manualOverrides: prospects.manualOverrides,
     })
     .from(prospects)
     .where(eq(prospects.searchId, searchId))
-    // Reachable first: a prospect with no way to contact it is not yet a lead,
-    // whatever else is known about it.
+    // Score first, since reachability is the largest thing the score is made of
+    // — sorting by both would just be sorting by reachability twice. Unscored
+    // rows sort last rather than as zero: not yet judged is not the same as
+    // judged badly.
     .orderBy(
+      sql`${prospects.score} desc nulls last`,
       desc(sql`(${prospects.whatsappE164} is not null)`),
-      desc(sql`(${prospects.email} is not null)`),
-      desc(sql`(${prospects.phoneE164} is not null)`),
       prospects.name,
     )
     .limit(limit);
@@ -71,10 +80,17 @@ export async function getProspects(searchId: string, limit = 200): Promise<Prosp
   // One query for the contact history rather than one per row.
   const contacted = await contactedIds(rows.map((r) => r.id));
 
-  return rows.map(({ manualOverrides, ...r }) => {
+  return rows.map(({ manualOverrides, siteSignals, scoreReasons, ...r }) => {
     const plan = chooseChannel(r);
+    // Scored here as well as by the script so a freshly found prospect is not
+    // shown blank until someone remembers to run `pnpm prospects:score`.
+    const live = scoreProspect({ ...r, siteSignals });
     return {
       ...r,
+      score: r.score ?? live.score,
+      tier: live.tier,
+      scoreReasons: Object.entries(scoreReasons ?? live.reasons).sort((a, b) => b[1] - a[1]),
+      provisional: isScoreProvisional({ ...r, siteSignals }),
       whatsappReady: isWhatsAppCapable(r.whatsappE164 ?? r.phoneE164),
       overridden: Object.keys(manualOverrides ?? {}),
       whatsapp: plan.whatsapp,

@@ -42,7 +42,8 @@
     "search:run": "tsx scripts/search-run.ts",
     "enrich": "tsx scripts/enrich.ts",
     "prospects:enhance": "tsx scripts/prospects-for-enhance.ts",
-    "apply:enhance": "tsx scripts/apply-enhance.ts"
+    "apply:enhance": "tsx scripts/apply-enhance.ts",
+    "prospects:score": "tsx scripts/score-prospects.ts"
   },
   "dependencies": {
     "@neon/config": "^1.1.0",

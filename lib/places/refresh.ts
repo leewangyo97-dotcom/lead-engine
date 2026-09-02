@@ -182,9 +182,20 @@ export async function refreshProspects(options: RefreshOptions = {}): Promise<Re
     const merged = applyOverrides(mergeFromOsm(row, place), row.manualOverrides);
     const changed = changedFields(row, merged);
 
+    // A row that had no website was marked "no_website" when it was found, and
+    // that status is what enrichment filters on. Gaining a website later — from
+    // the map or by hand — has to reopen it, or the site is never read and the
+    // prospect keeps a score built from contact details alone.
+    const gainedSite = !!merged.website && merged.website !== row.website;
+
     await db
       .update(prospects)
-      .set({ ...merged, lastRefreshedAt: now(), updatedAt: now() })
+      .set({
+        ...merged,
+        ...(gainedSite ? { enrichmentStatus: "pending" as const } : {}),
+        lastRefreshedAt: now(),
+        updatedAt: now(),
+      })
       .where(eq(prospects.id, row.id));
 
     if (changed.length > 0) progress.updated++;
@@ -269,9 +280,20 @@ export async function setOverrides(
     next[field] = clean === "" ? null : clean;
   }
 
+  const applied = applyOverrides({} as Record<string, unknown>, next);
+
+  // Same reopening rule as a refresh: someone typing in a website expects the
+  // site to be read, not to have entered a value nothing will ever look at.
+  const gainedSite = typeof applied.website === "string" && applied.website.length > 0;
+
   await db
     .update(prospects)
-    .set({ ...applyOverrides({} as Record<string, unknown>, next), manualOverrides: next, updatedAt: now() })
+    .set({
+      ...applied,
+      ...(gainedSite ? { enrichmentStatus: "pending" as const } : {}),
+      manualOverrides: next,
+      updatedAt: now(),
+    })
     .where(eq(prospects.id, prospectId));
 
   return next;
