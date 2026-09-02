@@ -39,7 +39,8 @@
     "refilter": "tsx scripts/refilter.ts",
     "db:migrate:check": "tsx scripts/migrate-check.ts",
     "places:probe": "tsx scripts/places-probe.ts",
-    "search:run": "tsx scripts/search-run.ts"
+    "search:run": "tsx scripts/search-run.ts",
+    "enrich": "tsx scripts/enrich.ts"
   },
   "dependencies": {
     "@neon/config": "^1.1.0",
