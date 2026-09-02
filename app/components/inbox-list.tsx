@@ -151,7 +151,13 @@ export function InboxList({ rows, judged = 0 }: { rows: InboxRow[]; judged?: num
 
   return (
     <>
-      <ul className="flex flex-col gap-2" aria-label="Leads to triage">
+      {/* Figma 3:874 "Leads List Box": 48px rows in one bordered box, separated
+          by hairline rules. Not cards with gaps — the density is the point when
+          the whole day is meant to clear in two minutes. */}
+      <ul
+        className="overflow-hidden rounded-md border border-rule bg-surface"
+        aria-label="Leads to triage"
+      >
         {rows.map((row, i) => {
           const active = i === cursor;
           return (
@@ -162,46 +168,35 @@ export function InboxList({ rows, judged = 0 }: { rows: InboxRow[]; judged?: num
               }}
               aria-current={active}
               onClick={() => setCursor(i)}
-              onDoubleClick={() => router.push(`/lead/${row.id}` as Route)}
-              className={`flex cursor-pointer gap-4 rounded-md border p-5 transition-colors ${
-                active ? "border-accent bg-selected" : "border-rule bg-surface hover:bg-hovered"
-              } ${pending && active ? "opacity-60" : ""}`}
+              className={`flex cursor-pointer items-center gap-4 px-4 py-3 transition-colors ${
+                i > 0 ? "border-t border-rule-soft" : ""
+              } ${active ? "bg-selected" : "hover:bg-hovered"} ${
+                pending && active ? "opacity-60" : ""
+              }`}
             >
               <TierStripe tier={row.tier ?? "cold"} />
               <Score value={row.score} />
+
               <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-baseline justify-between gap-3">
-                  {/* A real link, not just a row handler. The keyboard path is
-                      j/k/enter, but that leaves touch with only double-tap, and
-                      a div with onClick is invisible to a screen reader and has
-                      no URL to share. */}
-                  <Link
-                    href={`/lead/${row.id}` as Route}
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-subhead text-primary underline-offset-4 hover:underline"
-                  >
-                    {row.company}
-                  </Link>
-                  <span className="text-body-sm text-secondary">{row.title}</span>
-                </div>
-                <div className="mt-2 flex flex-wrap gap-4 text-body-sm text-muted">
-                  <span>{row.region ?? row.remoteScope ?? "region not stated"}</span>
-                  {row.overlapHours != null && (
-                    <span className="font-mono tabular-nums">{row.overlapHours}h overlap</span>
-                  )}
-                  {row.payRaw && <span className="font-mono tabular-nums">{row.payRaw}</span>}
-                  {row.stack.length > 0 && <span>{row.stack.slice(0, 4).join(" · ")}</span>}
-                </div>
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  {row.triggerEvent && (
-                    <span className="text-caption text-faint">↳ {row.triggerEvent}</span>
-                  )}
-                  {row.postedAt && (
-                    <span className="text-caption text-faint">posted {daysAgo(row.postedAt)}</span>
-                  )}
-                  {row.isContract && <Pill tone="go">contract</Pill>}
-                  {row.isDirect && <Pill tone="hold">direct</Pill>}
-                </div>
+                <Link
+                  href={`/lead/${row.id}` as Route}
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-subhead text-primary underline-offset-4 hover:underline"
+                >
+                  {row.company}
+                </Link>
+                <p className="truncate text-body-sm text-muted">{row.title}</p>
+              </div>
+
+              <div className="hidden shrink-0 items-center gap-4 sm:flex">
+                <span className="font-mono text-data-sm tabular-nums text-secondary">
+                  {row.payRaw ?? "rate unstated"} · {row.isContract ? "contract" : "full-time"}
+                </span>
+                {row.overlapHours != null && (
+                  <span className="w-20 text-right font-mono text-data-sm tabular-nums text-go">
+                    {row.overlapHours}h overlap
+                  </span>
+                )}
               </div>
             </li>
           );

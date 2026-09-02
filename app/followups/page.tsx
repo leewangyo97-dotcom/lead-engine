@@ -1,16 +1,16 @@
 import { getDueFollowups } from "@/lib/leads/followup-queries";
 import { LADDER_DAYS } from "@/lib/followups";
 
+import { Shell } from "@/app/components/shell";
+
 export const dynamic = "force-dynamic";
 
 export default async function Followups() {
   const due = await getDueFollowups();
 
   return (
-    <main className="mx-auto max-w-content px-6 py-8">
-      <a className="text-body-sm text-accent underline underline-offset-2" href="/">
-        &larr; inbox
-      </a>
+    <Shell current="/followups">
+      <div className="mx-auto max-w-content">
 
       <h1
         className="mt-4 font-display text-heading-lg text-primary"
@@ -57,6 +57,7 @@ export default async function Followups() {
         copywriter writes these in the same batched call as the day&rsquo;s first touches &mdash;
         one model call, not one per follow-up.
       </p>
-    </main>
+      </div>
+    </Shell>
   );
 }

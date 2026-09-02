@@ -1,0 +1,95 @@
+import type { ReactNode } from "react";
+
+/**
+ * The app shell from `inbox-populated-lg` (Figma 3:787): a 56px topbar over a
+ * 220px sidebar.
+ *
+ * The icons are drawn inline at the design system's 24px box rather than
+ * imported from the 40 `Icons/*` symbols in the file. That is a deliberate
+ * shortcut and the one place this shell is not traceable to a node — importing
+ * the set properly is worth doing before any icon beyond these four is needed.
+ */
+const ICON = {
+  inbox: "M22 12h-6l-2 3h-4l-2-3H2M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z",
+  calendar:
+    "M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z",
+  list: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01",
+  review: "M3 3v18h18M18.7 8l-5.1 5.2-2.8-2.7L7 14.3",
+  settings:
+    "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6h.09A1.65 1.65 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z",
+} as const;
+
+function Icon({ d }: { d: keyof typeof ICON }) {
+  return (
+    <svg
+      aria-hidden
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="shrink-0"
+    >
+      <path d={ICON[d]} />
+    </svg>
+  );
+}
+
+const NAV = [
+  { href: "/", label: "Inbox", icon: "inbox" },
+  { href: "/followups", label: "Follow-ups", icon: "calendar" },
+  { href: "/rejected", label: "All leads", icon: "list" },
+  // Not in the Figma sidebar, which lists four. The screen exists and dropping
+  // its only entry point to match a mock would be a regression.
+  { href: "/review", label: "Weekly review", icon: "review" },
+  { href: "/settings", label: "Settings", icon: "settings" },
+] as const;
+
+export function Shell({ current, children }: { current: string; children: ReactNode }) {
+  return (
+    <div className="min-h-screen bg-canvas">
+      <header className="flex h-14 items-center gap-3 border-b border-rule bg-surface px-6">
+        <span aria-hidden className="h-6 w-6 rounded-sm bg-accent" />
+        <span className="text-body-sm text-primary">Lead Engine</span>
+        <span aria-hidden className="ml-auto h-7 w-7 rounded-sm bg-accent" />
+      </header>
+
+      <div className="flex flex-col md:flex-row">
+        {/* A 220px sidebar on desktop, per Figma 3:793. On a phone it becomes a
+            scrollable strip rather than disappearing: hiding it left the small
+            screen with no navigation at all once the back-links were removed. */}
+        <nav
+          aria-label="Sections"
+          className="shrink-0 border-b border-rule bg-surface md:w-[220px] md:border-b-0 md:border-r md:py-5"
+        >
+          <ul className="flex overflow-x-auto md:block">
+            {NAV.map((item) => {
+              const active = item.href === current;
+              return (
+                <li key={item.href}>
+                  <a
+                    href={item.href}
+                    aria-current={active ? "page" : undefined}
+                    className={`flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 text-body-sm transition-colors md:gap-3 md:border-b-0 md:border-l-2 md:py-3 md:pl-5 md:pr-4 ${
+                      active
+                        ? "border-accent bg-selected text-primary"
+                        : "border-transparent text-secondary hover:bg-hovered"
+                    }`}
+                  >
+                    <Icon d={item.icon} />
+                    {item.label}
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+
+        <main className="min-w-0 flex-1 px-6 py-6 md:px-8">{children}</main>
+      </div>
+    </div>
+  );
+}

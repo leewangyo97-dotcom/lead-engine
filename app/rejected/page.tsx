@@ -8,6 +8,8 @@ import {
 import { getScenarios } from "@/lib/leads/whatif";
 import { Pill } from "@/app/components/pills";
 
+import { Shell } from "@/app/components/shell";
+
 export const dynamic = "force-dynamic";
 
 export default async function Rejected() {
@@ -23,10 +25,8 @@ export default async function Rejected() {
   const peak = Math.max(1, ...bands.map((b) => b.n));
 
   return (
-    <main className="mx-auto max-w-content px-6 py-8">
-      <a className="text-body-sm text-accent underline underline-offset-2" href="/">
-        &larr; inbox
-      </a>
+    <Shell current="/rejected">
+      <div className="mx-auto max-w-content">
 
       <h1
         className="mt-4 font-display text-heading-lg text-primary"
@@ -133,6 +133,7 @@ export default async function Rejected() {
           poor trade on a phone.
         </p>
       )}
-    </main>
+      </div>
+    </Shell>
   );
 }

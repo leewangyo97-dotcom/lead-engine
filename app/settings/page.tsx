@@ -5,6 +5,8 @@ import { NEEDS_DRAFT_THRESHOLD, RUBRIC_VERSION } from "@/lib/scoring/prescore";
 import { CONTACT_COOLDOWN_DAYS, MAX_AGE_DAYS } from "@/lib/scoring/disqualify";
 import { PRUNE_STATUSES, RETAIN_DAYS } from "@/lib/retention";
 
+import { Shell } from "@/app/components/shell";
+
 export const dynamic = "force-dynamic";
 
 /**
@@ -24,10 +26,8 @@ export default async function Settings() {
   const rows = await db.select().from(sources).orderBy(desc(sources.lastRunAt));
 
   return (
-    <main className="mx-auto max-w-content px-6 py-8">
-      <a className="text-body-sm text-accent underline underline-offset-2" href="/">
-        ← inbox
-      </a>
+    <Shell current="/settings">
+      <div className="mx-auto max-w-content">
 
       <h1
         className="mt-4 font-display text-heading-lg text-primary"
@@ -77,6 +77,7 @@ export default async function Settings() {
         then bumping the rubric version so old scores stay interpretable. That is deliberate: a
         weight change is a commit someone can review, which is what the tuning log asks for.
       </p>
-    </main>
+      </div>
+    </Shell>
   );
 }

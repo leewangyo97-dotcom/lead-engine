@@ -1,5 +1,7 @@
 import { MIN_SENDS, MIN_TOTAL_FOR_SUGGESTION, buildRollup, type Cut } from "@/lib/review/rollup";
 
+import { Shell } from "@/app/components/shell";
+
 export const dynamic = "force-dynamic";
 
 function CutTable({ title, cuts }: { title: string; cuts: Cut[] }) {
@@ -34,10 +36,8 @@ export default async function Review() {
   const rollup = await buildRollup();
 
   return (
-    <main className="mx-auto max-w-content px-6 py-8">
-      <a className="text-body-sm text-accent underline underline-offset-2" href="/">
-        ← inbox
-      </a>
+    <Shell current="/review">
+      <div className="mx-auto max-w-content">
 
       <h1
         className="mt-4 font-display text-heading-lg text-primary"
@@ -72,6 +72,7 @@ export default async function Review() {
         showing it would make noise look like a finding. Nothing on this page is ever applied
         automatically.
       </p>
-    </main>
+      </div>
+    </Shell>
   );
 }
