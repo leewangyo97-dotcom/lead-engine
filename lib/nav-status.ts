@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { sql } from "drizzle-orm";
 import { getDb } from "./db";
+import { getDueFollowups } from "./leads/followup-queries";
 
 /**
  * The counts and the health dot the sidebar carries in the design (Figma
@@ -24,8 +25,7 @@ export async function getNavStatus(): Promise<NavStatus> {
       select
         (select count(*) from leads where status = 'needs_scoring')::int as inbox,
         (select count(*) from leads)::int as leads,
-        (select count(*) from outreach where due_at is not null and due_at <= now()
-           and sent_at is null)::int as followups,
+        0::int as followups,
         (select count(*) from prospects where status = 'new'
            and (phone_e164 is not null or email is not null))::int as prospects,
         (select count(*) from sources where last_ok = false)::int as failed_sources,
@@ -40,11 +40,16 @@ export async function getNavStatus(): Promise<NavStatus> {
     stale_sources: number;
   }[];
 
+  // Follow-ups are derived from sentAt and the ladder, not stored — this badge
+  // used to count an `outreach.due_at` column that nothing ever writes, so it
+  // read zero however many were actually due.
+  const followups = (await getDueFollowups()).length;
+
   return {
     counts: {
       "/": row.inbox,
       "/prospects": row.prospects,
-      "/followups": row.followups,
+      "/followups": followups,
       "/rejected": row.leads,
     },
     ...classifyHealth(row.failed_sources, row.stale_sources),

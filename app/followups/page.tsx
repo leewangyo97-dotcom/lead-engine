@@ -34,7 +34,7 @@ export default async function Followups() {
               <div className="flex flex-wrap items-baseline justify-between gap-3">
                 <a
                   className="text-subhead text-primary underline-offset-2 hover:underline"
-                  href={`/lead/${row.leadId}`}
+                  href={row.kind === "prospect" ? "/prospects" : `/lead/${row.leadId}`}
                 >
                   {row.company}
                 </a>
