@@ -24,6 +24,9 @@ const backoffMs = (attempt: number) => 500 * 2 ** (attempt - 1);
 
 export interface FetchJsonOptions {
   headers?: Record<string, string>;
+  /** Overpass wants a POSTed query body; everything else here is a GET. */
+  method?: "GET" | "POST";
+  body?: string;
   timeoutMs?: number;
   attempts?: number;
   /** Injected in tests so they do not spend real seconds sleeping. */
@@ -34,6 +37,8 @@ export interface FetchJsonOptions {
 export async function fetchJson<T>(url: string, options: FetchJsonOptions = {}): Promise<T> {
   const {
     headers,
+    method = "GET",
+    body,
     timeoutMs = DEFAULT_TIMEOUT_MS,
     attempts = MAX_ATTEMPTS,
     sleep = (ms) => new Promise((r) => setTimeout(r, ms)),
@@ -44,7 +49,12 @@ export async function fetchJson<T>(url: string, options: FetchJsonOptions = {}):
 
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
-      const res = await fetchImpl(url, { headers, signal: AbortSignal.timeout(timeoutMs) });
+      const res = await fetchImpl(url, {
+        method,
+        body,
+        headers,
+        signal: AbortSignal.timeout(timeoutMs),
+      });
 
       if (res.ok) return (await res.json()) as T;
 

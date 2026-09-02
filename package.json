@@ -37,7 +37,8 @@
     "tokens:record": "tsx scripts/record-tokens.ts",
     "audit:titles": "tsx scripts/audit-titles.ts",
     "refilter": "tsx scripts/refilter.ts",
-    "db:migrate:check": "tsx scripts/migrate-check.ts"
+    "db:migrate:check": "tsx scripts/migrate-check.ts",
+    "places:probe": "tsx scripts/places-probe.ts"
   },
   "dependencies": {
     "@neon/config": "^1.1.0",
