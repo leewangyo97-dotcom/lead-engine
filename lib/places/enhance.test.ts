@@ -33,6 +33,29 @@ describe("buildSignals", () => {
     );
   });
 
+  it("believes what was measured over the stored URL", () => {
+    // A real case: OpenStreetMap held http://www.cebudentist.weebly.com, the
+    // site redirects to https, and a message telling the owner their site is
+    // insecure would be disproved by the one person reading it.
+    const redirects = buildSignals({
+      ...base,
+      website: "http://vet.ph",
+      siteSignals: { noHttps: false, noViewport: true },
+    }).map((s) => s.key);
+
+    expect(redirects).not.toContain("no_https");
+    expect(redirects).toContain("no_viewport");
+  });
+
+  it("still flags a site measured as insecure", () => {
+    const keys = buildSignals({
+      ...base,
+      website: "http://vet.ph",
+      siteSignals: { noHttps: true },
+    }).map((s) => s.key);
+    expect(keys).toContain("no_https");
+  });
+
   it("distinguishes a published WhatsApp number from a mobile from a landline", () => {
     const whatsapp = buildSignals({ ...base, whatsappE164: "+639171234567" }).map((s) => s.key);
     const mobile = buildSignals({ ...base, phoneE164: "+639171234567" }).map((s) => s.key);

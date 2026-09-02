@@ -378,3 +378,44 @@ describe("enrichSite", () => {
     );
   });
 });
+
+describe("parked domains", () => {
+  beforeEach(() => clearRobotsCache());
+  const nap = async () => {};
+
+  it("treats a for-sale page as no website, not as their site", async () => {
+    // A real case: a clinic's OpenStreetMap link redirected to a HugeDomains
+    // listing. Reading contact details off it would attribute a broker's
+    // details to the business.
+    const fetchImpl = (async (url: string | URL) => {
+      const u = url.toString();
+      if (u.endsWith("robots.txt")) return new Response("", { status: 404 });
+      return new Response(
+        `<h1>lhprime.com</h1><p>This domain is for sale</p><a href="mailto:sales@hugedomains.com">buy</a>`,
+        { status: 200, headers: { "content-type": "text/html" } },
+      );
+    }) as unknown as typeof fetch;
+
+    const out = await enrichSite("https://www.hugedomains.com/domain_profile.cfm?d=lhprime.com", "PH", {
+      fetchImpl,
+      sleep: nap,
+    });
+    expect(out.status).toBe("no_website");
+    expect(out.parked).toBe(true);
+    expect(out.email).toBeUndefined();
+  });
+
+  it("does not call an ordinary site parked", async () => {
+    const fetchImpl = (async (url: string | URL) => {
+      if (url.toString().endsWith("robots.txt")) return new Response("", { status: 404 });
+      return new Response(`<a href="mailto:hi@vet.ph">mail</a><p>We sell pet food and domain names of love</p>`, {
+        status: 200,
+        headers: { "content-type": "text/html" },
+      });
+    }) as unknown as typeof fetch;
+
+    const out = await enrichSite("https://vet.ph/", "PH", { fetchImpl, sleep: nap });
+    expect(out.status).toBe("enriched");
+    expect(out.parked).toBeUndefined();
+  });
+});

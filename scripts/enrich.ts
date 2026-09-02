@@ -47,8 +47,8 @@ async function main() {
 
   console.log(
     `enrich: ${progress.considered} considered, ${progress.enriched} enriched, ` +
-      `${progress.noContact} no contact found, ${progress.blocked} robots-blocked, ` +
-      `${progress.failed} failed — ${seconds}s`,
+      `${progress.noContact} no contact found, ${progress.blocked} refused, ` +
+      `${progress.noWebsite} site gone, ${progress.failed} failed — ${seconds}s`,
   );
 }
 

@@ -9,6 +9,7 @@ import {
   extractSiteSignals,
   extractSocials,
   extractWhatsApp,
+  isParkedDomain,
   type SiteSignals,
 } from "./extract";
 
@@ -56,6 +57,10 @@ export type EnrichStatus =
 
 export interface EnrichedFields {
   status: EnrichStatus;
+  /** Where the site actually served from, after redirects. */
+  finalUrl?: string;
+  /** The domain is parked or for sale, so the business has no site. */
+  parked?: boolean;
   email?: string;
   emailConfidence?: "mailto" | "text";
   phoneE164?: string;
@@ -164,6 +169,13 @@ export async function enrichSite(
   if (result.kind !== "page") return { status: "fetch_failed" };
 
   const home = result.page;
+
+  // A parked domain is not a website. Reading contact details off a
+  // for-sale page would attribute a broker's details to the business.
+  if (isParkedDomain(home.url, home.html)) {
+    return { status: "no_website", parked: true };
+  }
+
   const pages: Page[] = [home];
 
   // A homepage often carries a phone but keeps the email on /contact. That one
@@ -198,6 +210,7 @@ export async function enrichSite(
 
   return {
     status: reachable ? "enriched" : "no_contact_found",
+    finalUrl: home.url,
     email: emails[0]?.email,
     emailConfidence: emails[0]?.confidence,
     phoneE164: phones[0],
@@ -214,6 +227,8 @@ export interface EnrichProgress {
   enriched: number;
   noContact: number;
   blocked: number;
+  /** Sites that turned out not to exist — a parked domain, mostly. */
+  noWebsite: number;
   failed: number;
 }
 
@@ -265,6 +280,7 @@ export async function runEnrichment(
     enriched: 0,
     noContact: 0,
     blocked: 0,
+    noWebsite: 0,
     failed: 0,
   };
 
@@ -280,6 +296,9 @@ export async function runEnrichment(
     else if (result.status === "no_contact_found") progress.noContact++;
     else if (result.status === "robots_blocked" || result.status === "site_refused")
       progress.blocked++;
+    // A parked domain is not a failed fetch: the fetch worked and told us the
+    // site is gone.
+    else if (result.status === "no_website") progress.noWebsite++;
     else progress.failed++;
 
     // Scraped values fill gaps and never overwrite what OSM already held. An
@@ -300,6 +319,12 @@ export async function runEnrichment(
         whatsappE164: row.whatsappE164 ?? result.whatsappE164 ?? null,
         // Kept so scoring can read measured facts later without fetching again.
       siteSignals: result.signals ? { ...result.signals } : null,
+      // An http:// link that redirects to https is common in OpenStreetMap. The
+      // record should hold where the site actually is, or every later reader —
+      // scoring, the message prompt — reasons from a stale URL.
+      // A parked domain is cleared: the record should not point at a broker.
+      website: result.parked ? null : (result.finalUrl ?? row.website),
+      rootDomain: result.parked ? null : undefined,
       facebookUrl: row.facebookUrl ?? result.facebookUrl ?? null,
         instagramUrl: row.instagramUrl ?? result.instagramUrl ?? null,
         linkedinUrl: row.linkedinUrl ?? result.linkedinUrl ?? null,

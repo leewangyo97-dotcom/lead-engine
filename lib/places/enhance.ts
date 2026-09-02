@@ -15,6 +15,8 @@ export interface EnhanceablePlace extends ContactablePlace {
   id: string;
   category?: string | null;
   enrichmentStatus?: string | null;
+  /** What Stage B actually observed, which outranks anything inferred. */
+  siteSignals?: Record<string, unknown> | null;
 }
 
 export interface Signal {
@@ -41,8 +43,21 @@ export function buildSignals(place: EnhanceablePlace): Signal[] {
     signals.push({ key: "no_website", fact: "No website in the record" });
   } else {
     signals.push({ key: "website", fact: `Website: ${place.website}` });
-    if (place.website.startsWith("http://")) {
+
+    // The measured value wins over the stored URL. OpenStreetMap holds plenty of
+    // http:// links to sites that redirect to https, and a message telling an
+    // owner their site is insecure when it is not is a checkable lie — the one
+    // person who can disprove it is the person reading it.
+    const measured = place.siteSignals as { noHttps?: boolean; noViewport?: boolean } | undefined;
+    const insecure = measured ? measured.noHttps === true : place.website.startsWith("http://");
+    if (insecure) {
       signals.push({ key: "no_https", fact: "Site is served over plain http, not https" });
+    }
+    if (measured?.noViewport === true) {
+      signals.push({
+        key: "no_viewport",
+        fact: "Site has no viewport meta tag, so it does not adapt to phone screens",
+      });
     }
   }
 

@@ -162,3 +162,39 @@ export function stripTags(html: string): string {
     .replace(/&amp;/g, "&")
     .replace(/\s+/g, " ");
 }
+
+/**
+ * Hosts and phrases that mean the domain is parked or for sale.
+ *
+ * Found by following a clinic's OpenStreetMap link to a HugeDomains listing: the
+ * business let its domain lapse. Treating that page as "their website" would
+ * have us admire a site that no longer exists, when the truthful and far better
+ * opening is that their domain is gone.
+ */
+const PARKED_HOSTS = [
+  "hugedomains.com",
+  "sedo.com",
+  "afternic.com",
+  "dan.com",
+  "domainmarket.com",
+  "buydomains.com",
+  "undeveloped.com",
+  "parkingcrew.net",
+  "sedoparking.com",
+  "bodis.com",
+];
+
+const PARKED_TEXT =
+  /(this domain (?:name )?is for sale|buy this domain|the domain .{0,40} is for sale|domain parking|inquire about this domain)/i;
+
+export function isParkedDomain(finalUrl: string, html: string): boolean {
+  let host = "";
+  try {
+    host = new URL(finalUrl).hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+  if (PARKED_HOSTS.some((p) => host === p || host.endsWith(`.${p}`))) return true;
+  // Only the head of the page: a long article mentioning domain sales is not one.
+  return PARKED_TEXT.test(stripTags(html).slice(0, 1500));
+}
