@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { prospects } from "@/lib/db/schema";
+import { PROSPECT_OUTCOMES, isProspectOutcome } from "@/lib/places/outcome";
 
 export const dynamic = "force-dynamic";
 
@@ -12,17 +13,6 @@ export const dynamic = "force-dynamic";
  * never stops for anyone who replied, and the weekly review counts sends with
  * no outcomes against them.
  */
-const OUTCOMES = {
-  replied: "replied",
-  won: "won",
-  lost: "lost",
-  // Back to the ladder: a mistaken click should not silently end a conversation.
-  reopen: "contacted",
-} as const;
-
-export function isOutcome(value: string): value is keyof typeof OUTCOMES {
-  return value in OUTCOMES;
-}
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -34,9 +24,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return Response.json({ error: "body must be JSON" }, { status: 400 });
   }
 
-  if (!body.outcome || !isOutcome(body.outcome)) {
+  if (!isProspectOutcome(body.outcome)) {
     return Response.json(
-      { error: `outcome must be one of ${Object.keys(OUTCOMES).join(", ")}` },
+      { error: `outcome must be one of ${Object.keys(PROSPECT_OUTCOMES).join(", ")}` },
       { status: 400 },
     );
   }
@@ -44,7 +34,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const db = getDb();
   const [row] = await db
     .update(prospects)
-    .set({ status: OUTCOMES[body.outcome], updatedAt: new Date() })
+    .set({ status: PROSPECT_OUTCOMES[body.outcome], updatedAt: new Date() })
     .where(eq(prospects.id, id))
     .returning({ id: prospects.id, status: prospects.status });
 

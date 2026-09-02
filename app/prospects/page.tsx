@@ -10,6 +10,7 @@ import {
   getProspectStats,
   getProspects,
   getSearch,
+  getTopProspects,
   listSearches,
 } from "@/lib/places/prospect-queries";
 
@@ -37,9 +38,12 @@ export default async function Prospects({
   const recent = await listSearches();
   const active = searchId ? await getSearch(searchId) : null;
 
+  // With no search chosen the page is a work queue rather than an empty frame:
+  // the best rows across every search, which is the question "who do I message
+  // next" actually asks.
   const [rows, stats] = active
     ? await Promise.all([getProspects(active.id), getProspectStats(active.id)])
-    : [[], null];
+    : [await getTopProspects(), null];
 
   return (
     <Shell current="/prospects">
@@ -84,17 +88,26 @@ export default async function Prospects({
           </nav>
         )}
 
-        {active && stats && (
-          <>
-            <div className="mt-7 flex flex-wrap gap-6 font-mono text-data-sm tabular-nums text-muted">
-              <span className="text-primary">{stats.total} found</span>
-              <span className="text-go">{stats.withPhone} with a phone</span>
-              <span>{stats.withEmail} with an email</span>
-              <span>{stats.withWebsite} with a website</span>
-              <RefreshAllButton searchId={active.id} count={stats.total} />
-            </div>
+        {!active && rows.length > 0 && (
+          <p className="mt-7 text-body-sm text-muted">
+            Best {rows.length} to message next, across every search. Contacted and declined rows
+            are not here — pick a search above to see everything it found.
+          </p>
+        )}
 
-            {active.status === "failed" && (
+        {(active || rows.length > 0) && (
+          <>
+            {active && stats && (
+              <div className="mt-7 flex flex-wrap gap-6 font-mono text-data-sm tabular-nums text-muted">
+                <span className="text-primary">{stats.total} found</span>
+                <span className="text-go">{stats.withPhone} with a phone</span>
+                <span>{stats.withEmail} with an email</span>
+                <span>{stats.withWebsite} with a website</span>
+                <RefreshAllButton searchId={active.id} count={stats.total} />
+              </div>
+            )}
+
+            {active?.status === "failed" && (
               <p role="alert" className="mt-4 rounded-sm border border-stop bg-stop-tint p-3 text-body-sm">
                 {active.error ?? "This search failed."}
               </p>
@@ -102,7 +115,7 @@ export default async function Prospects({
 
             {rows.length === 0 ? (
               <p className="mt-6 rounded-md border border-rule bg-surface p-7 text-body text-muted">
-                {active.status === "queued"
+                {active?.status === "queued"
                   ? "Queued. Whole-country searches run in the background — run `pnpm search:run --drain`."
                   : "Nothing found here. Try a wider radius or another category."}
               </p>

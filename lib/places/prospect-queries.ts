@@ -1,4 +1,4 @@
-import { desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, isNotNull, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "../db";
 import { prospects, searches } from "../db/schema";
 import { isWhatsAppCapable } from "./phone";
@@ -47,7 +47,29 @@ export async function listSearches(limit = 10) {
   return db.select().from(searches).orderBy(desc(searches.createdAt)).limit(limit);
 }
 
+/**
+ * The work queue: the best prospects to message next, across every search.
+ *
+ * Without this the page could only show one search at a time, so working the
+ * list meant choosing a search first and comparing scores by memory. Contacted
+ * and declined rows are gone from it — this answers "who next", not "what did we
+ * find".
+ */
+export async function getTopProspects(limit = 25): Promise<ProspectRow[]> {
+  return queryProspects(
+    and(
+      eq(prospects.status, "new"),
+      or(isNotNull(prospects.phoneE164), isNotNull(prospects.email)),
+    ),
+    limit,
+  );
+}
+
 export async function getProspects(searchId: string, limit = 200): Promise<ProspectRow[]> {
+  return queryProspects(eq(prospects.searchId, searchId), limit);
+}
+
+async function queryProspects(where: SQL | undefined, limit: number): Promise<ProspectRow[]> {
   const db = getDb();
 
   const rows = await db
@@ -69,7 +91,7 @@ export async function getProspects(searchId: string, limit = 200): Promise<Prosp
       manualOverrides: prospects.manualOverrides,
     })
     .from(prospects)
-    .where(eq(prospects.searchId, searchId))
+    .where(where)
     // Score first, since reachability is the largest thing the score is made of
     // — sorting by both would just be sorting by reachability twice. Unscored
     // rows sort last rather than as zero: not yet judged is not the same as

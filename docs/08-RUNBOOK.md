@@ -170,6 +170,17 @@ If you expect a website to be there, check `enrichment_status`: a row that was
 found without one is marked `no_website`, and gaining a website later reopens it
 to `pending` automatically on refresh or hand edit.
 
+## Working the prospect list day to day
+
+`/prospects` with no search selected is the work queue: the best 25 reachable
+prospects across every search, contacted and declined rows removed. Pick a search
+from the chips only when you want to see everything that search found.
+
+Send with WhatsApp or Email on the row. When something comes back, record it on
+the same row — replied, won or lost. That is not bookkeeping: an unanswered
+prospect is chased again on day 4 and day 11, and recording the answer is what
+stops it. Every outcome has an undo.
+
 ## A prospect asked not to be contacted
 
 Use "they said no" on the row. That records every identifier they own — phone,
