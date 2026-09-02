@@ -2,7 +2,7 @@ import { appendFileSync } from "node:fs";
 import { count, desc, eq, gte, sql } from "drizzle-orm";
 import { getDb } from "../lib/db";
 import { loadLocalEnv } from "../lib/env";
-import { leads, runMetrics, sources } from "../lib/db/schema";
+import { leads, prospects, runMetrics, sources } from "../lib/db/schema";
 import { pipelineFaults, pipelineWarnings } from "../lib/health";
 
 /**
@@ -43,6 +43,26 @@ async function main() {
     .join(" ");
   console.log(`leads: ${statusLine || "none"}`);
   console.log(`harvested in last 24h: ${freshCount}`);
+
+  // The geo pipeline has its own way of starving: plenty of prospects, none of
+  // them reachable. Counting rows would hide that, so this counts channels.
+  const [geo] = await db
+    .select({
+      total: count(),
+      reachable: sql<number>`count(*) filter (where phone_e164 is not null or email is not null)::int`,
+      enriched: sql<number>`count(*) filter (where enrichment_status = 'enriched')::int`,
+      pending: sql<number>`count(*) filter (where enrichment_status = 'pending')::int`,
+      contacted: sql<number>`count(*) filter (where status = 'contacted')::int`,
+      declined: sql<number>`count(*) filter (where status = 'do_not_contact')::int`,
+    })
+    .from(prospects);
+
+  if (geo && geo.total > 0) {
+    console.log(
+      `prospects: ${geo.total} total, ${geo.reachable} reachable, ${geo.enriched} enriched, ` +
+        `${geo.pending} awaiting enrichment, ${geo.contacted} contacted, ${geo.declined} declined`,
+    );
+  }
 
   for (const s of sourceRows) {
     const state = s.lastOk ? "ok" : `FAILED: ${s.lastError ?? "unknown"}`;

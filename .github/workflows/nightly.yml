@@ -64,6 +64,24 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
+      # Stage B for geo prospects. Bounded at 25: this reads other people's
+      # servers at a second per host, and an unbounded loop in a nightly job is
+      # how a polite crawler becomes an impolite one. Never fails the run — a
+      # site being down is not a pipeline fault.
+      - name: Enrich prospect websites
+        continue-on-error: true
+        run: pnpm enrich --limit=25
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      # Cheap, pure, no network. Re-scoring everything nightly means a weight
+      # change takes effect without anyone remembering to run it.
+      - name: Score prospects
+        continue-on-error: true
+        run: pnpm prospects:score
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
       # GitHub disables scheduled workflows after 60 days of repo inactivity.
       # This write keeps the repo active so the schedule survives quiet periods.
       - name: Keepalive
@@ -114,5 +132,13 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm retention
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      # Businesses move and close, but slowly, and Overpass is a shared free
+      # endpoint — monthly is the right cadence for re-reading the map.
+      - name: Refresh prospects from OpenStreetMap
+        continue-on-error: true
+        run: pnpm prospects:refresh --limit=200
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

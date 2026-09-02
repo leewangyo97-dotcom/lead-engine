@@ -148,6 +148,61 @@ against its usual value before looking anywhere else.
 
 ---
 
+## Prospect discovery: `The free map service is busy`
+
+Overpass returned 504. It is a free, shared endpoint and this happens several
+times a day; the client already retries three times before giving up.
+
+Wait a minute and run it again. If it persists for hours, narrow the search — a
+radius search over one city is cheap, a whole-country area search is not, and
+the area queries are the ones that get shed first under load.
+
+The nightly and monthly jobs mark these steps `continue-on-error`, so a busy
+endpoint never fails the run or blocks the job pipeline.
+
+## `enrich: nothing pending with a website`
+
+Not a fault. Stage A stores a website only when OpenStreetMap has the tag, and
+in this market that is rare — 4 of 151 on the first real Cebu search. Stage B has
+nothing to visit because there is nothing to visit.
+
+If you expect a website to be there, check `enrichment_status`: a row that was
+found without one is marked `no_website`, and gaining a website later reopens it
+to `pending` automatically on refresh or hand edit.
+
+## A prospect asked not to be contacted
+
+Use "they said no" on the row. That records every identifier they own — phone,
+WhatsApp number, email, and their own domain — and marks the row
+`do_not_contact`, which both contact buttons then refuse.
+
+Platform domains (`weebly.com`, `wixsite.com`, `business.site`, …) are
+deliberately never suppressed: they identify the site builder, not the business,
+and one "no" would otherwise block every business using the same builder.
+
+To undo, delete the rows from `suppressions` and set the prospect's `status`
+back to `new`. There is no button for this on purpose.
+
+## Prospects exist but none are reachable
+
+Read the `prospects:` line in the nightly report — it counts reachable rows, not
+just rows, because the way this pipeline starves is plenty of businesses with no
+phone and no email.
+
+If `reachable` is near zero, the categories are the likely cause: schools and
+government offices are well mapped but rarely list a contact. Search a category
+that sells to the public.
+
+## The prospect list looks wrong after a weight change
+
+`pnpm prospects:score` re-scores everything from stored data. No network, no
+model, safe to run repeatedly. The nightly job does it anyway, so a weight change
+takes effect by the next morning without anyone remembering.
+
+Hover any score to see what it is made of. If the reasons look right and the
+order still looks wrong, the weights in `lib/places/score.ts` are what to argue
+with — not the query.
+
 ## Before deploying anything
 
 ```bash

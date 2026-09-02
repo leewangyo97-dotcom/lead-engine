@@ -1,11 +1,13 @@
 import { loadLocalEnv } from "../lib/env";
 import { runEnrichment } from "../lib/places/enrich";
+import { parseArgs } from "../lib/places/cli-args";
 
 /**
  * The Stage B worker.
  *
  *   pnpm enrich                    # up to 50 pending prospects with a website
  *   pnpm enrich <searchId> [limit] # just one search
+ *   pnpm enrich --limit=25         # bounded, for the nightly job
  *
  * Runs serially with a one-second gap per host, so 50 prospects take a minute or
  * two. That is the point: this reads other people's servers.
@@ -13,9 +15,7 @@ import { runEnrichment } from "../lib/places/enrich";
 async function main() {
   loadLocalEnv();
 
-  const args = process.argv.slice(2).filter((a) => !a.startsWith("-"));
-  const searchId = args[0];
-  const limit = args[1] ? Number(args[1]) : undefined;
+  const { searchId, limit } = parseArgs(process.argv.slice(2), 50);
 
   const started = Date.now();
   const progress = await runEnrichment({ searchId, limit });

@@ -43,7 +43,8 @@
     "enrich": "tsx scripts/enrich.ts",
     "prospects:enhance": "tsx scripts/prospects-for-enhance.ts",
     "apply:enhance": "tsx scripts/apply-enhance.ts",
-    "prospects:score": "tsx scripts/score-prospects.ts"
+    "prospects:score": "tsx scripts/score-prospects.ts",
+    "prospects:refresh": "tsx scripts/refresh-prospects.ts"
   },
   "dependencies": {
     "@neon/config": "^1.1.0",

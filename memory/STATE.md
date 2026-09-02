@@ -3,9 +3,28 @@
 **Cap: 150 lines.** When it exceeds that, roll closed items into `DECISIONS.md`
 and truncate. This file is read every session; every line costs tokens repeatedly.
 
-Last updated: 2026-09-01 · Phase: **all six complete. First real draft written 2026-09-02.**
+Last updated: 2026-09-02 · Phase: **all six complete, plus geo prospect discovery.**
 
 ## Right now
+
+**Geo prospect discovery is live in production.** `/prospects` searches
+OpenStreetMap by place and category, enriches websites, scores, and opens a
+pre-filled WhatsApp or email message. First real search (Cebu City — veterinary,
+clinics, dentists) found 151 businesses: 23 reachable, 4 with a website, 3
+enriched, 1 refused by its own robots.txt.
+
+The market fact that shapes the whole feature: **phones outnumber emails roughly
+7:1 here, and almost nobody has a website.** The spec ordered channels
+email-first; that would contact nearly nobody, so `chooseChannel` picks per
+prospect and prefers WhatsApp. Site-health scoring is correct but nearly inert
+until a market with better web coverage.
+
+Commands: `pnpm search:run "<place>" <categories>` · `pnpm enrich` ·
+`pnpm prospects:score` · `pnpm prospects:refresh` · `pnpm prospects:enhance` →
+Claude Code → `pnpm apply:enhance`. The nightly job now enriches (bounded at 25)
+and re-scores; the monthly job refreshes map data.
+
+
 
 **The system produced its first outreach draft on 2026-09-02, unassisted.** The
 scheduled nightly run harvested This Dot Labs — an AI-native consultancy hiring a
@@ -89,6 +108,13 @@ Nothing.
 
 ## Reminders that bite
 
+- WhatsApp capability needs `libphonenumber-js/max` — the default metadata
+  returns `undefined` type for every PH number and calls landlines mobile
+- Never suppress a platform domain (`weebly.com`, `wixsite.com`, …): one "no"
+  would block every business using that site builder
+- `enrichment_status` is the enrichment queue; a row found without a website is
+  `no_website` and must be reopened when one appears, or its site is never read
+- Overpass 504s several times a day. It is load, not a bug — retry
 - Vercel Hobby cron is **once per day, ±59 min** — the scheduler is GitHub Actions
 - Vercel Hobby is **non-commercial only**
 - Neon autosuspends at 5 min idle and cannot be told not to; use the HTTP driver
