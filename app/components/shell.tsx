@@ -19,6 +19,36 @@ const ICON = {
     "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6h.09A1.65 1.65 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z",
 } as const;
 
+/**
+ * The maker stamp from Figma 7:461 — a rounded base with a circular punch cut
+ * out of its top-right corner. The mark is specified at 32px with a 24px glyph;
+ * this renders the glyph at 24 in a 28px box, which is the topbar's own sizing
+ * in lead-detail-lg (3:971).
+ *
+ * The punch is a mask rather than a background-coloured circle, so the mark
+ * survives on any ground — a filled circle would show the wrong colour the
+ * moment the topbar is not `surface`.
+ */
+function LogoMark() {
+  return (
+    <svg aria-hidden width="24" height="24" viewBox="0 0 24 24" className="shrink-0">
+      <mask id="stamp-punch">
+        <rect x="0" y="0" width="24" height="24" fill="white" />
+        <circle cx="21" cy="3" r="5" fill="black" />
+      </mask>
+      <rect
+        x="1"
+        y="1"
+        width="22"
+        height="22"
+        rx="5"
+        fill="var(--accent-base)"
+        mask="url(#stamp-punch)"
+      />
+    </svg>
+  );
+}
+
 function Icon({ d }: { d: keyof typeof ICON }) {
   return (
     <svg
@@ -52,9 +82,8 @@ export function Shell({ current, children }: { current: string; children: ReactN
   return (
     <div className="min-h-screen bg-canvas">
       <header className="flex h-14 items-center gap-3 border-b border-rule bg-surface px-6">
-        <span aria-hidden className="h-6 w-6 rounded-sm bg-accent" />
+        <LogoMark />
         <span className="text-body-sm text-primary">Lead Engine</span>
-        <span aria-hidden className="ml-auto h-7 w-7 rounded-sm bg-accent" />
       </header>
 
       <div className="flex flex-col md:flex-row">

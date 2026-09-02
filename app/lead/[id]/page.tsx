@@ -3,6 +3,8 @@ import { getLead } from "@/lib/leads/queries";
 import { fromLead, prescore, type PrescoreResult } from "@/lib/scoring/prescore";
 import { Pill } from "@/app/components/pills";
 import { OutcomeButtons } from "@/app/components/outcome-buttons";
+import { Shell } from "@/app/components/shell";
+import { LeadActions } from "@/app/components/lead-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -42,10 +44,8 @@ export default async function LeadDetail({ params }: { params: Promise<{ id: str
   const rows = lead.kind === "funding" ? FUNDING_ROWS : JOB_ROWS;
 
   return (
-    <main className="mx-auto max-w-content px-6 py-8">
-      <a className="text-body-sm text-accent underline underline-offset-2" href="/">
-        ← inbox
-      </a>
+    <Shell current="/">
+      <div className="mx-auto max-w-content">
 
       <header className="mb-8 mt-4 border-b border-rule pb-5">
         <h1
@@ -61,6 +61,47 @@ export default async function LeadDetail({ params }: { params: Promise<{ id: str
           <Pill>{lead.status}</Pill>
         </div>
       </header>
+
+      {/* Figma 3:1052 — rate and terms beside the timezone overlap, directly
+          under the title. The two facts that decide whether a lead is workable
+          at all should not be four sections apart. */}
+      <div className="mb-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-body-sm">
+        <span className="font-mono tabular-nums text-secondary">
+          {lead.payRaw ?? "rate unstated"} · {lead.isContract ? "contract" : "full-time"}
+        </span>
+        {lead.overlapHours != null && (
+          <span className="flex items-center gap-2 font-mono tabular-nums text-go">
+            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-go" />
+            {lead.overlapHours}h overlap
+          </span>
+        )}
+      </div>
+
+      {/* Figma 3:1058 "Key Facts". Experience and Resume Highlights are omitted:
+          a lead here is a posting, not a candidate, and neither field exists in
+          docs/03-DATA-MODEL.md. Inventing them would be inventing facts. */}
+      <section className="mb-9">
+        <h2 className="mb-5 text-label uppercase text-muted">Key facts</h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            ["Stack", lead.stack.length ? lead.stack.slice(0, 3).join(" / ") : "not stated"],
+            ["Source", lead.sourceId],
+            ["Posted", lead.postedAt ? lead.postedAt.toISOString().slice(0, 10) : "unknown"],
+            ["Contact", lead.isDirect ? "direct inbox" : lead.contact ? "role inbox" : "none"],
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-sm border border-rule bg-surface px-4 py-3">
+              <p className="text-label uppercase text-muted">{label}</p>
+              <p className="mt-1 truncate text-body-sm text-primary">{value}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Figma 3:1087 — a primary "Draft email" with its key hint, then Archive
+          and Flag side by side. */}
+      <section className="mb-9">
+        <LeadActions leadId={lead.id} status={lead.status} />
+      </section>
 
       <section className="mb-9">
         <h2 className="mb-5 text-label uppercase text-muted">Why it scored</h2>
@@ -154,6 +195,7 @@ export default async function LeadDetail({ params }: { params: Promise<{ id: str
           stores — not a preview of something longer.
         </p>
       </section>
-    </main>
+      </div>
+    </Shell>
   );
 }
