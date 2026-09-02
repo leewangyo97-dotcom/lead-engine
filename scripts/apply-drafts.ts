@@ -1,4 +1,4 @@
-import { eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import { getDb } from "../lib/db";
 import { loadLocalEnv } from "../lib/env";
 import { events, leads, outreach } from "../lib/db/schema";
@@ -26,7 +26,8 @@ async function main() {
   const retryable = await db
     .select({ id: outreach.leadId })
     .from(outreach)
-    .where(isNull(outreach.verifiedAt));
+    // Scoped to job rows: prospect messages share this table and have no lead.
+    .where(and(isNull(outreach.verifiedAt), isNotNull(outreach.leadId)));
   for (const row of retryable) if (row.id) allowed.add(row.id);
 
   const unknown = drafts.filter((d) => !allowed.has(d.leadId));

@@ -1,8 +1,9 @@
-import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNotNull, sql } from "drizzle-orm";
 import { getDb } from "../lib/db";
 import { loadLocalEnv } from "../lib/env";
 import { events, leads, outreach, runMetrics, scores } from "../lib/db/schema";
 import { CONTACT_COOLDOWN_DAYS, disqualify, fromLead as toDisqualifyInput } from "../lib/scoring/disqualify";
+import { latestByCompany } from "../lib/leads/cooldown";
 import { NEEDS_DRAFT_THRESHOLD, RUBRIC_VERSION, fromLead as toPrescoreInput, prescore } from "../lib/scoring/prescore";
 
 /**
@@ -32,19 +33,19 @@ async function main() {
   }
 
   // One query for the whole contact-cooldown check, not one per lead.
+  //
+  // Keyed on `sentAt`, not `createdAt`: a draft that was written and never sent
+  // is not a contact, and counting it started a 90-day silence against a company
+  // nobody had actually written to. The join to leads keeps prospect messages
+  // out — they share this table and have their own suppression rules.
   const cooldownStart = new Date(now.getTime() - CONTACT_COOLDOWN_DAYS * 86_400_000);
   const contacted = await db
-    .select({ company: leads.company, at: outreach.createdAt })
+    .select({ company: leads.company, at: outreach.sentAt })
     .from(outreach)
     .innerJoin(leads, eq(outreach.leadId, leads.id))
-    .where(gte(outreach.createdAt, cooldownStart));
+    .where(and(isNotNull(outreach.sentAt), gte(outreach.sentAt, cooldownStart)));
 
-  const lastContacted = new Map<string, Date>();
-  for (const row of contacted) {
-    const key = row.company.toLowerCase();
-    const prev = lastContacted.get(key);
-    if (!prev || row.at > prev) lastContacted.set(key, row.at);
-  }
+  const lastContacted = latestByCompany(contacted);
 
   // The rule that rejected a lead, not just the fact that something did.
   // Without it the only answer to "why did nothing qualify tonight?" is to
