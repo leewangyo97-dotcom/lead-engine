@@ -1,4 +1,4 @@
-import { and, eq, isNotNull, or } from "drizzle-orm";
+import { and, eq, isNotNull, or, sql } from "drizzle-orm";
 import { getDb } from "../lib/db";
 import { loadLocalEnv } from "../lib/env";
 import { prospects } from "../lib/db/schema";
@@ -32,6 +32,9 @@ async function main() {
     .select()
     .from(prospects)
     .where(searchId ? and(eq(prospects.searchId, searchId), reachable) : reachable)
+    // Best first. A queue that hands out arbitrary rows wastes the one thing
+    // this step costs — a person reading each message before it is sent.
+    .orderBy(sql`${prospects.score} desc nulls last`, prospects.name)
     .limit(limit);
 
   if (candidates.length === 0) {

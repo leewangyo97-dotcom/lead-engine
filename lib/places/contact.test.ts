@@ -82,6 +82,21 @@ describe("firstMessage", () => {
     expect(firstMessage({ ...vet, city: null })).toContain("a business like yours");
   });
 
+  it("does not claim to have looked at a site it may never have fetched", () => {
+    const text = firstMessage({ ...vet, website: "https://vet.ph" });
+    expect(text).not.toMatch(/had a look at your site/i);
+    expect(text).toContain("You already have a site");
+  });
+
+  it("does not claim to be local to the business", () => {
+    // PROFILE places Joshua in Bulacan. Writing "here in Cebu" to a Cebu clinic
+    // is a false claim of local presence, and the searches now run in Austin and
+    // Sydney too.
+    const text = firstMessage({ ...vet });
+    expect(text).not.toMatch(/here in Cebu/i);
+    expect(text).toContain("here in the Philippines");
+  });
+
   it("stays short enough to read on a phone", () => {
     // A cold WhatsApp message is read between customers. Length is the message.
     expect(firstMessage({ ...vet }).length).toBeLessThan(400);

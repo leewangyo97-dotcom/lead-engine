@@ -51,10 +51,17 @@ export interface ContactPlan {
  */
 export function firstMessage(place: ContactablePlace): string {
   const name = place.name.trim();
-  const opener = `Hi ${name} — I'm Joshua, a web developer here in Cebu.`;
+  // PROFILE.md places Joshua in San Jose del Monte, Bulacan. The opener used to
+  // say "here in Cebu" because the first searches were Cebu searches, which is a
+  // false claim of local presence to every business it was sent to — and the
+  // searches now run in Austin and Sydney as well.
+  const opener = `Hi ${name} — I'm Joshua, a web developer here in the Philippines.`;
 
   const observation = place.website
-    ? `I had a look at your site and had one or two ideas that might bring you more bookings.`
+    // Not "I had a look at your site": a prospect whose site has never been
+    // fetched would make that a lie, and the owner is the one person who could
+    // catch it by asking what I saw.
+    ? `You already have a site — I had one or two ideas that might bring you more bookings through it.`
     : `I noticed you don't have a website yet — most people looking for a ${
         place.city ? `${place.city} ` : ""
       }business like yours start on Google.`;
