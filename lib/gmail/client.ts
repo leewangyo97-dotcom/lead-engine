@@ -52,7 +52,8 @@ export async function getAccessToken(creds: GmailCredentials): Promise<string> {
 
   if (!res.ok) {
     // The body of a failed token exchange echoes no secret, only an error code.
-    throw new Error(`token refresh failed: ${res.status} ${await res.text()}`);
+    const body = await res.text();
+    throw new Error(explainTokenFailure(res.status, body));
   }
   const data = (await res.json()) as { access_token?: string };
   if (!data.access_token) throw new Error("token refresh returned no access_token");
@@ -106,4 +107,31 @@ export async function createDraft(
   const data = (await res.json()) as { id?: string };
   if (!data.id) throw new Error("draft creation returned no id");
   return data.id;
+}
+
+/**
+ * Turns a token failure into the sentence a person needs at 4am.
+ *
+ * `invalid_grant` is the one that will happen: while the OAuth consent screen is
+ * in Testing, Google expires refresh tokens after seven days, so the Gmail path
+ * dies about a week after each authorisation with a message that explains
+ * nothing. The fix is always the same, and it belongs in the error rather than
+ * in a document nobody is reading at the time.
+ */
+export function explainTokenFailure(status: number, body: string): string {
+  if (/invalid_grant/.test(body)) {
+    return (
+      "Gmail refresh token rejected (invalid_grant). While the OAuth consent " +
+      "screen is in Testing, Google expires refresh tokens after seven days. " +
+      "Run `pnpm gmail:auth`, then put the new GOOGLE_REFRESH_TOKEN in .env.local " +
+      "and in the GitHub secret. Publishing the app stops it expiring."
+    );
+  }
+  if (/invalid_client/.test(body)) {
+    return (
+      "Gmail rejected the client credentials (invalid_client). GOOGLE_CLIENT_ID " +
+      "or GOOGLE_CLIENT_SECRET is wrong or belongs to a different project."
+    );
+  }
+  return `token refresh failed: ${status} ${body}`;
 }

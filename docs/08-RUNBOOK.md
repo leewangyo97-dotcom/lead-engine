@@ -68,6 +68,16 @@ Then treat it as a dead adapter, as above.
 
 ## Gmail: `invalid_grant`
 
+The error now says this itself, but the deadline is worth knowing in advance:
+while the OAuth consent screen is in **Testing**, Google expires refresh tokens
+seven days after they are issued. The Gmail step will fail about a week after
+each `pnpm gmail:auth`, whatever else is working.
+
+Publishing the app in the Google Cloud console stops the expiry. Until then this
+is a weekly chore, and the nightly job will keep drafting regardless — only the
+Gmail step fails, so nothing is lost but the draft's delivery to the mailbox.
+
+
 **Means:** the refresh token expired. The OAuth app is in Google's Testing mode
 on purpose — publishing would trigger a verification review a single-user tool
 does not need — and Testing-mode refresh tokens **expire after 7 days**.
