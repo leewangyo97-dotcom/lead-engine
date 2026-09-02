@@ -20,7 +20,19 @@ which is the `if:` gating that was broken until the monthly cron was declared.
 
 Every phase exit test now passes except one, and it is not a test the system can
 pass alone: no lead has scored 75 on merit, so no outreach draft has ever been
-written.
+written *because the system decided to write one*.
+
+The chain itself is proven. On 2026-09-02 the full path — copywriter,
+apply-drafts, verifier, apply-verdicts, create-gmail-drafts — was rehearsed on a
+scratch branch against a real lead (Atria, 68) with the contact swapped to
+Joshua's own inbox. The draft was created, read back from Gmail with its em
+dashes and quotes intact, and deleted; the branch was dropped and production was
+confirmed untouched (outreach=0, Atria still needs_scoring with its real
+contact).
+
+Two caveats worth keeping: the same session wrote and verified the draft, which
+is not the adversarial separation /daily-run uses, and Atria scored 68, so this
+was a rehearsal rather than a lead that earned an email.
 
 ## Next three actions
 
