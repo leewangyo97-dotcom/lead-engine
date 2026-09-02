@@ -53,7 +53,21 @@ thread stays small, which is what makes long sessions viable at all.
 
 ## Measure
 
-`pnpm tokens` reports per-stage usage for the last run from `run_metrics`.
+`pnpm tokens` reports the funnel and token usage for recent runs.
+
+Nothing measures the tokens for you. Model calls happen inside Claude Code, so
+the counts come from the session that made them — `/daily-run` ends with:
+
+```bash
+pnpm tokens:record --in <input> --out <output> --scored <n> --drafted <n>
+```
+
+Skip it and `pnpm tokens` prints "(not measured)" and the budget below is
+unenforceable.
+
+The funnel columns read `raw` (items fetched), `new` (survived the content hash)
+and `survived` (through the hard filters). A large gap between raw and new is the
+hash working, which is the saving the whole design rests on.
 
 - Under 25,000 per night: healthy
 - 25,000–40,000: investigate the filter

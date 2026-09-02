@@ -85,6 +85,38 @@ Exactly one, and small:
 Never "let me know if you'd like to schedule a call at your convenience". That is
 an ask that asks the reader to do the work.
 
+## The two fields the learning loop reads
+
+Every draft records an `angle` and the `proofUsed`. They are not bookkeeping:
+`lib/review/rollup.ts` groups reply rates by angle, and needs five sends of the
+same angle before it will report a rate at all. Free-text angles fragment that
+into buckets of one, and the loop can never say anything.
+
+Use these values exactly.
+
+| `angle` | The email's opening move |
+|---|---|
+| `stack-exact` | their stack is his stack, named precisely |
+| `offline-hard` | offline-first or sync is the hard part they mentioned |
+| `tz-preempt` | names the timezone gap before they raise it |
+| `trigger-fund` | they just raised or just launched |
+| `paid-trial` | offers a small paid trial task instead of an interview loop |
+| `ask-direct` | the role is closed to him; asks the direct question anyway |
+| `bench-offer` | offers to take one piece off their plate on contract |
+
+| `proofUsed` | Backed by |
+|---|---|
+| `crash-rate` | crash rate cut 35% |
+| `defects` | 3,000+ defects resolved |
+| `fastlane` | 30 signed variants in ~5 min |
+| `tencent` | Tencent IM 3.x to 4.x migration |
+| `kmp` | Kotlin/Compose Multiplatform adoption |
+| `shipped-apps` | Jollibee, Landbank, JoyRide, GoodNovel |
+| `ai-tooling` | custom Claude Code agents, skills, MCP servers |
+
+One proof, occasionally two. Every one traces to `memory/PROFILE.md`; if a claim
+is not in that file it does not go in the email.
+
 ## Hard rules
 
 1. Every factual claim traces to `memory/PROFILE.md`. `verifier` enforces this.
