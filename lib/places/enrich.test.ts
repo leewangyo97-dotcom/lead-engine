@@ -335,6 +335,35 @@ describe("enrichSite", () => {
     expect((await enrichSite("ftp://x.ph", "PH", { fetchImpl })).status).toBe("no_website");
   });
 
+  it("calls a 403 a refusal, not a failure", async () => {
+    // Franchise sites answer a self-identifying crawler with 403. Recording it
+    // as a failure says the site is broken and invites a retry that will be
+    // refused again.
+    for (const status of [401, 403, 451]) {
+      const fetchImpl = (async (url: string | URL) => {
+        if (url.toString().endsWith("robots.txt")) return new Response("", { status: 404 });
+        return new Response("nope", { status, headers: { "content-type": "text/html" } });
+      }) as unknown as typeof fetch;
+
+      expect((await enrichSite("https://franchise.example/", "PH", { fetchImpl, sleep: nap })).status).toBe(
+        "site_refused",
+      );
+    }
+  });
+
+  it("still calls a 404 or a 500 a failure", async () => {
+    for (const status of [404, 500, 502]) {
+      const fetchImpl = (async (url: string | URL) => {
+        if (url.toString().endsWith("robots.txt")) return new Response("", { status: 404 });
+        return new Response("", { status });
+      }) as unknown as typeof fetch;
+
+      expect((await enrichSite("https://gone.example/", "PH", { fetchImpl, sleep: nap })).status).toBe(
+        "fetch_failed",
+      );
+    }
+  });
+
   it("skips a non-HTML response instead of parsing a binary", async () => {
     const fetchImpl = (async (url: string | URL) => {
       if (url.toString().endsWith("robots.txt")) return new Response("", { status: 404 });

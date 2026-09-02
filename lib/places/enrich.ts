@@ -29,6 +29,15 @@ const DEFAULT_HOST_DELAY_MS = 1000;
 /** Homepage plus at most this many contact-ish pages. */
 const MAX_EXTRA_PAGES = 2;
 
+/**
+ * A ceiling on one prospect, whatever its server does.
+ *
+ * `AbortSignal.timeout` covers a slow response, not a socket that never settles
+ * the promise at all — which a malformed HTTP response can produce. Without this
+ * one site can hold the whole run open.
+ */
+const PROSPECT_BUDGET_MS = 45_000;
+
 const CONTACT_HINT = /(contact|kontakt|about|reach)/i;
 
 export interface EnrichDeps {
@@ -42,6 +51,7 @@ export type EnrichStatus =
   | "no_website"
   | "fetch_failed"
   | "robots_blocked"
+  | "site_refused"
   | "no_contact_found";
 
 export interface EnrichedFields {
@@ -61,21 +71,36 @@ interface Page {
   html: string;
 }
 
-async function fetchPage(url: string, fetchImpl: typeof fetch): Promise<Page | null> {
+/**
+ * A refusal is not a failure.
+ *
+ * Franchise and corporate sites answer a self-identifying crawler with 403.
+ * Recording that as "fetch_failed" says the site is broken and invites a retry
+ * that will be refused again; the honest reading is that they said no, and the
+ * answer to being told no is not to ask differently.
+ */
+type FetchResult =
+  | { kind: "page"; page: Page }
+  | { kind: "refused" }
+  | { kind: "unusable" };
+
+async function fetchPage(url: string, fetchImpl: typeof fetch): Promise<FetchResult> {
   const res = await fetchImpl(url, {
     headers: { "User-Agent": OSM_USER_AGENT, Accept: "text/html,application/xhtml+xml" },
     redirect: "follow",
     signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
   });
-  if (!res.ok) return null;
+
+  if (res.status === 401 || res.status === 403 || res.status === 451) return { kind: "refused" };
+  if (!res.ok) return { kind: "unusable" };
 
   // A PDF or an image cannot contain a mailto: href worth parsing, and reading
   // one spends the whole byte budget to learn nothing.
   const type = res.headers.get("content-type") ?? "";
-  if (type && !type.includes("html")) return null;
+  if (type && !type.includes("html")) return { kind: "unusable" };
 
   const body = await res.text();
-  return { url: res.url || url, html: body.slice(0, MAX_BYTES) };
+  return { kind: "page", page: { url: res.url || url, html: body.slice(0, MAX_BYTES) } };
 }
 
 /** Contact-page candidates linked from the homepage. */
@@ -129,14 +154,16 @@ export async function enrichSite(
   if (!isAllowed(robots, start.pathname)) return { status: "robots_blocked" };
   const hostDelay = robots.crawlDelayMs ?? DEFAULT_HOST_DELAY_MS;
 
-  let home: Page | null;
+  let result: FetchResult;
   try {
-    home = await fetchPage(start.toString(), fetchImpl);
+    result = await fetchPage(start.toString(), fetchImpl);
   } catch {
     return { status: "fetch_failed" };
   }
-  if (!home) return { status: "fetch_failed" };
+  if (result.kind === "refused") return { status: "site_refused" };
+  if (result.kind !== "page") return { status: "fetch_failed" };
 
+  const home = result.page;
   const pages: Page[] = [home];
 
   // A homepage often carries a phone but keeps the email on /contact. That one
@@ -146,8 +173,8 @@ export async function enrichSite(
       if (!isAllowed(robots, new URL(link).pathname)) continue;
       await sleep(hostDelay);
       try {
-        const page = await fetchPage(link, fetchImpl);
-        if (page) pages.push(page);
+        const extra = await fetchPage(link, fetchImpl);
+        if (extra.kind === "page") pages.push(extra.page);
       } catch {
         // One bad contact page does not invalidate the homepage's findings.
       }
@@ -244,14 +271,15 @@ export async function runEnrichment(
   for (const row of queue) {
     let result: EnrichedFields;
     try {
-      result = await enrichSite(row.website, row.countryCode, options);
+      result = await withBudget(enrichSite(row.website, row.countryCode, options));
     } catch {
       result = { status: "fetch_failed" };
     }
 
     if (result.status === "enriched") progress.enriched++;
     else if (result.status === "no_contact_found") progress.noContact++;
-    else if (result.status === "robots_blocked") progress.blocked++;
+    else if (result.status === "robots_blocked" || result.status === "site_refused")
+      progress.blocked++;
     else progress.failed++;
 
     // Scraped values fill gaps and never overwrite what OSM already held. An
@@ -280,4 +308,17 @@ export async function runEnrichment(
   }
 
   return progress;
+}
+
+/** Resolves to a failure rather than waiting forever on a socket that stalls. */
+async function withBudget(work: Promise<EnrichedFields>): Promise<EnrichedFields> {
+  let timer: NodeJS.Timeout | undefined;
+  const budget = new Promise<EnrichedFields>((resolve) => {
+    timer = setTimeout(() => resolve({ status: "fetch_failed" }), PROSPECT_BUDGET_MS);
+  });
+  try {
+    return await Promise.race([work, budget]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }

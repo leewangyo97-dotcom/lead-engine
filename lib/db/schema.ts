@@ -194,6 +194,8 @@ export const enrichmentStatus = pgEnum("enrichment_status", [
   "no_website",
   "fetch_failed",
   "robots_blocked",
+  /** The site answered, and answered "no" — a 401, 403 or 451. */
+  "site_refused",
   "no_contact_found",
 ]);
 

@@ -1,0 +1,1 @@
+ALTER TYPE "public"."enrichment_status" ADD VALUE 'site_refused' BEFORE 'no_contact_found';
