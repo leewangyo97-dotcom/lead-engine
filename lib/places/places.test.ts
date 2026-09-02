@@ -9,6 +9,7 @@ import {
 import { toGeocodedPlace } from "./nominatim";
 import { RateLimiter } from "./rate-limit";
 import { normalizeName, rootDomain } from "./normalize";
+import { buildWhatsAppLink, isWhatsAppCapable, toE164 } from "./phone";
 
 describe("overpass queries", () => {
   it("always sets an explicit timeout", () => {
@@ -186,5 +187,42 @@ describe("dedupe identity", () => {
     expect(rootDomain("")).toBeNull();
     expect(rootDomain("not a url")).toBeNull();
     expect(rootDomain("localhost")).toBeNull();
+  });
+});
+
+describe("phone normalisation", () => {
+  it("parses the shapes OpenStreetMap actually holds", () => {
+    // All three are real values from one Cebu search.
+    expect(toE164("+63322382289", "PH")).toBe("+63322382289");
+    expect(toE164("+63 32 344-1238", "PH")).toBe("+63323441238");
+    expect(toE164("(032) 123 4567", "PH")).toBe("+63321234567");
+  });
+
+  it("takes the first valid number from a list", () => {
+    // OSM separates multiple numbers with ";" — storing the whole string would
+    // produce a wa.me link to a number that does not exist.
+    expect(toE164("+63 32 344-1238;+63 917 555 0000", "PH")).toBe("+63323441238");
+  });
+
+  it("returns null rather than guessing", () => {
+    // A broken WhatsApp link is worse than none: the user finds out after the
+    // chat opens on the wrong person.
+    expect(toE164("call us!", "PH")).toBeNull();
+    expect(toE164("", "PH")).toBeNull();
+    expect(toE164(null)).toBeNull();
+    expect(toE164("12", "PH")).toBeNull();
+  });
+
+  it("builds a wa.me link with bare digits", () => {
+    const url = buildWhatsAppLink("+63 917 555 0000".replace(/\s/g, ""), "hi there");
+    expect(url).toBe("https://wa.me/639175550000?text=hi%20there");
+  });
+
+  it("treats an unknown line type as usable", () => {
+    // Many valid mobiles report undefined; calling those "not mobile" would
+    // discard the channel that matters most in this market.
+    expect(isWhatsAppCapable("+639175550000")).toBe(true);
+    expect(isWhatsAppCapable(null)).toBe(false);
+    expect(isWhatsAppCapable("+1")).toBe(false);
   });
 });

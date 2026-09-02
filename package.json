@@ -38,7 +38,8 @@
     "audit:titles": "tsx scripts/audit-titles.ts",
     "refilter": "tsx scripts/refilter.ts",
     "db:migrate:check": "tsx scripts/migrate-check.ts",
-    "places:probe": "tsx scripts/places-probe.ts"
+    "places:probe": "tsx scripts/places-probe.ts",
+    "search:run": "tsx scripts/search-run.ts"
   },
   "dependencies": {
     "@neon/config": "^1.1.0",
@@ -46,6 +47,7 @@
     "@neondatabase/serverless": "^1.0.1",
     "@paralleldrive/cuid2": "^3.3.0",
     "drizzle-orm": "^0.44.2",
+    "libphonenumber-js": "^1.13.12",
     "next": "^15.5.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
