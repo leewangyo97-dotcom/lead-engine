@@ -4,6 +4,7 @@ import { loadLocalEnv } from "../lib/env";
 import { outreach, prospects } from "../lib/db/schema";
 import { EnhanceBatch, readValidatedStdin } from "../lib/model/schemas";
 import { signalKeys } from "../lib/places/enhance";
+import { verifyMessage } from "../lib/places/message-verify";
 import { DRAFT_STEP } from "../lib/places/outreach-log";
 
 /**
@@ -41,6 +42,20 @@ async function main() {
       console.error(
         `${byId.get(e.prospectId)!.name}: claims signals [${e.usedSignals.join(", ")}], known are [${known.join(", ")}]`,
       );
+    }
+    process.exit(1);
+  }
+
+  // Declaring honest signals is not the same as writing an honest message. A
+  // draft once claimed a site was insecure while every signal it declared was
+  // real, so the text is checked against the facts as well as the keys.
+  const untrue = enhanced.flatMap((e) => {
+    const known = signalKeys(byId.get(e.prospectId)!);
+    return verifyMessage(e.message, known).map((v) => ({ e, v }));
+  });
+  if (untrue.length) {
+    for (const { e, v } of untrue) {
+      console.error(`${byId.get(e.prospectId)!.name}: "${v.quote}" — ${v.reason}`);
     }
     process.exit(1);
   }
