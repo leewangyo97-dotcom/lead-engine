@@ -11,12 +11,15 @@
 name: nightly
 
 on:
+  # Seventeen minutes past, not on the hour. GitHub queues scheduled workflows
+  # and drops them under load; the top of the hour is the most contended minute
+  # there is, and a run was skipped outright on 2 September at 20:00.
   schedule:
     # 20:00 UTC Mon-Fri = 04:00 Manila (UTC+8)
-    - cron: '0 20 * * 1-5'
+    - cron: '17 20 * * 1-5'
     # Monthly retention. The `retention` job below is gated on this exact
     # string, so it must be declared here or that job never runs at all.
-    - cron: '0 20 1 * *'
+    - cron: '17 20 1 * *'
   workflow_dispatch: {}
 
 concurrency:

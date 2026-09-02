@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { pipelineFaults, pipelineWarnings, STALE_HOURS, type SourceHealth } from "./health";
+import { pipelineFaults, pipelineWarnings, STALE_HOURS, type SourceHealth, expectedLastRun } from "./health";
 
 const NOW = new Date("2026-09-01T12:00:00Z");
 const hoursAgo = (h: number) => new Date(NOW.getTime() - h * 3_600_000);
@@ -28,13 +28,13 @@ describe("pipeline health", () => {
       sources: [ok("a"), { id: "b", lastRunAt: hoursAgo(STALE_HOURS + 1), lastOk: true }],
       now: NOW,
     });
-    expect(faults[0]).toMatch(/have not run/);
+    expect(faults[0]).toMatch(/missed the run/);
     expect(faults[0]).toContain("b");
   });
 
-  it("tolerates a normal weekend gap", () => {
-    // The cron is Mon-Fri, so a Monday run is more than 24h after Friday's.
-    expect(pipelineFaults({ latestRawCount: 200, sources: [ok("a", 30)], now: NOW })).toEqual([]);
+  it("tolerates a gap that has not yet reached a scheduled run", () => {
+    // NOW is Tuesday noon; the last run was due Monday 20:00 and happened.
+    expect(pipelineFaults({ latestRawCount: 200, sources: [ok("a", 16)], now: NOW })).toEqual([]);
   });
 
   it("reports a source that has never run", () => {
@@ -43,7 +43,7 @@ describe("pipeline health", () => {
       sources: [{ id: "new", lastRunAt: null, lastOk: true }],
       now: NOW,
     });
-    expect(faults[0]).toMatch(/have not run/);
+    expect(faults[0]).toMatch(/missed the run/);
   });
 
   it("still reports an outright failure, and lists every fault", () => {
@@ -125,5 +125,69 @@ describe("a single source going silent", () => {
         sources: [{ id: "hn", lastRunAt: recent, lastOk: true, lastRawCount: null }],
       }),
     ).toEqual([]);
+  });
+});
+
+describe("expectedLastRun", () => {
+  const at = (iso: string) => new Date(iso);
+
+  it("is today's slot once it has passed", () => {
+    // Wednesday 21:00 UTC — the 20:00 run was due an hour ago.
+    expect(expectedLastRun(at("2026-09-02T21:00:00Z"))?.toISOString()).toBe(
+      "2026-09-02T20:00:00.000Z",
+    );
+  });
+
+  it("is yesterday's slot before today's has come round", () => {
+    expect(expectedLastRun(at("2026-09-02T09:00:00Z"))?.toISOString()).toBe(
+      "2026-09-01T20:00:00.000Z",
+    );
+  });
+
+  it("steps back over the weekend rather than expecting a run", () => {
+    // Saturday, Sunday, and Monday morning all point at Friday evening.
+    for (const iso of ["2026-09-05T12:00:00Z", "2026-09-06T23:00:00Z", "2026-09-07T09:00:00Z"]) {
+      expect(expectedLastRun(at(iso))?.toISOString()).toBe("2026-09-04T20:00:00.000Z");
+    }
+  });
+});
+
+describe("pipelineFaults and the schedule", () => {
+  const source = (lastRunAt: Date) => ({
+    id: "hn-whoishiring",
+    lastOk: true,
+    lastRunAt,
+    lastRawCount: 400,
+  });
+
+  it("does not cry stale over a weekend", () => {
+    // Friday's run, checked on Sunday: seventy-two hours of silence, all of it
+    // legitimate. The old flat 36-hour rule failed here every week.
+    const faults = pipelineFaults({
+      latestRawCount: 400,
+      sources: [source(new Date("2026-09-04T20:05:00Z"))],
+      now: new Date("2026-09-06T18:00:00Z"),
+    });
+    expect(faults).toEqual([]);
+  });
+
+  it("reports a night the scheduler skipped", () => {
+    // What actually happened: a run on Tuesday, none on Wednesday.
+    const faults = pipelineFaults({
+      latestRawCount: 400,
+      sources: [source(new Date("2026-09-01T20:05:00Z"))],
+      now: new Date("2026-09-03T09:00:00Z"),
+    });
+    expect(faults.some((f) => /missed the run/.test(f))).toBe(true);
+  });
+
+  it("allows a late run within the grace period", () => {
+    // GitHub delays these under load; an hour late is not a fault.
+    const faults = pipelineFaults({
+      latestRawCount: 400,
+      sources: [source(new Date("2026-09-01T20:05:00Z"))],
+      now: new Date("2026-09-02T23:00:00Z"),
+    });
+    expect(faults).toEqual([]);
   });
 });

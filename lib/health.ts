@@ -12,6 +12,19 @@
  */
 export const STALE_HOURS = 36;
 
+/** The workflow's own schedule: 20:00 UTC, which is 04:00 in Manila. */
+export const SCHEDULE_HOUR_UTC = 20;
+
+/**
+ * How late a run may be before it counts as missed.
+ *
+ * GitHub delays scheduled workflows under load and sometimes drops one — which
+ * is how this was found, with no run at all on a Wednesday night. Six hours is
+ * long enough not to cry about a delay and short enough that a skipped night is
+ * visible the next morning.
+ */
+export const GRACE_HOURS = 6;
+
 export interface SourceHealth {
   id: string;
   lastRunAt: Date | null;
@@ -26,6 +39,26 @@ export interface PipelineState {
   latestRawCount: number | null;
   sources: SourceHealth[];
   now?: Date;
+}
+
+/**
+ * When the harvest was last due: the schedule in `.github/workflows/nightly.yml`
+ * is `0 20 * * 1-5`, so 20:00 UTC on the most recent weekday at or before now.
+ */
+export function expectedLastRun(now: Date): Date | null {
+  const candidate = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), SCHEDULE_HOUR_UTC, 0, 0, 0),
+  );
+  // Before today's slot, the last due run was on a previous day.
+  if (candidate > now) candidate.setUTCDate(candidate.getUTCDate() - 1);
+
+  // Walk back over the weekend: Sunday is 0, Saturday is 6.
+  for (let i = 0; i < 7; i++) {
+    const day = candidate.getUTCDay();
+    if (day !== 0 && day !== 6) return candidate;
+    candidate.setUTCDate(candidate.getUTCDate() - 1);
+  }
+  return null;
 }
 
 /** Returns one message per fault. Empty means healthy. */
@@ -45,13 +78,21 @@ export function pipelineFaults({ latestRawCount, sources, now = new Date() }: Pi
     faults.push("every source returned zero items — the pipeline has starved, not settled");
   }
 
-  const stale = sources.filter(
-    (s) => !s.lastRunAt || now.getTime() - s.lastRunAt.getTime() > STALE_HOURS * 3_600_000,
-  );
-  if (stale.length) {
-    faults.push(
-      `${stale.length} source(s) have not run in ${STALE_HOURS}h: ${stale.map((s) => s.id).join(", ")}`,
-    );
+  // Measured against the schedule, not against a flat number of hours. The
+  // harvest runs weekdays, so Friday evening to Monday evening is seventy-two
+  // hours of legitimate silence — a flat 36-hour rule called that a fault every
+  // single weekend, which is the red-for-no-reason that teaches you to stop
+  // reading these.
+  const expected = expectedLastRun(now);
+  if (expected && now.getTime() - expected.getTime() > GRACE_HOURS * 3_600_000) {
+    const missed = sources.filter((s) => !s.lastRunAt || s.lastRunAt < expected);
+    if (missed.length) {
+      faults.push(
+        `${missed.length} source(s) missed the run due ${expected.toISOString()}: ${missed
+          .map((s) => s.id)
+          .join(", ")}`,
+      );
+    }
   }
 
   return faults;

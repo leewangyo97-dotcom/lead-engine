@@ -148,6 +148,20 @@ against its usual value before looking anywhere else.
 
 ---
 
+## The nightly run did not happen
+
+GitHub queues scheduled workflows and drops them under load — it skipped 2
+September entirely. Nothing is wrong with the repo when this happens, and the
+next night usually runs.
+
+Check with `gh run list --workflow=nightly.yml`. To catch up by hand:
+
+    pnpm harvest && pnpm prefilter && pnpm enrich --limit=25 && pnpm prospects:score
+
+Health notices this by itself: a source whose last run predates the most recent
+scheduled slot is reported as having missed it, six hours after the slot passed.
+That check knows the schedule is Mon-Fri, so a quiet weekend is not a fault.
+
 ## Prospect discovery: `The free map service is busy`
 
 Overpass returned 504. It is a free, shared endpoint and this happens several
