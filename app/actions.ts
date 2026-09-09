@@ -47,11 +47,21 @@ export async function logOutcome(leadId: string, outcome: Outcome) {
     // Stamps the most recent draft for this lead. The follow-up ladder measures
     // from the last touch, so this is what starts the clock.
     const [latest] = await db
-      .select({ id: outreach.id })
+      .select({ id: outreach.id, sentAt: outreach.sentAt })
       .from(outreach)
       .where(eq(outreach.leadId, leadId))
       .orderBy(desc(outreach.createdAt))
       .limit(1);
+
+    // Clicking twice must not count as sending twice. The first real use of this
+    // button was a double click, which re-stamped the send time — moving the
+    // day-4 follow-up later — and logged a second "sent" event for one email.
+    // An email is sent once; the record should say so however often the button
+    // is pressed.
+    if (latest?.sentAt) {
+      revalidatePath(`/lead/${leadId}`);
+      return;
+    }
 
     if (latest) {
       await db.update(outreach).set({ sentAt: new Date() }).where(eq(outreach.id, latest.id));
