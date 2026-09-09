@@ -27,6 +27,35 @@ describe("chooseChannel", () => {
     expect(plan.whatsapp.href).toContain("639171234567");
   });
 
+  it("trusts a published WhatsApp number even on a landline range", () => {
+    // Dresden Vision in Sydney advertises +61 2 5300 3003, which libphonenumber
+    // calls a fixed line. WhatsApp Business accepts landlines, so refusing it
+    // disabled the button on a number its owner asks to be contacted on.
+    const plan = chooseChannel({ ...vet, whatsappE164: "+61253003003" });
+    expect(plan.whatsapp.available).toBe(true);
+    expect(plan.whatsapp.confidence).toBe("confirmed");
+    expect(plan.preferred).toBe("whatsapp");
+  });
+
+  it("says a published WhatsApp number is confirmed", () => {
+    // They put a wa.me link on their own site: that is them telling us.
+    const plan = chooseChannel({ ...vet, whatsappE164: "+639171234567" });
+    expect(plan.whatsapp.confidence).toBe("confirmed");
+  });
+
+  it("says a plain mobile number is only likely", () => {
+    // Accurate in the Philippines, a coin toss in the US where mobile and
+    // landline share ranges. Claiming more than that would be a guess dressed
+    // as a fact.
+    const plan = chooseChannel({ ...vet, phoneE164: "+639171234567" });
+    expect(plan.whatsapp.confidence).toBe("likely");
+  });
+
+  it("claims no confidence at all when WhatsApp is unavailable", () => {
+    expect(chooseChannel({ ...vet, phoneE164: "+63322382289" }).whatsapp.confidence).toBeUndefined();
+    expect(chooseChannel(vet).whatsapp.confidence).toBeUndefined();
+  });
+
   it("falls back to email when the number is a landline", () => {
     const plan = chooseChannel({ ...vet, phoneE164: "+63322382289", email: "hi@vet.ph" });
     expect(plan.preferred).toBe("email");
@@ -34,6 +63,7 @@ describe("chooseChannel", () => {
     // The reason has to be visible before the click: wa.me accepts a landline
     // and fails only once the chat is open.
     expect(plan.whatsapp.reason).toMatch(/landline/);
+    expect(plan.whatsapp.reason).toMatch(/publish no WhatsApp/);
   });
 
   it("says there is no phone rather than offering a broken link", () => {

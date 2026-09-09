@@ -1,7 +1,6 @@
 import { and, desc, eq, isNotNull, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "../db";
 import { prospects, searches } from "../db/schema";
-import { isWhatsAppCapable } from "./phone";
 import { chooseChannel, type ContactOption } from "./contact";
 import { isScoreProvisional, scoreProspect } from "./score";
 import { contactedIds } from "./outreach-log";
@@ -32,7 +31,10 @@ export interface ProspectRow {
   scoreReasons: [string, number][];
   /** True when the site has never been read, so the score is contacts only. */
   provisional: boolean;
-  /** Precomputed here so the table does not parse phone numbers per render. */
+  /**
+   * Whether WhatsApp can be used at all — the same answer the button gives,
+   * taken from the contact plan rather than worked out a second time.
+   */
   whatsappReady: boolean;
 }
 
@@ -120,7 +122,11 @@ async function queryProspects(where: SQL | undefined, limit: number): Promise<Pr
       tier: live.tier,
       scoreReasons: Object.entries(scoreReasons ?? live.reasons).sort((a, b) => b[1] - a[1]),
       provisional: isScoreProvisional({ ...r, siteSignals }),
-      whatsappReady: isWhatsAppCapable(r.whatsappE164 ?? r.phoneE164),
+      // Taken from the plan, not computed again. The second copy of this rule
+      // disagreed with the first the moment published numbers began to outrank
+      // the classifier: Dresden Vision's row showed a confirmed WhatsApp button
+      // beside a chip reading "no whatsapp".
+      whatsappReady: plan.whatsapp.available,
       overridden: Object.keys(manualOverrides ?? {}),
       whatsapp: plan.whatsapp,
       emailChannel: plan.email,

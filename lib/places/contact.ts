@@ -29,6 +29,22 @@ export interface ContactOption {
   href?: string;
   /** Why this channel cannot be used, in words the user can act on. */
   reason?: string;
+  /**
+   * How much the WhatsApp number is worth trusting.
+   *
+   * "confirmed" means the business published a wa.me link or a contact:whatsapp
+   * tag — they are telling us this number takes WhatsApp. "likely" means only
+   * that the number classifies as mobile, which is a good guess in the
+   * Philippines and a coin toss in the United States, where mobile and landline
+   * share ranges and libphonenumber cannot separate them.
+   *
+   * There is no free, reliable way to ask WhatsApp whether a number is
+   * registered: wa.me answers the same for any number, the Business API does not
+   * expose it on a personal account, and the third-party checkers are paid and
+   * against WhatsApp's terms. So this says what is actually known instead of
+   * pretending to know more.
+   */
+  confidence?: "confirmed" | "likely";
 }
 
 export interface ContactPlan {
@@ -76,18 +92,35 @@ export function firstMessage(place: ContactablePlace): string {
 export function chooseChannel(place: ContactablePlace, message?: string): ContactPlan {
   const text = message ?? firstMessage(place);
 
-  const number = place.whatsappE164 ?? place.phoneE164 ?? null;
-  const whatsapp: ContactOption = number
-    ? isWhatsAppCapable(number)
-      ? { channel: "whatsapp", available: true, href: buildWhatsAppLink(number, text) }
-      : {
-          channel: "whatsapp",
-          available: false,
-          // wa.me happily accepts a landline and fails only after the chat
-          // opens, so the reason is worth saying before the click.
-          reason: "landline — WhatsApp needs a mobile number",
-        }
-    : { channel: "whatsapp", available: false, reason: "no phone number" };
+  // A number the business published for WhatsApp beats our classifier.
+  //
+  // Dresden Vision in Sydney advertises +61 2 5300 3003, which libphonenumber
+  // calls a fixed line — and WhatsApp Business accepts landlines, so the button
+  // was disabled on a number its owner asks to be contacted on. Their claim is
+  // evidence; a number range is only an inference.
+  const whatsapp: ContactOption = place.whatsappE164
+    ? {
+        channel: "whatsapp",
+        available: true,
+        href: buildWhatsAppLink(place.whatsappE164, text),
+        confidence: "confirmed",
+      }
+    : place.phoneE164
+      ? isWhatsAppCapable(place.phoneE164)
+        ? {
+            channel: "whatsapp",
+            available: true,
+            href: buildWhatsAppLink(place.phoneE164, text),
+            confidence: "likely",
+          }
+        : {
+            channel: "whatsapp",
+            available: false,
+            // wa.me happily accepts a landline and fails only after the chat
+            // opens, so the reason is worth saying before the click.
+            reason: "landline, and they publish no WhatsApp number",
+          }
+      : { channel: "whatsapp", available: false, reason: "no phone number" };
 
   const email: ContactOption = place.email
     ? {

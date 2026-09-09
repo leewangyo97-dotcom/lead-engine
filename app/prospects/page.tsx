@@ -16,12 +16,32 @@ import {
 
 export const dynamic = "force-dynamic";
 
-function Channel({ ok, label }: { ok: boolean; label: string }) {
+function Channel({
+  ok,
+  label,
+  note,
+}: {
+  ok: boolean;
+  label: string;
+  /** Only WhatsApp has one: whether the number is confirmed or merely likely. */
+  note?: "confirmed" | "likely";
+}) {
+  // A likely number gets the muted chip. Painting it the same green as a
+  // published wa.me link would claim a certainty nobody has.
+  const strong = ok && note !== "likely";
   return (
     <span
-      title={ok ? `${label} available` : `no ${label.toLowerCase()}`}
+      title={
+        !ok
+          ? `no ${label.toLowerCase()}`
+          : note === "likely"
+            ? `${label}: mobile number, not confirmed by them`
+            : note === "confirmed"
+              ? `${label}: they publish this number`
+              : `${label} available`
+      }
       className={`rounded-xs px-2 py-0.5 text-label uppercase ${
-        ok ? "bg-go-tint text-go" : "bg-sunk text-faint"
+        strong ? "bg-go-tint text-go" : ok ? "bg-sunk text-secondary" : "bg-sunk text-faint"
       }`}
     >
       {label}
@@ -36,12 +56,6 @@ export default async function Prospects({
 }) {
   const { search: searchId } = await searchParams;
 
-  // One round of queries, not three. Neon speaks HTTP, so each await here is a
-  // separate trip to Singapore — and this page ran listSearches, then getSearch,
-  // then the prospects before rendering anything, which is three trips of
-  // latency stacked in series behind a blank screen. Nothing here needs the
-  // result of anything else: the prospect queries key off the id in the URL, not
-  // off the search row.
   // Four queries, and this page is dominated by their latency: it renders in
   // anything from 0.5s to 4.5s depending on how awake Neon is, which is what the
   // loading skeleton exists for. Arranging them in one Promise.all was tried and
@@ -230,7 +244,11 @@ export default async function Prospects({
                         <td className="px-4 py-3 text-muted">{p.city ?? "—"}</td>
                         <td className="px-4 py-3">
                           <span className="flex gap-2">
-                            <Channel ok={p.whatsappReady} label="WhatsApp" />
+                            <Channel
+                              ok={p.whatsappReady}
+                              label="WhatsApp"
+                              note={p.whatsapp.confidence}
+                            />
                             <Channel ok={!!p.email} label="Email" />
                           </span>
                         </td>

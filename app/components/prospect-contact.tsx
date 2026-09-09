@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 interface Props {
   id: string;
-  whatsapp: { available: boolean; reason?: string };
+  whatsapp: { available: boolean; reason?: string; confidence?: "confirmed" | "likely" };
   email: { available: boolean; reason?: string };
   contacted: boolean;
   declined: boolean;
@@ -118,14 +118,47 @@ export function ProspectContact({ id, whatsapp, email, contacted, declined, stat
   return (
     <div className="flex flex-col items-start gap-1">
       <div className="flex gap-2">
+        {/* Confirmed and likely look different, because they are.
+            Confirmed means the business published a wa.me link; likely means the
+            number merely classifies as mobile, which is reliable here and a coin
+            toss in the United States. Nobody can ask WhatsApp whether a number
+            is registered, so the button says which of the two it is rather than
+            implying the same certainty for both. */}
         <button
           type="button"
           onClick={() => open("whatsapp")}
           disabled={!whatsapp.available || busy !== null}
-          title={whatsapp.available ? "Open WhatsApp with a first message ready" : whatsapp.reason}
-          className="rounded-xs border border-go px-3 py-1 text-body-sm text-go hover:bg-go-tint disabled:cursor-not-allowed disabled:border-rule disabled:text-faint disabled:hover:bg-transparent"
+          title={
+            !whatsapp.available
+              ? whatsapp.reason
+              : whatsapp.confidence === "confirmed"
+                ? "They publish this WhatsApp number — opens with a first message ready"
+                : "Mobile number, so probably on WhatsApp. Not confirmed by them."
+          }
+          className={`rounded-xs border px-3 py-1 text-body-sm disabled:cursor-not-allowed disabled:border-rule disabled:text-faint disabled:hover:bg-transparent ${
+            whatsapp.confidence === "confirmed"
+              ? "border-go text-go hover:bg-go-tint"
+              : "border-rule text-secondary hover:bg-hovered"
+          }`}
         >
           {busy === "whatsapp" ? "Opening…" : "WhatsApp"}
+          {whatsapp.available && (
+            <span
+              aria-hidden="true"
+              className={`ml-1 font-mono text-data-sm ${
+                whatsapp.confidence === "confirmed" ? "text-go" : "text-faint"
+              }`}
+            >
+              {whatsapp.confidence === "confirmed" ? "✓" : "?"}
+            </span>
+          )}
+          <span className="sr-only">
+            {whatsapp.available
+              ? whatsapp.confidence === "confirmed"
+                ? " (confirmed)"
+                : " (unconfirmed)"
+              : ""}
+          </span>
         </button>
         <button
           type="button"
