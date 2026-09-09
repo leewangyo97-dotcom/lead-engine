@@ -401,3 +401,21 @@ clinics/veterinary/dentists 13,134 rows and 5,103 reachable; Australia schools
 6,786 and 2,105; a twelve-category Cebu City search 2,837 and 261. Cebu's
 reachability rate stays an order of magnitude below Australia's, which is the
 same finding at a hundred times the sample.
+
+## Rotated out of STATE on 2026-09-10 (third pass)
+
+- 2026-09-10 — Placeholder figures from a usage line were recorded as real:
+  run_metrics held "18 scored, 7 drafted" for a night when 2 leads survived the
+  filter. Row restored to 0/0/null/null; `lib/model/record-guard.ts` now refuses
+  a count the run's own funnel cannot support, and the docs carry no example
+  numbers.
+- 2026-09-10 — Figma screen audit finished, all seventeen frames. The mock's
+  numbers contradict each other between sizes (score bands, weights, thresholds,
+  source names), so structure comes from it and no figure does.
+- 2026-09-10 — Three more dead spacing classes found by measuring elements in
+  the browser: `py-0.5` on every count badge and kbd key, `h-1.5` on the lead
+  page's overlap dot (0x0 since it was written), `py-16` on the empty inbox.
+  `tests/spacing-scale.test.ts` reads the scale out of the config and now
+  refuses any class the scale has no key for.
+- 2026-09-10 — `/followups` draws the ladder as a track (Sent, Day 4, Day 11)
+  from `ladderRungs()`, per Figma 3:1437, instead of printing "step 2".

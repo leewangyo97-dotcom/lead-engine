@@ -9,7 +9,8 @@ Last updated: 2026-09-10 · Phase: **all six complete, plus geo prospect discove
 
 **The machine ran unattended for a week and nothing broke.** Nightly runs on 3,
 4, 7 and 8 September all green; weekends correctly skipped. 341 leads, 44
-harvested in the last six days, 446 prospects, 389 tests passing.
+harvested in the last six days, 396 tests passing. Prospect counts are below —
+they moved by two orders of magnitude on 10 September.
 
 **Fifteen sends, no replies yet.** Two leads by email (This Dot Labs, Atria) and
 thirteen prospects by WhatsApp and email, all on Wednesday 9 September, one row
@@ -100,19 +101,11 @@ Nothing.
 - 2026-09-10 — A country-wide search queues and nothing drains it. `/prospects`
   now says so with `pnpm search:run --drain` to copy, instead of a note that
   read as "nothing happened".
-- 2026-09-10 — Placeholder figures from a usage line were recorded as real:
-  run_metrics held "18 scored, 7 drafted" for a night when 2 leads survived the
-  filter. Row restored to 0/0/null/null; `lib/model/record-guard.ts` now refuses
-  a count the run's own funnel cannot support, and the docs carry no example
-  numbers.
 - 2026-09-10 — `pnpm tokens:estimate` sizes the four real model payloads without
   a model, so the 25k target is checkable today rather than after someone
   records a run by hand. Tonight: 1,683 estimated input tokens, nearly all of it
   the enhance prompt. `pnpm tokens` still reads "(not measured)" and still needs
   `tokens:record` after a real /daily-run.
-- 2026-09-10 — Figma screen audit finished, all seventeen frames. The mock's
-  numbers contradict each other between sizes (score bands, weights, thresholds,
-  source names), so structure comes from it and no figure does.
 - 2026-09-10 — `/review` gained the score distribution (Figma 3:1694). It is the
   only thing on that page that can see leads nothing was ever sent to, so a
   scorer collapsed into one band stops looking like silence. Production draws
@@ -124,13 +117,6 @@ Nothing.
   ScoreMeter (3:1048 / 3:1973), which the page had never shown above the fold.
   The four 360px frames are audited and the mobile bottom nav is recorded as
   deliberate divergence — the nav is six items now, not the design's four.
-- 2026-09-10 — Three more dead spacing classes found by measuring elements in
-  the browser: `py-0.5` on every count badge and kbd key, `h-1.5` on the lead
-  page's overlap dot (0x0 since it was written), `py-16` on the empty inbox.
-  `tests/spacing-scale.test.ts` reads the scale out of the config and now
-  refuses any class the scale has no key for.
-- 2026-09-10 — `/followups` draws the ladder as a track (Sent, Day 4, Day 11)
-  from `ladderRungs()`, per Figma 3:1437, instead of printing "step 2".
 - 2026-09-10 — `lib/health.ts` computed the run schedule from `0 20` after the
   cron moved to `17 20`. Grace absorbed it, so it never showed. A test now
   parses the workflow and fails if the two copies drift again.
