@@ -355,3 +355,26 @@ queued state is not a dead end. Expect minutes per country and the odd Overpass
 **If you did not mean to queue one**, search a city instead: anything with a
 comma ("Sydney, Australia") geocodes to a radius and runs inside the request in
 two or three seconds.
+
+## "Maximum call stack size exceeded" from a search
+
+**Symptom.** `pnpm search:run --drain` dies with `RangeError: Maximum call stack
+size exceeded` and no other detail. The search row is left `failed`, and — before
+this was fixed — every search behind it in the queue stayed `queued` with nothing
+said about it.
+
+**Cause.** One INSERT with too many rows. A whole-country Overpass query returns
+tens of thousands of places, and the prospects insert names 32 columns; Drizzle
+builds SQL by merging fragments recursively, so a large enough `values()`
+overflows the call stack before a query is ever sent. Postgres has a second
+ceiling behind it: 65,535 bind parameters per statement, which this table reaches
+at about two thousand rows. The same failure appeared as a truncated
+`Failed query: insert into "prospects" ...` on a city search with twelve
+categories, which is the same bug wearing a different message.
+
+**Fixed.** `persist` writes in batches of 500 (`lib/chunk.ts`). The drain also
+reports each search before it starts, and one failure no longer strands the rest
+of the queue.
+
+**To retry a failed search**, set it back to `queued` and drain again — the
+content of the row is still good, only the write failed.

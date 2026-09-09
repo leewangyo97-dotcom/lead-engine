@@ -25,9 +25,34 @@ async function main() {
       console.log("search-run: nothing queued");
       return;
     }
+    // Each search is reported before it starts, because a country-wide Overpass
+    // query takes minutes and a silent terminal is indistinguishable from a
+    // hung one.
+    let failures = 0;
     for (const s of queued) {
-      const r = await runSearch(s.id);
-      console.log(`search-run: ${s.query} — found ${r.found}, new ${r.inserted}, dupes ${r.duplicates}`);
+      const scope = s.isArea ? "whole area" : `${(s.radiusM ?? 15_000) / 1000}km radius`;
+      console.log(
+        `search-run: starting ${s.query} — ${s.categories.length} categor` +
+          `${s.categories.length === 1 ? "y" : "ies"}, ${scope}`,
+      );
+      // One search failing must not strand the rest of the queue. It used to
+      // throw straight out of this loop, so a single bad row meant every search
+      // behind it stayed queued with nothing said about them.
+      try {
+        const r = await runSearch(s.id);
+        console.log(
+          `search-run: ${s.query} — found ${r.found}, new ${r.inserted}, dupes ${r.duplicates}`,
+        );
+      } catch (err) {
+        failures += 1;
+        console.error(
+          `search-run: ${s.query} failed — ${err instanceof Error ? err.message : err}`,
+        );
+      }
+    }
+    if (failures) {
+      console.error(`search-run: ${failures} of ${queued.length} failed; they stay queueable`);
+      process.exit(1);
     }
     return;
   }
@@ -58,6 +83,8 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error(err instanceof Error ? err.message : err);
+  // The stack, not just the message. "Maximum call stack size exceeded" with no
+  // frames says nothing about which call recursed.
+  console.error(err instanceof Error ? (err.stack ?? err.message) : err);
   process.exit(1);
 });

@@ -1,5 +1,6 @@
 import { eq, sql } from "drizzle-orm";
 import { getDb } from "../db";
+import { chunk } from "../chunk";
 import { prospects, searches } from "../db/schema";
 import { geocode } from "./nominatim";
 import { overpassProvider } from "./overpass";
@@ -125,13 +126,24 @@ async function persist(
   // upstream change should not silently merge unrelated businesses.
   const usable = rows.filter((r) => r.normalizedName.length > 0);
 
+  // In batches, because a whole-country search hands this thirty thousand rows
+  // and one statement cannot carry them. Drizzle merges query fragments
+  // recursively, so a large enough values() overflows the call stack before
+  // anything reaches the database — which is exactly how `pnpm search:run
+  // --drain` failed on Australia, with "Maximum call stack size exceeded" and no
+  // hint that the row count was the problem.
+  //
   // Two unique indexes guard this table, so the conflict target is left open:
   // a row may clash on (searchId, sourceId) or on cross-search identity.
-  const result = await db.insert(prospects).values(usable).onConflictDoNothing().returning({
-    id: prospects.id,
-  });
+  let inserted = 0;
+  for (const batch of chunk(usable)) {
+    const result = await db.insert(prospects).values(batch).onConflictDoNothing().returning({
+      id: prospects.id,
+    });
+    inserted += result.length;
+  }
 
-  return result.length;
+  return inserted;
 }
 
 export async function countProspects(searchId: string): Promise<number> {
