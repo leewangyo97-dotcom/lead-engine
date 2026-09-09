@@ -123,8 +123,8 @@ export function explainTokenFailure(status: number, body: string): string {
     return (
       "Gmail refresh token rejected (invalid_grant). While the OAuth consent " +
       "screen is in Testing, Google expires refresh tokens after seven days. " +
-      "Run `pnpm gmail:auth`, then put the new GOOGLE_REFRESH_TOKEN in .env.local " +
-      "and in the GitHub secret. Publishing the app stops it expiring."
+      "Run `pnpm gmail:auth` — it writes the new token to .env.local itself. " +
+      "Publishing the app in Google Cloud stops it expiring."
     );
   }
   if (/invalid_client/.test(body)) {

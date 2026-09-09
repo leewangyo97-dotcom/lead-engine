@@ -1,6 +1,7 @@
 import { createServer } from "node:http";
 import { GMAIL_SCOPE } from "../lib/gmail/client";
 import { loadLocalEnv } from "../lib/env";
+import { setLocalEnv } from "../lib/env-write";
 
 /**
  * One-time OAuth to obtain a refresh token. Run it, approve in the browser, then

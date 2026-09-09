@@ -8,7 +8,11 @@ describe("explainTokenFailure", () => {
     const message = explainTokenFailure(400, '{"error":"invalid_grant"}');
     expect(message).toMatch(/seven days/);
     expect(message).toMatch(/pnpm gmail:auth/);
-    expect(message).toMatch(/GitHub secret/);
+    // No GitHub secret holds this token — only DATABASE_URL is stored there, and
+    // the nightly workflow has no Gmail step. Sending someone to update a secret
+    // that does not exist is worse than saying nothing.
+    expect(message).not.toMatch(/GitHub secret/);
+    expect(message).toMatch(/writes the new token/);
   });
 
   it("distinguishes wrong credentials from an expired grant", () => {
