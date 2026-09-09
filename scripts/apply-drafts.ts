@@ -6,6 +6,7 @@ import { events, leads, outreach } from "../lib/db/schema";
 import { DraftBatch, readValidatedStdin } from "../lib/model/schemas";
 import { verifyClaims, verifyLocation } from "../lib/model/profile-claims";
 import { addRunCounts } from "../lib/leads/run-metrics";
+import { checkStep } from "../lib/leads/draft-step";
 
 /**
  * Persists drafts. `verifiedAt` is deliberately left null — nothing here may set
@@ -33,9 +34,42 @@ async function main() {
     .where(and(isNull(outreach.verifiedAt), isNotNull(outreach.leadId)));
   for (const row of retryable) if (row.id) allowed.add(row.id);
 
+  // A follow-up is written for a lead that was already contacted, so it sits at
+  // `in_gmail` rather than `needs_draft`. Those are allowed in on the strength of
+  // the step check below, which is stricter than a status test: it knows which
+  // rung is next and refuses anything else.
+  for (const draft of drafts) if ((draft.step ?? 0) > 0) allowed.add(draft.leadId);
+
   const unknown = drafts.filter((d) => !allowed.has(d.leadId));
   if (unknown.length) {
     console.error(`${unknown.length} draft(s) reference leads not awaiting a draft`);
+    process.exit(1);
+  }
+
+  // Which rung each draft claims, checked against what has actually been sent.
+  const existing = await db
+    .select({ leadId: outreach.leadId, step: outreach.step, sentAt: outreach.sentAt })
+    .from(outreach)
+    .where(and(isNotNull(outreach.leadId), inArray(outreach.leadId, drafts.map((d) => d.leadId))));
+
+  const misstepped = drafts
+    .map((draft) => {
+      const rows = existing.filter((r) => r.leadId === draft.leadId);
+      const sent = rows.filter((r) => r.sentAt !== null).map((r) => r.step);
+      const step = draft.step ?? 0;
+      const check = checkStep({
+        step,
+        highestSentStep: sent.length ? Math.max(...sent) : null,
+        hasUnsentDraft: rows.some((r) => r.step === step && r.sentAt === null),
+      });
+      return { draft, check };
+    })
+    .filter((r) => !r.check.ok);
+
+  if (misstepped.length) {
+    for (const { draft, check } of misstepped) {
+      console.error(`${draft.leadId}: ${check.reason}`);
+    }
     process.exit(1);
   }
 
@@ -57,7 +91,7 @@ async function main() {
   await db.insert(outreach).values(
     drafts.map((d) => ({
       leadId: d.leadId,
-      step: 0,
+      step: d.step ?? 0,
       subject: d.subject,
       body: d.body,
       angle: d.angle,

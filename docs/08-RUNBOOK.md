@@ -158,6 +158,17 @@ against its usual value before looking anywhere else.
 
 ---
 
+## A follow-up went out as a first email
+
+It cannot now. `apply:drafts` takes a `step` and checks it against what has been
+sent: 0 only when nothing has, otherwise exactly the next rung, never a duplicate
+of an unsent rung, never past the end of the ladder. A nudge without a step is
+refused with the reason, rather than stored as a second opening message.
+
+If you see two step-0 rows for one company in `outreach`, they predate this check
+(9 September 2026). The follow-up queries read the highest step, so the ladder
+will have stalled on that lead — set the later row's step by hand to unstick it.
+
 ## Retention deleted something you wanted
 
 It cannot delete a lead that was ever written to. Anything with an outreach row

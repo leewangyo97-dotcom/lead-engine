@@ -40,6 +40,18 @@ Run the morning pipeline. Target: under 25,000 tokens, three model calls, ten mi
    `angle` and `proofUsed` are required by the schema — a draft missing either
    teaches the learning loop nothing, so it is rejected rather than stored.
 
+   **A follow-up must carry `"step": 1` or `"step": 2`.** Omitting it means a
+   first touch, and a nudge stored as step 0 becomes a second opening email: the
+   outreach log shows two first contacts with one company, and the ladder reads
+   the highest step as 0 forever, so it keeps asking for a follow-up that was
+   already written. `apply:drafts` checks the rung against what has actually been
+   sent and refuses anything out of order — a skipped rung, a duplicate of an
+   unsent one, or a fourth touch.
+
+   Take the step from the `nextStep` field that `pnpm followups` gives you for
+   each lead. Its `previousSubject` and `previousAngle` are there so the nudge
+   does not repeat the angle that already failed to land.
+
 6. Delegate to the `verifier` subagent. One call. Apply with:
    ```bash
    cat verdicts.json | pnpm apply:verdicts

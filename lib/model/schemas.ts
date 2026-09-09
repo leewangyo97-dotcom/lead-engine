@@ -36,6 +36,14 @@ export const DraftItem = z.object({
   body: z.string().min(1),
   angle: z.string().min(1).max(60),
   proofUsed: z.array(z.string().min(1)).min(1),
+  /**
+   * Which rung of the ladder this is: 0 first touch, 1 and 2 the follow-ups.
+   *
+   * Omitted means a first touch, which is what every draft was until now —
+   * `apply:drafts` hard-coded 0, so a day-4 nudge would have been stored as a
+   * second first email and the ladder would never have advanced past step 1.
+   */
+  step: z.number().int().min(0).max(2).optional(),
 });
 
 export const DraftBatch = z.object({
