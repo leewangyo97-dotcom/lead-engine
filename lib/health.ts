@@ -12,8 +12,16 @@
  */
 export const STALE_HOURS = 36;
 
-/** The workflow's own schedule: 20:00 UTC, which is 04:00 in Manila. */
+/**
+ * The workflow's own schedule: 20:17 UTC, which is just after 04:00 in Manila.
+ *
+ * These two mirror `.github/workflows/nightly.yml` and are asserted against it
+ * in `tests/nightly-schedule.test.ts` — the cron was moved off the hour once
+ * already, and a copy of a schedule that nothing checks is a comment that goes
+ * stale silently while the code keeps computing against a time nothing runs at.
+ */
 export const SCHEDULE_HOUR_UTC = 20;
+export const SCHEDULE_MINUTE_UTC = 17;
 
 /**
  * How late a run may be before it counts as missed.
@@ -43,11 +51,19 @@ export interface PipelineState {
 
 /**
  * When the harvest was last due: the schedule in `.github/workflows/nightly.yml`
- * is `0 20 * * 1-5`, so 20:00 UTC on the most recent weekday at or before now.
+ * is `17 20 * * 1-5`, so 20:17 UTC on the most recent weekday at or before now.
  */
 export function expectedLastRun(now: Date): Date | null {
   const candidate = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), SCHEDULE_HOUR_UTC, 0, 0, 0),
+    Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      SCHEDULE_HOUR_UTC,
+      SCHEDULE_MINUTE_UTC,
+      0,
+      0,
+    ),
   );
   // Before today's slot, the last due run was on a previous day.
   if (candidate > now) candidate.setUTCDate(candidate.getUTCDate() - 1);

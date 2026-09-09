@@ -88,3 +88,58 @@ foundations page but are not bound to Figma variables, so the MCP cannot report
 their values. The code's `go` ramp is therefore unverified against the design.
 Interpolated values were written and then reverted rather than presenting a
 guess as a design token.
+
+## Second pass: the empty, skeleton and small-screen states
+
+`inbox-empty-lg` (3:1212) and `inbox-skeleton-lg` (3:1285) were built from the
+design earlier and are recorded here for completeness: `app/components/empty-inbox.tsx`
+carries the design's structure — a centred mark, a display-size line, one
+sentence of specifics — and `app/loading.tsx` uses the design's placeholder
+sizes. The empty state's copy is the design's shape with real numbers
+substituted, because "Seven leads, four drafted" printed literally would be a
+fabricated report.
+
+The small-screen set is four frames at 360px: `inbox-populated-xs` (3:1794),
+`inbox-empty-xs` (3:1877), `inbox-skeleton-xs` (3:1906) and `lead-detail-xs`
+(3:1960). All four specify the same chrome — an iOS status bar, a 56px
+MobileTopBar carrying the logo mark and a 32px control at the right, and a fixed
+64px MobileBottomNav with four items. `lead-detail-xs` additionally pins its
+actions to the bottom: a full-width "Draft email" over Archive and Flag.
+
+## Drift found and fixed, second pass
+
+**The lead page had no score above the fold.** Both frames put a
+`Data/ScoreMeter` at the top right of the header — 3:1048 in `lead-detail-lg`,
+3:1973 in `lead-detail-xs`, 52x36 in each. The
+implementation showed the score only as the total of the "Why it scored" table,
+four sections down the page. `ScoreMeter` in `app/components/pills.tsx` is now
+the design's component — the number in data/lg over a 3px track filled to the
+score in the tier's colour — and sits in the lead header. Verified against a
+live lead: 52px track, 38px fill at score 73, amber for the warn tier.
+
+**The schedule was written down twice and the copies had diverged.** Not a
+Figma finding, caught while reading the inbox for this pass: `lib/health.ts`
+computed the expected run time from `0 20 * * 1-5` while the workflow had moved
+to `17 20`. Six hours of grace absorbed the seventeen minutes so it never showed
+as a false fault. `tests/nightly-schedule.test.ts` now parses the workflow and
+asserts the constants match it.
+
+## Known, deliberate divergence, second pass
+
+**No mobile bottom nav.** The design gives small screens a fixed bottom bar with
+Inbox, Follow-ups, All leads and Settings. The app keeps one shell at every
+width, and on a phone the sidebar becomes a horizontally scrollable strip under
+the topbar. Two reasons it stays: the nav is six items rather than the design's
+four (Find prospects and Weekly review both postdate these frames, and 86px per
+item does not divide into 360 six ways), and a fixed bottom bar would have to be
+duplicated as a second navigation component with its own active state. The strip
+is worse for thumb reach and better for not lying about which sections exist.
+
+**No mobile status bar, and no separate MobileTopBar.** The status bar is the
+phone's own, drawn in the mock for realism; a web page cannot and should not
+render one. The topbar is the same component at every width.
+
+**Lead actions are not pinned to the bottom on a phone.** `lead-detail-xs` fixes
+them there. In the app they sit in document flow after Key facts, which is where
+the large frame puts them. Pinning would need a second layout for the same three
+buttons, and the page is short enough that they are one scroll away.

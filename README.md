@@ -21,7 +21,7 @@ pnpm nightly
 
 Harvests every source, then filters and pre-scores. Chained inside the script
 because Windows PowerShell has no `&&`. GitHub Actions runs the same thing at
-20:00 UTC on weekdays, so this is only needed to pull leads in early.
+20:17 UTC on weekdays, so this is only needed to pull leads in early.
 
 If it reports `needs_scoring` above zero, run `/daily-run` in Claude Code: it
 batch-scores, drafts, verifies, and creates Gmail drafts. Three model calls,

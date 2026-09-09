@@ -33,8 +33,9 @@ describe("pipeline health", () => {
   });
 
   it("tolerates a gap that has not yet reached a scheduled run", () => {
-    // NOW is Tuesday noon; the last run was due Monday 20:00 and happened.
-    expect(pipelineFaults({ latestRawCount: 200, sources: [ok("a", 16)], now: NOW })).toEqual([]);
+    // NOW is Tuesday noon; the last run was due Monday 20:17 and happened at
+    // 20:24, which is when GitHub actually fires it.
+    expect(pipelineFaults({ latestRawCount: 200, sources: [ok("a", 15.6)], now: NOW })).toEqual([]);
   });
 
   it("reports a source that has never run", () => {
@@ -132,22 +133,22 @@ describe("expectedLastRun", () => {
   const at = (iso: string) => new Date(iso);
 
   it("is today's slot once it has passed", () => {
-    // Wednesday 21:00 UTC — the 20:00 run was due an hour ago.
+    // Wednesday 21:00 UTC — the 20:17 run was due 43 minutes ago.
     expect(expectedLastRun(at("2026-09-02T21:00:00Z"))?.toISOString()).toBe(
-      "2026-09-02T20:00:00.000Z",
+      "2026-09-02T20:17:00.000Z",
     );
   });
 
   it("is yesterday's slot before today's has come round", () => {
     expect(expectedLastRun(at("2026-09-02T09:00:00Z"))?.toISOString()).toBe(
-      "2026-09-01T20:00:00.000Z",
+      "2026-09-01T20:17:00.000Z",
     );
   });
 
   it("steps back over the weekend rather than expecting a run", () => {
     // Saturday, Sunday, and Monday morning all point at Friday evening.
     for (const iso of ["2026-09-05T12:00:00Z", "2026-09-06T23:00:00Z", "2026-09-07T09:00:00Z"]) {
-      expect(expectedLastRun(at(iso))?.toISOString()).toBe("2026-09-04T20:00:00.000Z");
+      expect(expectedLastRun(at(iso))?.toISOString()).toBe("2026-09-04T20:17:00.000Z");
     }
   });
 });
@@ -165,7 +166,7 @@ describe("pipelineFaults and the schedule", () => {
     // legitimate. The old flat 36-hour rule failed here every week.
     const faults = pipelineFaults({
       latestRawCount: 400,
-      sources: [source(new Date("2026-09-04T20:05:00Z"))],
+      sources: [source(new Date("2026-09-04T20:24:00Z"))],
       now: new Date("2026-09-06T18:00:00Z"),
     });
     expect(faults).toEqual([]);
@@ -175,7 +176,7 @@ describe("pipelineFaults and the schedule", () => {
     // What actually happened: a run on Tuesday, none on Wednesday.
     const faults = pipelineFaults({
       latestRawCount: 400,
-      sources: [source(new Date("2026-09-01T20:05:00Z"))],
+      sources: [source(new Date("2026-09-01T20:24:00Z"))],
       now: new Date("2026-09-03T09:00:00Z"),
     });
     expect(faults.some((f) => /missed the run/.test(f))).toBe(true);
@@ -185,7 +186,7 @@ describe("pipelineFaults and the schedule", () => {
     // GitHub delays these under load; an hour late is not a fault.
     const faults = pipelineFaults({
       latestRawCount: 400,
-      sources: [source(new Date("2026-09-01T20:05:00Z"))],
+      sources: [source(new Date("2026-09-01T20:24:00Z"))],
       now: new Date("2026-09-02T23:00:00Z"),
     });
     expect(faults).toEqual([]);

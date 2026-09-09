@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
-import { getLead } from "@/lib/leads/queries";
+import { getLead, tierOf } from "@/lib/leads/queries";
 import { fromLead, prescore, type PrescoreResult } from "@/lib/scoring/prescore";
-import { Pill } from "@/app/components/pills";
+import { Pill, ScoreMeter } from "@/app/components/pills";
 import { OutcomeButtons } from "@/app/components/outcome-buttons";
 import { Shell } from "@/app/components/shell";
 import { LeadActions } from "@/app/components/lead-actions";
@@ -47,19 +47,27 @@ export default async function LeadDetail({ params }: { params: Promise<{ id: str
     <Shell current="/">
       <div className="mx-auto max-w-content">
 
-      <header className="mb-8 mt-4 border-b border-rule pb-5">
-        <h1
-          className="font-display text-heading-lg text-primary"
-          style={{ fontVariationSettings: "'opsz' 24, 'SOFT' 25, 'WONK' 0" }}
-        >
-          {lead.company}
-        </h1>
-        <p className="mt-2 text-body text-secondary">{lead.title}</p>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          {lead.isContract && <Pill tone="go">contract</Pill>}
-          {lead.isDirect && <Pill tone="hold">direct</Pill>}
-          <Pill>{lead.status}</Pill>
+      {/* Figma puts a Data/ScoreMeter at the top right of this header in both
+          sizes — 3:1048 in lead-detail-lg, 3:1973 in lead-detail-xs. The score
+          was previously only the total of the breakdown table four sections
+          below, which is the wrong place for the number that decides whether
+          the rest of the page is worth reading. */}
+      <header className="mb-8 mt-4 flex items-start justify-between gap-5 border-b border-rule pb-5">
+        <div className="min-w-0">
+          <h1
+            className="font-display text-heading-lg text-primary"
+            style={{ fontVariationSettings: "'opsz' 24, 'SOFT' 25, 'WONK' 0" }}
+          >
+            {lead.company}
+          </h1>
+          <p className="mt-2 text-body text-secondary">{lead.title}</p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {lead.isContract && <Pill tone="go">contract</Pill>}
+            {lead.isDirect && <Pill tone="hold">direct</Pill>}
+            <Pill>{lead.status}</Pill>
+          </div>
         </div>
+        <ScoreMeter value={computed.score} tier={tierOf(computed.score)} />
       </header>
 
       {/* Figma 3:1052 — rate and terms beside the timezone overlap, directly

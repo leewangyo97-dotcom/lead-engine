@@ -20,22 +20,22 @@ const TABS = [
 /**
  * When the nightly run fires next, in the reader's terms.
  *
- * The cron is 20:00 UTC Monday to Friday, which is 04:00 the next morning in
- * Manila. On a Friday evening the next run is Monday, and saying "tomorrow"
- * then would simply be wrong.
+ * The cron is 20:17 UTC Monday to Friday, which is just after 04:00 the next
+ * morning in Manila. On a Friday evening the next run is Monday, and saying
+ * "tomorrow" then would simply be wrong.
  */
 function nextRunPhrase(now = new Date()): string {
   const day = now.getUTCDay();
   const ranToday = now.getUTCHours() >= 20;
 
-  // The weekend gap. Monday's 20:00 UTC run lands at 04:00 Tuesday in Manila,
+  // The weekend gap. Monday's 20:17 UTC run lands at 04:17 Tuesday in Manila,
   // so "Monday" would be a day early — the offset is the whole point of saying
   // it in Manila time at all.
   const weekendAhead = day === 6 || day === 0 || (day === 5 && ranToday);
   if (weekendAhead) return "Tuesday at 4am";
 
   // Otherwise it is always the next Manila morning, whether tonight's run has
-  // fired yet or not: before 20:00 UTC it fires tonight, after it fires
+  // fired yet or not: before 20:17 UTC it fires tonight, after it fires
   // tomorrow night — both land at 4am on the following Manila day.
   return "tomorrow at 4am";
 }

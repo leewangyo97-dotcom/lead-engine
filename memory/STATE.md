@@ -93,6 +93,13 @@ Nothing.
 
 ## Recently done
 
+- 2026-09-10 — Figma second pass: the lead header now carries the design's
+  ScoreMeter (3:1048 / 3:1973), which the page had never shown above the fold.
+  The four 360px frames are audited and the mobile bottom nav is recorded as
+  deliberate divergence — the nav is six items now, not the design's four.
+- 2026-09-10 — `lib/health.ts` computed the run schedule from `0 20` after the
+  cron moved to `17 20`. Grace absorbed it, so it never showed. A test now
+  parses the workflow and fails if the two copies drift again.
 - 2026-09-01 — `remoteok` adapter added; harvest idempotent across both sources
   (30 raw, 28 unique, 0 inserted on the second run).
 - 2026-09-01 — Fixed: BD titles were clearing every hard reject.
