@@ -2,6 +2,7 @@ import { inArray, isNotNull, sql } from "drizzle-orm";
 import { getDb } from "../lib/db";
 import { loadLocalEnv } from "../lib/env";
 import { events, leads, outreach, scores } from "../lib/db/schema";
+import { PROTECTED, REJUDGEABLE } from "../lib/leads/refilter-scope";
 
 /**
  * Re-judges the existing corpus after a rule or rubric change.
@@ -23,17 +24,6 @@ import { events, leads, outreach, scores } from "../lib/db/schema";
  *
  * Run `pnpm prefilter` afterwards to apply the current rules.
  */
-const PROTECTED = [
-  "needs_draft",
-  "drafted",
-  "in_gmail",
-  "answered",
-  "won",
-  "lost",
-  "closed",
-] as const;
-
-const REJUDGEABLE = ["parked", "disqualified", "needs_scoring", "scored"] as const;
 
 async function main() {
   loadLocalEnv();

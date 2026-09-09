@@ -24,6 +24,15 @@ export const leadStatus = pgEnum("lead_status", [
   "needs_draft",
   "drafted",
   "in_gmail",
+  /**
+   * The email has actually gone out.
+   *
+   * `in_gmail` means a draft is sitting in the mailbox waiting for a human;
+   * leaving a sent lead at that status made the funnel report read
+   * "in_gmail=2" for two applications that were already delivered, which is the
+   * opposite of what a person reading it needs to know.
+   */
+  "sent",
   "answered",
   "won",
   "lost",

@@ -32,7 +32,8 @@ export async function setLeadStatus(id: string, status: TriageStatus, reason?: s
  */
 export type Outcome = "sent" | "no_reply" | "reply" | "call" | "won" | "lost";
 
-const STATUS_FOR: Partial<Record<Outcome, "answered" | "won" | "lost" | "closed">> = {
+const STATUS_FOR: Partial<Record<Outcome, "sent" | "answered" | "won" | "lost" | "closed">> = {
+  sent: "sent",
   reply: "answered",
   call: "answered",
   won: "won",
