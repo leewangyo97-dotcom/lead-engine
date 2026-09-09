@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getLead } from "@/lib/leads/queries";
 import { getDraft } from "@/lib/leads/draft-query";
+import { highlight } from "@/lib/leads/highlight";
 import { NEEDS_DRAFT_THRESHOLD } from "@/lib/scoring/prescore";
 import { Shell } from "@/app/components/shell";
 
@@ -19,24 +20,6 @@ export const dynamic = "force-dynamic";
  * no send path anywhere in the repo (CLAUDE.md rule 2), so the button says what
  * it actually does.
  */
-
-/** Splits a body around the verifier's quoted text so it can be marked inline. */
-function highlight(body: string, quotes: string[]) {
-  if (!quotes.length) return [{ text: body, flagged: false }];
-
-  const found = quotes.filter((q) => body.includes(q));
-  if (!found.length) return [{ text: body, flagged: false }];
-
-  const pattern = found
-    .map((q) => q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
-    .sort((a, b) => b.length - a.length)
-    .join("|");
-
-  return body
-    .split(new RegExp(`(${pattern})`, "g"))
-    .filter(Boolean)
-    .map((text) => ({ text, flagged: found.includes(text) }));
-}
 
 export default async function DraftReview({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

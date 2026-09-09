@@ -41,6 +41,23 @@ list beside a detail panel where the app uses a page per lead. Those are not
 treated as drift: the design predates the features, and the nav has since grown
 a prospects section the design has no concept of.
 
+`draft-review-lg` (3:1098) is faithful in structure: the title, a badge on the
+right for the verifier's verdict, each violation called out above the message,
+labelled Subject and Email body boxes, and the offending sentence marked inside
+the body — which the implementation does by splitting the text around the
+verifier's quotes.
+
+Its primary button says "Send to Gmail". The implementation says "Ready — run
+`pnpm gmail:drafts`", or "Create Gmail draft — blocked until verified" when the
+verifier has not passed it. That is the one departure the page has always
+documented, and it is not negotiable: there is no send path in this repo, so a
+button may not claim one.
+
+Two smaller things the design has and the app does not: an arrow-left back
+affordance beside the title, and an icon in the violation block. The app links
+the company name back to the lead instead, which does the same job. Neither is
+worth changing.
+
 ## Drift found and fixed
 
 **Ten dead utility classes.** The project replaces Tailwind's spacing scale with
