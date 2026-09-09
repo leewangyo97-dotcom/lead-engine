@@ -261,3 +261,38 @@ So: take structure, hierarchy and component anatomy from these frames. Take no
 number. The real thresholds live in `lib/scoring/*` and `memory/RUBRIC.md`, and
 the score bands built for `/review` are the large frame's because five bands of
 twenty divide the range evenly, not because the mock is authoritative.
+
+## The icons, closed
+
+The shell drew its six sidebar icons as inline Lucide paths, which the earlier
+pass recorded as "the one place this shell is not traceable to a node". Checked
+properly, they were not merely untraced but different: Figma's `Icons/inbox`
+(3:306) is a squarer tray — `M3 12H7L9 15H15L17 12H21M3 12V19H21V12M3 12V5M21
+12V5`, straight sides from 3 to 21 — where Lucide's has an angled lid, and every
+symbol in the file strokes at 1.5 against the 1.75 this drew at.
+
+Five of the six are now the design's own, each named to its symbol:
+
+| Sidebar item | Symbol | Node |
+|---|---|---|
+| Inbox | `Icons/inbox` | 3:306 |
+| Find prospects | `Icons/search` | 3:310 |
+| Follow-ups | `Icons/calendar` | 3:308 |
+| All leads | `Icons/list` | 3:307 |
+| Settings | `Icons/settings` | 3:309 |
+| Weekly review | none | — |
+
+Primitives are kept as the SVG export gives them — `circle`, `rect`, `path` —
+rather than converted to path data by hand, a step that can only introduce
+error. `Icons/list` fills its three bullets rather than stroking them, and
+`Icons/settings` is two concentric circles rather than a toothed gear; both are
+now drawn as the file draws them.
+
+The sixth is honest about itself. The set has no chart glyph at any of the
+positions checked (3:306-311, 3:316-317, 3:320), and walking all forty symbols
+to be certain was not worth it for one sidebar item, so `review` stays a hand
+drawing at the same box and weight, marked in the source as having no
+counterpart.
+
+The other 34 symbols are not imported. Nothing uses them, and a component
+library nobody calls is a maintenance cost with no reader.

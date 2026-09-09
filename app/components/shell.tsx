@@ -5,21 +5,59 @@ import { cachedNavStatus } from "@/lib/nav-status";
  * The app shell from `inbox-populated-lg` (Figma 3:787): a 56px topbar over a
  * 220px sidebar.
  *
- * The icons are drawn inline at the design system's 24px box rather than
- * imported from the 40 `Icons/*` symbols in the file. That is a deliberate
- * shortcut and the one place this shell is not traceable to a node — importing
- * the set properly is worth doing before any icon beyond these four is needed.
+ * The icons are the design's own, traced to their symbols in the file rather
+ * than borrowed from an icon set that looks similar. They were Lucide paths
+ * before, and the two do not match: Figma's inbox is a squarer tray
+ * (`M3 12H7L9 15H15L17 12H21…`, straight sides from 3 to 21) where Lucide's has
+ * an angled lid, and the design strokes at 1.5 where this drew 1.75.
+ *
+ * Each entry names its node. `review` is the exception and is marked as such:
+ * the set has no chart glyph in the positions checked, and walking all forty
+ * symbols to be sure was not worth it for one sidebar item.
+ *
+ * Primitives are kept as the export gives them — circle, rect, path — rather
+ * than converted to path data by hand, which is a step that can only introduce
+ * error.
  */
-const ICON = {
-  inbox: "M22 12h-6l-2 3h-4l-2-3H2M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z",
-  calendar:
-    "M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z",
-  list: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01",
-  search: "M11 3a8 8 0 1 0 0 16 8 8 0 0 0 0-16zM21 21l-4.35-4.35",
-  review: "M3 3v18h18M18.7 8l-5.1 5.2-2.8-2.7L7 14.3",
-  settings:
-    "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6h.09A1.65 1.65 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z",
-} as const;
+const ICON: Record<string, ReactNode> = {
+  // Figma Icons/inbox (3:306)
+  inbox: <path d="M3 12H7L9 15H15L17 12H21M3 12V19H21V12M3 12V5M21 12V5" />,
+  // Figma Icons/search (3:310)
+  search: (
+    <>
+      <circle cx="9.5" cy="9.5" r="5.75" />
+      <path d="M13.8881 13.592L18.6419 18.025" />
+    </>
+  ),
+  // Figma Icons/calendar (3:308)
+  calendar: (
+    <>
+      <rect x="3.75" y="5.75" width="16.5" height="14.5" rx="1.25" />
+      <path d="M3 10H21" />
+      <path d="M8 3V7" />
+      <path d="M16 3V7" />
+    </>
+  ),
+  // Figma Icons/list (3:307). The bullets are filled, not stroked.
+  list: (
+    <>
+      <path d="M9 7H20M9 12H20M9 17H20" />
+      <circle cx="4" cy="7" r="1.25" fill="currentColor" stroke="none" />
+      <circle cx="4" cy="12" r="1.25" fill="currentColor" stroke="none" />
+      <circle cx="4" cy="17" r="1.25" fill="currentColor" stroke="none" />
+    </>
+  ),
+  // Figma Icons/settings (3:309) — two concentric circles, not a toothed gear.
+  settings: (
+    <>
+      <circle cx="12" cy="12" r="3.25" />
+      <circle cx="12" cy="12" r="8.25" />
+    </>
+  ),
+  // No Figma counterpart: a bar chart for the weekly review, drawn to the same
+  // 24px box and stroke weight as the rest.
+  review: <path d="M3 3v18h18M18.7 8l-5.1 5.2-2.8-2.7L7 14.3" />,
+};
 
 /**
  * The maker stamp from Figma 7:461 — a rounded base with a circular punch cut
@@ -51,6 +89,7 @@ function LogoMark() {
   );
 }
 
+/** 1.5, which is the weight every symbol in the file is drawn at. */
 function Icon({ d }: { d: keyof typeof ICON }) {
   return (
     <svg
@@ -60,12 +99,12 @@ function Icon({ d }: { d: keyof typeof ICON }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.75"
+      strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
       className="shrink-0"
     >
-      <path d={ICON[d]} />
+      {ICON[d]}
     </svg>
   );
 }

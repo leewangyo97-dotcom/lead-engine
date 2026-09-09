@@ -76,6 +76,15 @@ Nothing.
 
 ## Recently done
 
+- 2026-09-10 — The sidebar icons are the design's own now (Icons/inbox 3:306,
+  search 3:310, calendar 3:308, list 3:307, settings 3:309), replacing Lucide
+  paths that were a different drawing at a heavier stroke. Weekly review has no
+  counterpart in the set and says so. The other 34 symbols stay unimported.
+- 2026-09-10 — Two more unordered queues found at the new scale: enrichment took
+  an arbitrary 25 of 9,156 and monthly refresh an arbitrary 200 of 23,203.
+  Enrichment now goes best-first, refresh oldest-first, so each budget rotates
+  instead of redrawing the same sample. Token payloads re-measured after the
+  country load: still 1,672 estimated, because the enhance prompt is capped at 10.
 - 2026-09-10 — `search:run --drain` died with "Maximum call stack size
   exceeded": one INSERT of tens of thousands of rows, which Drizzle cannot even
   build (it merges SQL fragments recursively) and Postgres would refuse anyway at

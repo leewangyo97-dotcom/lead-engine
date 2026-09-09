@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { getDb } from "../db";
 import { prospects } from "../db/schema";
 import { fetchByIds } from "./overpass";
@@ -143,6 +143,14 @@ export async function refreshProspects(options: RefreshOptions = {}): Promise<Re
     .select()
     .from(prospects)
     .where(where)
+    // Stalest first, never-refreshed before that. The monthly job takes 200 of
+    // 23,203 rows, so without an order it draws an arbitrary — and, given
+    // Postgres's stable-ish physical order, often the same — sample every month,
+    // and the rest are never re-read at all. Oldest-first turns one budget into
+    // a rotation through the table.
+    //
+    // Explicitly asked for by id, the caller's list wins and this does nothing.
+    .orderBy(sql`${prospects.lastRefreshedAt} asc nulls first`, prospects.id)
     .limit(options.limit ?? 200);
 
   const progress: RefreshProgress = {
