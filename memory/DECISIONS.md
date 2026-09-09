@@ -372,3 +372,18 @@ Phase work from 1 September, all closed:
 - Gmail authorised; token exchange and drafts endpoint verified.
 - Runtime docs audited end to end against the schemas and the code.
 - F: corrupted; working copy restored to C:\dev\lead-engine.
+
+## Rotated out of STATE on 2026-09-10 (second pass)
+
+- 2026-09-02 — First outreach draft produced unassisted by the scheduled run:
+  This Dot Labs, an AI-native consultancy hiring a Senior Android Engineer
+  (Kotlin) and a Senior React Native Engineer, remote-first and global. Pre-score
+  75, stage 2 took it to 80 on a precise stack match. Sent 9 September to
+  jobs@thisdot.co and logged; draft id r1950667528497554225. That closed the last
+  open exit test — every phase has evidence behind it.
+- 2026-09-09 — The "missed" nightly run of 2 September was never missed. It
+  started at 20:24 UTC; the check was made at 04:20 Manila, four minutes earlier
+  in UTC, with the local date already rolled over. The cron was moved to 20:17 on
+  that false premise — harmless, and now asserted against the workflow file by
+  tests/nightly-schedule.test.ts. The weekend false alarm fixed in the same
+  session was real.

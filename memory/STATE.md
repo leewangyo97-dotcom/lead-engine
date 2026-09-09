@@ -9,7 +9,7 @@ Last updated: 2026-09-10 · Phase: **all six complete, plus geo prospect discove
 
 **The machine ran unattended for a week and nothing broke.** Nightly runs on 3,
 4, 7 and 8 September all green; weekends correctly skipped. 341 leads, 44
-harvested in the last six days, 446 prospects, 357 tests passing.
+harvested in the last six days, 446 prospects, 389 tests passing.
 
 **Fifteen sends, no replies yet.** Two leads by email (This Dot Labs, Atria) and
 thirteen prospects by WhatsApp and email, all on Wednesday 9 September, one row
@@ -21,12 +21,6 @@ Two live chores: the Gmail refresh token expires seven days after each
 `pnpm gmail:auth` while the consent screen is in Testing (it expired 8
 September — publishing the app ends the chore), and searches are manual, so
 prospect supply only grows when someone runs `pnpm search:run`.
-
-Corrected 2026-09-09: the "missed" nightly run of 2 September was not missed. It
-started at 20:24 UTC, four minutes after a check made at 04:20 Manila — the local
-date had rolled over and UTC had not. The cron was moved to 20:17 on a false
-premise; harmless, but the schedule was never broken. The weekend false alarm the
-same session fixed was real.
 
 **Geo prospect discovery is live in production.** `/prospects` searches
 OpenStreetMap by place and category, enriches websites, scores, and opens a
@@ -54,18 +48,6 @@ Claude Code → `pnpm apply:enhance`. The nightly job now enriches (bounded at 2
 and re-scores; the monthly job refreshes map data.
 
 
-
-**The system produced its first outreach draft on 2026-09-02, unassisted.** The
-scheduled nightly run harvested This Dot Labs — an AI-native consultancy hiring a
-Senior Android Engineer (Kotlin) and a Senior React Native Engineer, remote-first
-and global. Pre-score 75, stage 2 took it to 80 for an unusually precise stack
-match: those two roles are his two strongest bands, both named.
-
-It was sent on 9 September, addressed to jobs@thisdot.co, and logged. Draft id
-r1950667528497554225.
-
-That closes the last open exit test. Every phase now has evidence behind it, and
-the funnel has run end to end without anyone deciding to help it.
 
 The working copy is `C:\dev\lead-engine`. `F:\lead-engine` is corrupted NTFS
 wreckage awaiting `chkdsk F: /f /r`.
