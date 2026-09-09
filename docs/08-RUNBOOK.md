@@ -306,3 +306,27 @@ Both refuse to run against the database in `DATABASE_URL`: one truncates tables,
 the other drops the schema. A Neon branch is a copy of production, so
 `db:migrate:check` empties it first — testing against an unmodified branch would
 prove nothing, since every table is already there.
+
+## The preview pane stops applying streamed updates
+
+**Symptom.** Every page shows `loading.tsx` ("Loading today's leads") for ever,
+in every tab, including a newly opened one. `document.querySelectorAll('main')`
+returns two: the fallback, and the real content sitting inside a `<div hidden>`
+that was never swapped in.
+
+**What it is not.** Not the app. Check the server directly:
+
+```
+curl -s http://localhost:3000/settings | grep -c Thresholds
+```
+
+A `1` means the server streamed the whole document — the content, the resolved
+Suspense boundaries and the reveal scripts are all in the response. It was
+observed at 0.43s for a page that the pane had been showing as "loading" for
+minutes. Restarting the dev server and deleting `.next` did not change it, so it
+is not the stale-chunk fault below either.
+
+**What to do.** Verify server-side and carry on; do not redesign a page around
+it. Every page here is a two-flush page — the shell streams its nav counts and
+the engine-health line behind Suspense — so this affects all of them equally,
+and a page that renders in one flush would still stream the shell.

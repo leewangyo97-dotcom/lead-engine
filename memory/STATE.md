@@ -93,6 +93,9 @@ Nothing.
 
 ## Recently done
 
+- 2026-09-10 — `/settings` now says whether Gmail will accept a draft right now,
+  by refreshing the token. The only previous signal was `pnpm gmail:drafts`
+  failing at the end of a run.
 - 2026-09-10 — Figma second pass: the lead header now carries the design's
   ScoreMeter (3:1048 / 3:1973), which the page had never shown above the fold.
   The four 360px frames are audited and the mobile bottom nav is recorded as
@@ -122,5 +125,7 @@ Nothing.
 - Neon autosuspends at 5 min idle and cannot be told not to; use the HTTP driver
 - Phases 1–3 contain **zero** model calls. Keep it that way.
 - `contentHash` stability is the single biggest cost lever — its test is not optional
+- The preview pane sometimes stops applying streamed updates and every page sits
+  on `loading.tsx` for ever. Check with curl before believing it — see RUNBOOK
 - Tailwind's spacing scale is **replaced**, keys 0-12 only. `py-0.5`, `h-14`,
   `py-16` emit nothing and fail silently — use an arbitrary value like `h-[6px]`

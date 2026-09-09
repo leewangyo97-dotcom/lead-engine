@@ -179,3 +179,26 @@ live, found by measuring elements in the browser:
 `tailwind.config.ts`, scans every `.tsx` under `app/`, and fails naming the file
 and the class. Confirmed to fail on an injected `py-0.5` and `md:h-14` before
 being left green.
+
+## settings-lg (3:1503)
+
+The design has four cards: Sources with a "Run now" button and an enable switch
+per source, a Gmail card carrying the account and a Connected badge, Scoring
+weights as percentages, and Preferences as editable inputs for timezone,
+minimum score and auto-archive days.
+
+One of them was a real gap and is now built. The app had no way to learn that
+the Gmail refresh token had expired except to run `pnpm gmail:drafts` and watch
+it fail — which happens at the end of a daily run, not the start, and while the
+consent screen is in Testing the token expires every seven days. `/settings` now
+carries a Gmail card that asks Google directly (`lib/gmail/status.ts`, a token
+refresh and nothing else) and reports connected, expired, not authorised or
+failing, keeping `explainTokenFailure`'s wording so the line says which command
+fixes it.
+
+The rest stays out, for reasons already recorded on the page itself: the
+switches and "Run now" need a write path and a way to trigger a harvest from the
+web, and this pipeline is driven by cron and the CLI; the weights and
+preferences are editable in the design, but they live in `memory/RUBRIC.md` and
+in code, so a form would need a second source of truth that can disagree with
+the first. Tuning a weight is a commit.
