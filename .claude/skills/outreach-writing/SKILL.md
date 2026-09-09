@@ -68,7 +68,7 @@ subject line, not a job application.
 If the role is US-only, onsite, or otherwise closed to him, say so in the email and
 ask one direct question. Do not pretend not to have noticed.
 
-> "I know the role is onsite in Astoria and I'm based in Manila, so I'll ask
+> "I know the role is onsite in Astoria and I'm based in the Philippines, so I'll ask
 > directly rather than waste your time: would you consider a remote contractor for
 > any part of this? If not, understood."
 
@@ -127,11 +127,23 @@ is not in that file it does not go in the email.
 6. Follow-ups: day 4 and day 11, then stop. Each references the original in one
    line and adds something new — never "just bumping this".
 
+## Where he is
+
+**"the Philippines", never "Manila".** PROFILE.md places him in San Jose del
+Monte, Bulacan — Greater Manila, but not Manila. "Manila" is the shorthand
+everyone reaches for and it is a claim the profile does not make; a recruiter
+comparing the email to a CV or a LinkedIn profile sees the difference. The
+country and the timezone are what actually matter to the person reading, and both
+are true.
+
+Write "based in the Philippines" or "the Philippines (UTC+8)". If a specific place
+is genuinely useful, write "San Jose del Monte, Bulacan".
+
 ## Signature
 
 ```
 —
 Joshua Senining
-Full Stack + Mobile Developer · Manila (UTC+8)
+Full Stack + Mobile Developer · the Philippines (UTC+8)
 joshuasenining.dev · WhatsApp +63 915 858 7388
 ```

@@ -4,7 +4,7 @@ import { getDb } from "../lib/db";
 import { loadLocalEnv } from "../lib/env";
 import { events, leads, outreach } from "../lib/db/schema";
 import { DraftBatch, readValidatedStdin } from "../lib/model/schemas";
-import { verifyClaims } from "../lib/model/profile-claims";
+import { verifyClaims, verifyLocation } from "../lib/model/profile-claims";
 import { addRunCounts } from "../lib/leads/run-metrics";
 
 /**
@@ -43,9 +43,10 @@ async function main() {
   // verifier judges the prose; this refuses the one error that does concrete
   // damage — an invented or inflated metric in an email to a stranger.
   const profile = readFileSync("memory/PROFILE.md", "utf8");
-  const invented = drafts.flatMap((d) =>
-    verifyClaims(`${d.subject} ${d.body}`, profile).map((v) => ({ d, v })),
-  );
+  const invented = drafts.flatMap((d) => {
+    const text = `${d.subject} ${d.body}`;
+    return [...verifyClaims(text, profile), ...verifyLocation(text, profile)].map((v) => ({ d, v }));
+  });
   if (invented.length) {
     for (const { d, v } of invented) {
       console.error(`${d.leadId}: "${v.quote}" — ${v.reason}`);

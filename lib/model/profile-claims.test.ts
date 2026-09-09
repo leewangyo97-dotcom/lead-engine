@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { extractClaims, verifyClaims } from "./profile-claims";
+import { extractClaims, verifyClaims, verifyLocation } from "./profile-claims";
 
 const PROFILE = readFileSync("memory/PROFILE.md", "utf8");
 
@@ -51,5 +51,36 @@ describe("verifyClaims against the real PROFILE.md", () => {
 
   it("says nothing about a draft that quotes no figures", () => {
     expect(verifyClaims("I build mobile apps and web front ends.", PROFILE)).toEqual([]);
+  });
+});
+
+describe("verifyLocation against the real PROFILE.md", () => {
+  it("catches the claim that actually went out", () => {
+    // This application was sent saying "based in Manila" three times, while the
+    // profile says San Jose del Monte, Bulacan.
+    const violations = verifyLocation("Kotlin + React Native, 7 yrs — based in Manila", PROFILE);
+    expect(violations).toHaveLength(1);
+    expect(violations[0].reason).toMatch(/the Philippines/);
+  });
+
+  it("catches it in a signature line too", () => {
+    expect(verifyLocation("Full Stack + Mobile Developer · Manila (UTC+8)", PROFILE)).toHaveLength(1);
+  });
+
+  it("allows what the profile does say", () => {
+    expect(verifyLocation("I'm based in the Philippines (UTC+8).", PROFILE)).toEqual([]);
+    expect(verifyLocation("I'm in San Jose del Monte, Bulacan.", PROFILE)).toEqual([]);
+  });
+
+  it("leaves the employer's own location alone", () => {
+    // "Your office is in Manila" is a fact about them, not a claim about him.
+    expect(verifyLocation("I saw your team is hiring for the Manila office.", PROFILE)).toEqual([]);
+    expect(verifyLocation("The role is onsite in Cebu, which rules me out.", PROFILE)).toEqual([]);
+  });
+
+  it("passes the Atria draft, which said it correctly", () => {
+    const atria =
+      "I'm Joshua, a mobile and full-stack developer based in the Philippines (UTC+8). I saw the Product Engineer roles.";
+    expect(verifyLocation(atria, PROFILE)).toEqual([]);
   });
 });

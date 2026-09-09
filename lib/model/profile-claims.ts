@@ -80,3 +80,67 @@ export function verifyClaims(draft: string, profile: string): ClaimViolation[] {
       reason: "figure does not appear in PROFILE.md, which is the only source of claims about him",
     }));
 }
+
+/**
+ * Places the drafts keep reaching for, so a claim about where he is can be
+ * checked against the file that decides it.
+ *
+ * "Manila" is the one that actually happened: an application went out saying
+ * "based in Manila" three times — subject, body and signature — while PROFILE.md
+ * says San Jose del Monte, Bulacan. It is Greater Manila and it is the useful
+ * answer for a recruiter thinking about timezones, but it is not what the
+ * profile says, and a reader comparing the email to a CV sees the difference.
+ *
+ * Only shorthand for somewhere he might plausibly be claimed to live. A draft
+ * mentioning the employer's city is not making a claim about him, which is why
+ * this list is short and local rather than every place name in the world.
+ */
+const CLAIMABLE_PLACES = [
+  "Manila",
+  "Metro Manila",
+  "Makati",
+  "Quezon City",
+  "Taguig",
+  "BGC",
+  "Pasig",
+  "Mandaluyong",
+  "Cebu",
+  "Cebu City",
+  "Davao",
+  "Bulacan",
+  "San Jose del Monte",
+];
+
+/**
+ * Rejects a location the profile does not support.
+ *
+ * Matched only where the draft is saying this is where *he* is — "based in",
+ * "I'm in", or a signature line — so quoting an employer's office location stays
+ * allowed.
+ */
+export function verifyLocation(draft: string, profile: string): ClaimViolation[] {
+  const violations: ClaimViolation[] = [];
+
+  for (const place of CLAIMABLE_PLACES) {
+    if (profile.includes(place)) continue;
+
+    // String.raw, because in an ordinary template literal `\s` collapses to "s"
+    // and `\b` becomes a backspace character — which is how the first version of
+    // this check silently matched nothing at all.
+    const claim = new RegExp(
+      String.raw`(based in|I'?m in|I am in|located in|writing from|Developer · |Developer - )\s*` +
+        place +
+        String.raw`\b`,
+      "i",
+    );
+    const match = draft.match(claim);
+    if (match) {
+      violations.push({
+        quote: match[0].trim(),
+        reason: `PROFILE.md does not place him in ${place} — write "the Philippines", or "San Jose del Monte, Bulacan"`,
+      });
+    }
+  }
+
+  return violations;
+}
