@@ -29,6 +29,7 @@ export function ProspectContact({ id, whatsapp, email, contacted, declined, stat
   // is worse than one that asks. It needs asking — undoing this means editing
   // the suppression list by hand.
   const [confirming, setConfirming] = useState(false);
+  const [mailto, setMailto] = useState<string | null>(null);
 
   async function markDeclined() {
     setBusy("decline");
@@ -47,10 +48,14 @@ export function ProspectContact({ id, whatsapp, email, contacted, declined, stat
   async function open(channel: "whatsapp" | "email") {
     setBusy(channel);
     setError(null);
+    setMailto(null);
 
-    // Opened before the await. A popup blocker only trusts a window opened in
-    // the click's own turn, so the tab is claimed now and pointed afterwards.
-    const tab = window.open("", "_blank");
+    // Only a web link gets a tab. A mailto: set on a blank popup is ignored by
+    // most browsers — the click appeared to do nothing at all, which is how this
+    // was found — so email hands the URL to the current window and lets the OS
+    // mail handler take it. Opened before the await either way: a popup blocker
+    // only trusts a window opened in the click's own turn.
+    const tab = channel === "whatsapp" ? window.open("", "_blank") : null;
 
     try {
       const res = await fetch(`/api/prospects/${id}/contact`, {
@@ -68,6 +73,11 @@ export function ProspectContact({ id, whatsapp, email, contacted, declined, stat
 
       if (tab) tab.location.href = data.href;
       else window.location.href = data.href;
+
+      // Nothing opens if no mail client is registered, and the browser gives no
+      // event to detect that. Showing the address means the click is never a
+      // dead end: the message is already logged, so it can be sent by hand.
+      if (channel === "email" && data.to) setMailto(data.to);
       router.refresh();
     } catch {
       tab?.close();
@@ -193,6 +203,13 @@ export function ProspectContact({ id, whatsapp, email, contacted, declined, stat
       {!whatsapp.available && whatsapp.reason && (
         <span className="text-caption text-faint">{whatsapp.reason}</span>
       )}
+      {mailto && (
+        <span className="text-caption text-muted">
+          logged. If your mail app did not open, write to{" "}
+          <span className="font-mono text-data-sm text-secondary">{mailto}</span>
+        </span>
+      )}
+
       {error && (
         <span role="alert" className="text-caption text-stop">
           {error}

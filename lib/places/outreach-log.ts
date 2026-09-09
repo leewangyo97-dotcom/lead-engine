@@ -3,6 +3,7 @@ import { getDb } from "../db";
 import { outreach, prospects, suppressions } from "../db/schema";
 import { rootDomain } from "./normalize";
 import { chooseChannel, type Channel } from "./contact";
+import { MAX_STEP } from "../followups";
 
 /**
  * Recording that a prospect was contacted, and refusing when they asked not to
@@ -159,8 +160,26 @@ export interface LogContactResult {
   ok: boolean;
   outreachId?: string;
   href?: string;
+  /** The same message reopened rather than a new one logged. */
+  reopened?: boolean;
   /** Set when the contact was refused, for showing rather than throwing. */
   blocked?: string;
+}
+
+/**
+ * How long a click counts as reopening the last message rather than sending the
+ * next one.
+ *
+ * A day: long enough to cover clicking twice, closing WhatsApp and coming back,
+ * or a mail client that failed to open the first time; short enough that a
+ * genuine follow-up tomorrow is a new rung. The ladder's own rungs are four and
+ * eleven days out, so nothing legitimate lands inside this window.
+ */
+export const REOPEN_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+export function withinReopenWindow(sentAt: Date | null, now: Date): boolean {
+  if (!sentAt) return true;
+  return now.getTime() - sentAt.getTime() < REOPEN_WINDOW_MS;
 }
 
 /**
@@ -209,13 +228,34 @@ export async function logContact(
 
   // Step counts what has already gone out, so the follow-up rules see a real
   // sequence rather than a pile of first touches.
-  const previous = await db
-    .select({ step: outreach.step })
+  const [previous] = await db
+    .select({ step: outreach.step, sentAt: outreach.sentAt })
     .from(outreach)
     .where(and(eq(outreach.prospectId, prospectId), gte(outreach.step, 0)))
     .orderBy(desc(outreach.step))
     .limit(1);
-  const step = previous.length ? previous[0].step + 1 : 0;
+
+  // Clicking again reopens the same message; it does not send a new one.
+  //
+  // Every click used to insert a row and bump the step, so three clicks on one
+  // clinic wrote steps 0, 1 and 2 — the whole ladder spent on a single message,
+  // and three sends counted where one was made. WhatsApp and email both hand off
+  // to another application, so a click is a request to open, not evidence of a
+  // second conversation.
+  if (previous && withinReopenWindow(previous.sentAt, now())) {
+    return { ok: true, outreachId: undefined, href: option.href, reopened: true };
+  }
+
+  const step = previous ? previous.step + 1 : 0;
+
+  // Three touches is the ladder. A fourth is pestering, and it would arrive here
+  // as step 3, which no follow-up rule knows what to do with.
+  if (step > MAX_STEP) {
+    return {
+      ok: false,
+      blocked: `the ${MAX_STEP + 1}-message sequence is finished for this prospect`,
+    };
+  }
 
   const [row] = await db
     .insert(outreach)

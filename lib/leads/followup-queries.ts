@@ -163,3 +163,51 @@ const ANSWERED_PROSPECT_STATUS = new Set(["replied", "won", "lost", "do_not_cont
 export function isAnsweredProspectStatus(status: string): boolean {
   return ANSWERED_PROSPECT_STATUS.has(status);
 }
+
+/**
+ * How many follow-ups are owed, without building any of them.
+ *
+ * `getDueFollowups` assembles a row per lead and per prospect across three
+ * queries, which is right for the page that lists them and absurd for a badge
+ * in the sidebar — it cost about 180ms on every page in the app. This asks the
+ * database for the only four facts the ladder needs per conversation, in one
+ * query, and applies the same `isDue` rule so there is still one definition of
+ * "owed".
+ */
+export async function countDueFollowups(now = new Date()): Promise<number> {
+  const db = getDb();
+
+  const rows = await db.execute(sql`
+    select
+      max(o.step) as highest_step,
+      max(o.sent_at) as last_sent,
+      bool_or(
+        coalesce(l.status in ('answered', 'won', 'lost', 'closed'), false)
+        or coalesce(p.status in ('replied', 'won', 'lost', 'do_not_contact'), false)
+        or exists (
+          select 1 from events e
+          where e.lead_id = o.lead_id and e.type in ('reply', 'call', 'won', 'lost')
+        )
+      ) as answered
+    from outreach o
+    left join leads l on l.id = o.lead_id
+    left join prospects p on p.id = o.prospect_id
+    where o.sent_at is not null
+    group by coalesce(o.lead_id, o.prospect_id)
+  `);
+
+  const conversations = rows.rows as unknown as {
+    highest_step: number;
+    last_sent: string | Date | null;
+    answered: boolean;
+  }[];
+
+  return conversations.filter((row) =>
+    isDue({
+      lastSentAt: row.last_sent ? new Date(row.last_sent) : null,
+      nextStep: (row.highest_step ?? 0) + 1,
+      hasReplied: row.answered,
+      now,
+    }),
+  ).length;
+}

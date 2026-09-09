@@ -30,5 +30,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return Response.json({ error: result.blocked }, { status: 409 });
   }
 
-  return Response.json({ outreachId: result.outreachId, href: result.href });
+  // The address travels with the link so the browser's silence about mailto —
+  // it reports nothing when no mail client is registered — is not a dead end.
+  const to = result.href?.startsWith("mailto:")
+    ? decodeURIComponent(result.href.slice("mailto:".length).split("?")[0])
+    : undefined;
+
+  return Response.json({ outreachId: result.outreachId, href: result.href, to });
 }

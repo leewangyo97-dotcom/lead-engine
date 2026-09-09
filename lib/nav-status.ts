@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { sql } from "drizzle-orm";
 import { getDb } from "./db";
-import { getDueFollowups } from "./leads/followup-queries";
+import { countDueFollowups } from "./leads/followup-queries";
 
 /**
  * The counts and the health dot the sidebar carries in the design (Figma
@@ -40,10 +40,10 @@ export async function getNavStatus(): Promise<NavStatus> {
     stale_sources: number;
   }[];
 
-  // Follow-ups are derived from sentAt and the ladder, not stored — this badge
-  // used to count an `outreach.due_at` column that nothing ever writes, so it
-  // read zero however many were actually due.
-  const followups = (await getDueFollowups()).length;
+  // Derived from sentAt and the ladder rather than stored, but counted rather
+  // than built: listing them cost ~180ms on every page in the app to render one
+  // number.
+  const followups = await countDueFollowups();
 
   return {
     counts: {
