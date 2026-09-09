@@ -40,8 +40,27 @@ async function main() {
       ),
     );
 
+  // A verified draft with no address is not "nothing to do" — it is a finished
+  // message that cannot be delivered, and saying nothing about it leaves the
+  // work invisible. Jawa.gg is the live example: the posting publishes no email,
+  // so the application has to go through the board itself.
+  const undeliverable = await db
+    .select({ company: leads.company, subject: outreach.subject })
+    .from(outreach)
+    .innerJoin(leads, eq(leads.id, outreach.leadId))
+    .where(
+      and(
+        isNotNull(outreach.verifiedAt),
+        isNull(outreach.gmailDraftId),
+        isNull(leads.contact),
+      ),
+    );
+
   if (!ready.length) {
-    console.log("create-gmail-drafts: nothing verified and unsent");
+    console.log("create-gmail-drafts: nothing verified and unsent with an address");
+    for (const row of undeliverable) {
+      console.log(`  ${row.company}: verified, but the posting publishes no email — apply on the board`);
+    }
     return;
   }
 
