@@ -30,7 +30,7 @@ export function LeadActions({ leadId, status }: { leadId: string; status: string
         className="flex items-center justify-between rounded-sm bg-accent px-5 py-3 text-body-sm text-on-accent transition-colors hover:bg-accent-hover"
       >
         Draft email
-        <kbd className="rounded-xs border border-on-accent/30 px-2 py-0.5 font-mono text-data-sm">
+        <kbd className="rounded-xs border border-on-accent/30 px-2 py-1 font-mono text-data-sm">
           E
         </kbd>
       </a>

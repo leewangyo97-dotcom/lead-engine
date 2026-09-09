@@ -23,7 +23,7 @@ export function EmptyInbox({
   nextRun: string;
 }) {
   return (
-    <div className="flex flex-col items-center rounded-md border border-rule bg-surface px-6 py-16 text-center">
+    <div className="flex flex-col items-center rounded-md border border-rule bg-surface px-6 py-[64px] text-center">
       <span
         aria-hidden
         className="flex h-[56px] w-[56px] items-center justify-center rounded-full bg-sunk text-muted"

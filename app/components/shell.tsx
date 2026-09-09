@@ -151,7 +151,7 @@ async function NavCount({ href }: { href: string }) {
   const count = status?.counts[href];
   if (!count) return null;
   return (
-    <span className="ml-auto hidden rounded-xs bg-sunk px-2 py-0.5 font-mono text-data-sm tabular-nums text-muted md:inline">
+    <span className="ml-auto hidden rounded-xs bg-sunk px-2 py-1 font-mono text-data-sm tabular-nums text-muted md:inline">
       {count}
     </span>
   );

@@ -185,10 +185,10 @@ export default async function Inbox({
 
           <p className="flex items-center gap-2 pb-2 text-caption text-faint">
             Navigate
-            <kbd className="rounded-xs border border-rule bg-sunk px-2 py-0.5 font-mono text-data-sm">
+            <kbd className="rounded-xs border border-rule bg-sunk px-2 py-1 font-mono text-data-sm">
               J
             </kbd>
-            <kbd className="rounded-xs border border-rule bg-sunk px-2 py-0.5 font-mono text-data-sm">
+            <kbd className="rounded-xs border border-rule bg-sunk px-2 py-1 font-mono text-data-sm">
               K
             </kbd>
           </p>
@@ -215,11 +215,11 @@ export default async function Inbox({
 
         <p className="mt-5 text-caption text-faint">
           Press{" "}
-          <kbd className="rounded-xs border border-rule bg-sunk px-2 py-0.5 font-mono text-data-sm">
+          <kbd className="rounded-xs border border-rule bg-sunk px-2 py-1 font-mono text-data-sm">
             Enter
           </kbd>{" "}
           to open the selected lead ·{" "}
-          <kbd className="rounded-xs border border-rule bg-sunk px-2 py-0.5 font-mono text-data-sm">
+          <kbd className="rounded-xs border border-rule bg-sunk px-2 py-1 font-mono text-data-sm">
             ?
           </kbd>{" "}
           for all shortcuts

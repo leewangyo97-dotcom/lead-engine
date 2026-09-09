@@ -12,6 +12,34 @@ export const MAX_STEP = LADDER_DAYS.length; // step 0 is the first touch
 /** Outcomes that cancel the ladder. Any human response ends the sequence. */
 export const REPLIED_TYPES = ["reply", "call", "won", "lost"] as const;
 
+export type RungState = "done" | "due" | "later";
+
+export interface Rung {
+  label: string;
+  state: RungState;
+}
+
+/**
+ * The ladder as three labelled rungs, for Figma's follow-ups timeline (3:1437):
+ * Sent, Day 4, Day 11, joined by a line, each either behind you, owed now, or
+ * still ahead.
+ *
+ * The page used to say "step 2" and leave the reader to remember what step 2
+ * meant and how many were left. The rung a lead is on and the end of the
+ * sequence are the same question, and this answers both at a glance.
+ *
+ * `nextStep` is the rung now owed, so everything below it has been sent. A lead
+ * past the last rung has no due state — every rung reads as done, which is the
+ * honest picture of a finished sequence.
+ */
+export function ladderRungs(nextStep: number): Rung[] {
+  const labels = ["Sent", ...LADDER_DAYS.map((d) => `Day ${d}`)];
+  return labels.map((label, i) => ({
+    label,
+    state: i < nextStep ? "done" : i === nextStep ? "due" : "later",
+  }));
+}
+
 export function dueAtFor(sentAt: Date, step: number): Date {
   const days = LADDER_DAYS[step - 1];
   if (days == null) throw new Error(`no ladder rung for step ${step}`);

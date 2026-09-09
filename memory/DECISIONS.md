@@ -344,3 +344,31 @@ STATE.md hit its 150-line cap. These are closed and need no re-reading:
   `runs` table for the Phase 3 keepalive, design-token layer, Vitest wired.
 - 2026-09-01 — Spec written: plan, architecture, stack, data model, UI, token
   budget, features, orchestration. Agents, skills and memory bank defined.
+
+## Build history, rotated out of STATE on 2026-09-10
+
+Phase work from 1 September, all closed:
+
+- Phase 1: full schema migrated, `hn-whoishiring` adapter, stack canonicaliser,
+  `scripts/harvest.ts`, 10 tests. Second harvest inserts 0 rows.
+- Phase 2: `disqualify.ts`, `prescore.ts`, `scripts/prefilter.ts`, 13 tests.
+  1 of 24 reaches `needs_scoring`.
+- Phase 3: keepalive, report-run and retention scripts; the nightly workflow
+  fixed to declare the monthly cron its retention job was gated on. Exit test
+  passed on two green scheduled runs.
+- Phase 4: inbox, lead detail, draft placeholder, settings; keyboard triage
+  j/k/enter/e/a/x/f and the ? overlay.
+- Phase 5 plumbing: model contracts, payload emitters, apply scripts, the Gmail
+  draft client, `pnpm tokens`.
+- Phase 6: outcome logging, weekly rollup with evidence gates, the follow-up
+  ladder, /review and /followups.
+- Operational hardening: per-source raw counts, the fault/warning split,
+  /rejected, fetch timeouts and retries, pagination recovery, a 15s adapter
+  timeout, `pnpm gate`, `pnpm log:outreach`.
+- `remoteok` adapter added; harvest idempotent across both sources.
+- Fixed: BD titles were clearing every hard reject.
+- Integration check for the draft/verify/Gmail-gate write path; its guard is
+  identity, after two row-count heuristics failed in opposite directions.
+- Gmail authorised; token exchange and drafts endpoint verified.
+- Runtime docs audited end to end against the schemas and the code.
+- F: corrupted; working copy restored to C:\dev\lead-engine.

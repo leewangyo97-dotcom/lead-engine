@@ -143,3 +143,39 @@ render one. The topbar is the same component at every width.
 them there. In the app they sit in document flow after Key facts, which is where
 the large frame puts them. Pinning would need a second layout for the same three
 buttons, and the page is short enough that they are one scroll away.
+
+## follow-ups-lg (3:1411)
+
+The design draws the ladder as a track — Sent, Day 4, Day 11, joined by lines,
+each rung filled or not — beside a SENT date and a "View draft" action, under a
+"3 due today" count. The implementation said "step 2 · 6d since last touch",
+which asks the reader to remember what step 2 means and how many rungs are left.
+`LadderTrack` in `app/followups/page.tsx` now draws the three rungs from
+`ladderRungs()` in `lib/followups.ts`, so the labels come from `LADDER_DAYS`
+rather than being written twice, and the count sits under the heading per
+3:1431. The rung states are unit-tested; the track has not yet been seen with
+real data: all five sends went out on Wednesday 9 September, so the first rung
+comes due on 13 September.
+
+The SENT date column and the "View draft" button are not added: the row already
+carries days-since-last-touch, and there is no draft to view until `/daily-run`
+writes one.
+
+## Drift found and fixed: three more dead spacing classes
+
+The earlier pass found ten utilities that produced no CSS because this project
+replaces Tailwind's spacing scale rather than extending it. Three were still
+live, found by measuring elements in the browser:
+
+- `py-0.5` — every sidebar count badge, every `kbd` key on the inbox, the
+  keyboard hint in the lead actions, and the Reach chips on `/prospects`. All
+  had zero vertical padding. Now `py-1` (2px).
+- `h-1.5 w-1.5` — the green overlap dot on the lead page, 0x0 and therefore
+  invisible since it was written. Now `h-[6px] w-[6px]`, which is the size of
+  Figma's ellipse (3:1983).
+- `py-16` — the empty inbox card. Now `py-[64px]`.
+
+`tests/spacing-scale.test.ts` reads the thirteen keys out of
+`tailwind.config.ts`, scans every `.tsx` under `app/`, and fails naming the file
+and the class. Confirmed to fail on an injected `py-0.5` and `md:h-14` before
+being left green.

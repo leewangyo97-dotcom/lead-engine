@@ -3,18 +3,18 @@
 **Cap: 150 lines.** When it exceeds that, roll closed items into `DECISIONS.md`
 and truncate. This file is read every session; every line costs tokens repeatedly.
 
-Last updated: 2026-09-09 · Phase: **all six complete, plus geo prospect discovery.**
+Last updated: 2026-09-10 · Phase: **all six complete, plus geo prospect discovery.**
 
 ## Right now
 
 **The machine ran unattended for a week and nothing broke.** Nightly runs on 3,
 4, 7 and 8 September all green; weekends correctly skipped. 341 leads, 44
-harvested in the last six days, 446 prospects, 298 tests passing.
+harvested in the last six days, 446 prospects, 357 tests passing.
 
-**Nothing has ever been sent.** `sent=0`, `contacted=0`, zero recorded outcomes.
-The follow-up ladder has never fired and the weekly review still needs 20 sends
-before it will say anything. Every remaining unknown in this project is
-downstream of that one number.
+**Five sends, no replies yet.** Two leads by email (This Dot Labs, Atria) and
+three prospects by WhatsApp and email, all logged on Wednesday 9 September. The
+ladder is armed for the first time: day 4 comes due 13 September. `/review`
+still says nothing — it wants 20 sends before it will call a difference real.
 
 Two live chores: the Gmail refresh token expires seven days after each
 `pnpm gmail:auth` while the consent screen is in Testing (it expired 8
@@ -60,8 +60,8 @@ Senior Android Engineer (Kotlin) and a Senior React Native Engineer, remote-firs
 and global. Pre-score 75, stage 2 took it to 80 for an unusually precise stack
 match: those two roles are his two strongest bands, both named.
 
-It is in Gmail, verified, unsent, addressed to jobs@thisdot.co. Joshua reviews
-and sends. Draft id r1950667528497554225.
+It was sent on 9 September, addressed to jobs@thisdot.co, and logged. Draft id
+r1950667528497554225.
 
 That closes the last open exit test. Every phase now has evidence behind it, and
 the funnel has run end to end without anyone deciding to help it.
@@ -71,11 +71,11 @@ wreckage awaiting `chkdsk F: /f /r`.
 
 ## Next three actions
 
-1. **Read the draft and send it if it is right.** Then log the send on the lead
-   detail page — the learning loop measures from `sentAt`, and an unlogged send
-   makes every reply rate below it wrong.
-2. Run `pnpm nightly` daily. The September thread is filling: 449 raw, 262 leads,
-   12 reaching stage 2 on 2 Sep.
+1. **Publish the Google OAuth consent screen.** While it is in Testing the
+   refresh token dies every seven days and `pnpm gmail:drafts` stops with it.
+2. **Work the day-4 follow-ups on 13 September.** Five sends come due at once.
+   `/daily-run` writes them in one batched call; each item must carry its
+   `"step"`, because `apply:drafts` refuses a rung that is out of order.
 3. The contract weight is still open, but less urgently: a full-time posting just
    cleared 75 on stack merit alone. `/rejected` still quantifies the cost —
    1 qualifies today, 6 would if full-time counted as acceptable terms.
@@ -97,42 +97,17 @@ Nothing.
   ScoreMeter (3:1048 / 3:1973), which the page had never shown above the fold.
   The four 360px frames are audited and the mobile bottom nav is recorded as
   deliberate divergence — the nav is six items now, not the design's four.
+- 2026-09-10 — Three more dead spacing classes found by measuring elements in
+  the browser: `py-0.5` on every count badge and kbd key, `h-1.5` on the lead
+  page's overlap dot (0x0 since it was written), `py-16` on the empty inbox.
+  `tests/spacing-scale.test.ts` reads the scale out of the config and now
+  refuses any class the scale has no key for.
+- 2026-09-10 — `/followups` draws the ladder as a track (Sent, Day 4, Day 11)
+  from `ladderRungs()`, per Figma 3:1437, instead of printing "step 2".
 - 2026-09-10 — `lib/health.ts` computed the run schedule from `0 20` after the
   cron moved to `17 20`. Grace absorbed it, so it never showed. A test now
   parses the workflow and fails if the two copies drift again.
-- 2026-09-01 — `remoteok` adapter added; harvest idempotent across both sources
-  (30 raw, 28 unique, 0 inserted on the second run).
-- 2026-09-01 — Fixed: BD titles were clearing every hard reject.
-- 2026-09-02 — First real Gmail draft: This Dot Labs, scored 80, verified,
-  written from PROFILE with no invented claims.
-- 2026-09-02 — Inbox, lead detail, draft review, empty and loading states built
-  to the Figma frames; logo mark implemented from 7:461.
-- 2026-09-02 — Runtime docs audited end to end: agent output contracts against
-  their schemas, skills against the code, and the copywriter's angle/proof
-  vocabulary, which the learning loop groups by and nothing defined.
-- 2026-09-02 — F: corrupted; working copy restored to C:\dev\lead-engine.
-- 2026-09-01 — Phase 3 exit test passed: two green scheduled runs.
-- 2026-09-01 — Operational hardening: per-source raw counts, fault/warning
-  split, /rejected view, fetch timeouts and retries, pagination recovery.
-- 2026-09-01 — Integration check for the draft/verify/Gmail-gate write path;
-  its guard is identity, after two row-count heuristics failed opposite ways.
-- 2026-09-01 — Adapters given a 15s timeout and retry; `pnpm gate`;
-  `pnpm log:outreach` regenerates OUTREACH-LOG from the database.
-- 2026-09-01 — Phase 6: outcome logging, weekly rollup with evidence gates, the
-  follow-up ladder, /review and /followups. 10 tests.
-- 2026-09-01 — Gmail authorised; token exchange and drafts endpoint verified.
-- 2026-09-01 — Phase 5 plumbing: model contracts, payload emitters, apply
-  scripts, Gmail draft client, `pnpm tokens`. Untested against a real model.
-- 2026-09-01 — Phase 4: inbox, lead detail, draft placeholder, settings.
-  Keyboard triage per the UI spec: j/k/enter/e/a/x/f and the ? overlay.
-- 2026-09-01 — Nightly workflow green from CI end to end.
-- 2026-09-01 — Phase 3: keepalive, report-run and retention scripts; nightly
-  workflow fixed to declare the monthly cron its retention job was gated on.
-- 2026-09-01 — Phase 2: `disqualify.ts`, `prescore.ts`, `scripts/prefilter.ts`,
-  13 tests. Exit test passes: 1 of 24 reaches `needs_scoring`.
-- 2026-09-01 — Phase 1: full schema migrated, `hn-whoishiring` adapter, stack
-  canonicaliser, `scripts/harvest.ts`, 10 tests. Exit test passes — second
-  harvest inserts 0 rows.
+
 ## Reminders that bite
 
 - WhatsApp capability needs `libphonenumber-js/max` — the default metadata
@@ -147,3 +122,5 @@ Nothing.
 - Neon autosuspends at 5 min idle and cannot be told not to; use the HTTP driver
 - Phases 1–3 contain **zero** model calls. Keep it that way.
 - `contentHash` stability is the single biggest cost lever — its test is not optional
+- Tailwind's spacing scale is **replaced**, keys 0-12 only. `py-0.5`, `h-14`,
+  `py-16` emit nothing and fail silently — use an arbitrary value like `h-[6px]`

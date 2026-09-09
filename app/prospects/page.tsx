@@ -40,7 +40,7 @@ function Channel({
               ? `${label}: they publish this number`
               : `${label} available`
       }
-      className={`rounded-xs px-2 py-0.5 text-label uppercase ${
+      className={`rounded-xs px-2 py-1 text-label uppercase ${
         strong ? "bg-go-tint text-go" : ok ? "bg-sunk text-secondary" : "bg-sunk text-faint"
       }`}
     >

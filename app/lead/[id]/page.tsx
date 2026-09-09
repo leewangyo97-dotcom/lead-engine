@@ -79,7 +79,7 @@ export default async function LeadDetail({ params }: { params: Promise<{ id: str
         </span>
         {lead.overlapHours != null && (
           <span className="flex items-center gap-2 font-mono tabular-nums text-go">
-            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-go" />
+            <span aria-hidden className="h-[6px] w-[6px] rounded-full bg-go" />
             {lead.overlapHours}h overlap
           </span>
         )}
