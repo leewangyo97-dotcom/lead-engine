@@ -88,8 +88,18 @@ async function main() {
     );
   }
 
-  console.log("\nAdd this line to .env.local (it is gitignored):\n");
-  console.log(`GOOGLE_REFRESH_TOKEN="${data.refresh_token}"`);
+  // Written, not printed. Printing it and trusting a paste failed the first time
+  // it mattered: the token was generated, the paste never happened, and the Gmail
+  // path stayed broken for a week. It also kept a live credential in terminal
+  // scrollback, where it is one screenshot away from being shared.
+  const outcome = setLocalEnv("GOOGLE_REFRESH_TOKEN", data.refresh_token);
+
+  console.log(`\nGOOGLE_REFRESH_TOKEN ${outcome} in .env.local (gitignored).`);
+  console.log("Run `pnpm gmail:smoke` to confirm the path works end to end.\n");
+  console.log(
+    "It expires in seven days while the consent screen is in Testing.\n" +
+      "Publishing the app in Google Cloud ends the weekly re-auth.",
+  );
 }
 
 main().catch((err) => {
