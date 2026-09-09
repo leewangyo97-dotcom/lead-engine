@@ -2,6 +2,7 @@ import { desc, eq } from "drizzle-orm";
 import { getDb } from "../lib/db";
 import { loadLocalEnv } from "../lib/env";
 import { runMetrics } from "../lib/db/schema";
+import { checkCounts } from "../lib/model/record-guard";
 
 /**
  * Records what a /daily-run cost, against the most recent run.
@@ -14,7 +15,12 @@ import { runMetrics } from "../lib/db/schema";
  * Model calls happen inside Claude Code rather than server-side, so the counts
  * come from the session that made them:
  *
- *   pnpm tokens:record --in 6000 --out 1200 --scored 18 --drafted 7
+ *   pnpm tokens:record --in <in> --out <out> --scored <n> --drafted <n>
+
+ * Every figure is a real count from that session. There are no example numbers
+ * in this file on purpose: the ones that used to be here were run verbatim, and
+ * run_metrics recorded eighteen leads scored on a night when two survived the
+ * pre-filter.
  *
  * Only the funnel counts that a model produced are set here. Harvest already
  * records the deterministic ones.
@@ -57,6 +63,18 @@ async function main() {
 
   if (!latest) {
     console.error("no run recorded yet — run a harvest first");
+    process.exit(1);
+  }
+
+  // The figures here come from a person, so the run's own deterministic counts
+  // are the only evidence available. They cannot confirm a number, but they can
+  // refuse one that could not have happened.
+  const check = checkCounts(
+    { afterFilter: latest.afterFilter, scoredCount: latest.scoredCount },
+    { scored, drafted },
+  );
+  if (!check.ok) {
+    console.error(`tokens:record refused: ${check.reason}`);
     process.exit(1);
   }
 

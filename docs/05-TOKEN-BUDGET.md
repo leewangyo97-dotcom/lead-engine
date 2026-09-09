@@ -162,3 +162,23 @@ size because a filter stopped filtering — not a ten-percent drift.
 `rows=prose` means the emitter writes a prompt rather than JSON, so there is
 nothing to count. It is not the same as `rows=0`, which means the pipeline has
 nothing to send.
+
+### Recorded figures are guarded, not trusted
+
+`tokens:record` is the only write path in this project with no evidence behind
+it — the numbers come from a person, because nothing server-side can see the
+model calls. On 10 September the example figures from this document's own usage
+line were run verbatim against a night where **two** leads survived the
+pre-filter, and `run_metrics` accepted "18 scored, 7 drafted" without a word.
+
+The run's deterministic counts are the only evidence available, and they bound
+what the model can possibly have done. `lib/model/record-guard.ts` now refuses
+a `--scored` above that run's `afterFilter`, and a `--drafted` above the number
+scored. The bad command is refused with exit 1 and the row is left alone.
+
+This cannot make a recorded number true. It makes an impossible one loud. If a
+figure is refused, the usual cause is that it belongs to a different run — the
+counts attach to the **most recent** run, so record them before the next
+harvest.
+
+There are deliberately no example numbers in this section.

@@ -94,6 +94,11 @@ Nothing.
 
 ## Recently done
 
+- 2026-09-10 — Placeholder figures from a usage line were recorded as real:
+  run_metrics held "18 scored, 7 drafted" for a night when 2 leads survived the
+  filter. Row restored to 0/0/null/null; `lib/model/record-guard.ts` now refuses
+  a count the run's own funnel cannot support, and the docs carry no example
+  numbers.
 - 2026-09-10 — `pnpm tokens:estimate` sizes the four real model payloads without
   a model, so the 25k target is checkable today rather than after someone
   records a run by hand. Tonight: 1,683 estimated input tokens, nearly all of it
@@ -140,5 +145,7 @@ Nothing.
 - `contentHash` stability is the single biggest cost lever — its test is not optional
 - The preview pane sometimes stops applying streamed updates and every page sits
   on `loading.tsx` for ever. Check with curl before believing it — see RUNBOOK
+- `tokens:record` writes to the **most recent** run and its figures come from a
+  person — never paste numbers out of a usage line
 - Tailwind's spacing scale is **replaced**, keys 0-12 only. `py-0.5`, `h-14`,
   `py-16` emit nothing and fail silently — use an arbitrary value like `h-[6px]`
