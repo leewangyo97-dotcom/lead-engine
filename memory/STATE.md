@@ -11,10 +11,11 @@ Last updated: 2026-09-10 · Phase: **all six complete, plus geo prospect discove
 4, 7 and 8 September all green; weekends correctly skipped. 341 leads, 44
 harvested in the last six days, 446 prospects, 357 tests passing.
 
-**Five sends, no replies yet.** Two leads by email (This Dot Labs, Atria) and
-three prospects by WhatsApp and email, all logged on Wednesday 9 September. The
+**Fifteen sends, no replies yet.** Two leads by email (This Dot Labs, Atria) and
+thirteen prospects by WhatsApp and email, all on Wednesday 9 September, one row
+per prospect — the reopen window is holding, no click storm this time. The
 ladder is armed for the first time: day 4 comes due 13 September. `/review`
-still says nothing — it wants 20 sends before it will call a difference real.
+wants 20 sends before it will call a difference real, so it is close.
 
 Two live chores: the Gmail refresh token expires seven days after each
 `pnpm gmail:auth` while the consent screen is in Testing (it expired 8
@@ -93,6 +94,10 @@ Nothing.
 
 ## Recently done
 
+- 2026-09-10 — `/review` gained the score distribution (Figma 3:1694). It is the
+  only thing on that page that can see leads nothing was ever sent to, so a
+  scorer collapsed into one band stops looking like silence. Production draws
+  0 / 6 / 51 / 66 / 49 across the five bands.
 - 2026-09-10 — `/settings` now says whether Gmail will accept a draft right now,
   by refreshing the token. The only previous signal was `pnpm gmail:drafts`
   failing at the end of a run.

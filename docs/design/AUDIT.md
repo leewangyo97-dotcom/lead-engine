@@ -154,8 +154,8 @@ which asks the reader to remember what step 2 means and how many rungs are left.
 `ladderRungs()` in `lib/followups.ts`, so the labels come from `LADDER_DAYS`
 rather than being written twice, and the count sits under the heading per
 3:1431. The rung states are unit-tested; the track has not yet been seen with
-real data: all five sends went out on Wednesday 9 September, so the first rung
-comes due on 13 September.
+real data: every send went out on Wednesday 9 September, so the first rung comes
+due on 13 September.
 
 The SENT date column and the "View draft" button are not added: the row already
 carries days-since-last-touch, and there is no draft to view until `/daily-run`
@@ -202,3 +202,30 @@ web, and this pipeline is driven by cron and the CLI; the weights and
 preferences are editable in the design, but they live in `memory/RUBRIC.md` and
 in code, so a form would need a second source of truth that can disagree with
 the first. Tuning a weight is a commit.
+
+## weekly-review-lg (3:1627)
+
+The design has a dated subtitle, five stat tiles, a Score Distribution card, a
+Top Sources ranking and a Response Rate by Day column chart.
+
+Score Distribution is now built (`lib/review/distribution.ts`, one query over
+the newest score per lead, five bands high-first, bars scaled to the largest
+band). It answers something the outcome tables structurally cannot: they only
+see leads that were sent something, so a scorer collapsed into one band reads as
+silence rather than as a fault. Against production it draws 0 / 6 / 51 / 66 / 49
+across the five bands.
+
+The rest stays out:
+
+- **The date range.** 3:1662 reads "Aug 25 - Sep 1". This review is not windowed
+  — with fifteen sends in total, a seven-day window would be empty most weeks —
+  so the page says "all time" rather than printing a range the numbers do not
+  obey.
+- **Response Rate by Day as bars.** The data is there and the app already shows
+  it as a table, which withholds a rate below five sends. Bars cannot withhold:
+  a column drawn at 0% and a column withheld for lack of evidence look the same,
+  and the whole point of that rule is that they are not.
+- **Top Sources.** Lead counts per source are on `/settings`, where the source
+  list already lives. This page is about outcomes.
+- **Stat tiles.** The inbox has them. Repeating them here would be a second
+  place for the same numbers to be right or wrong in.
