@@ -1,6 +1,7 @@
 import { getInbox, getJudgedCount, tierOf } from "@/lib/leads/queries";
 import { getPipelineFaults } from "@/lib/leads/health-query";
 import { getInboxStats } from "@/lib/leads/stats";
+import { getAwaitingSend } from "@/lib/leads/awaiting-send";
 import { Shell } from "./components/shell";
 import { StatTiles } from "./components/stat-tiles";
 import { InboxList } from "./components/inbox-list";
@@ -57,10 +58,11 @@ export default async function Inbox({
   const { tab } = await searchParams;
   const active = TABS.find((t) => t.key === tab) ?? TABS[2];
 
-  const [all, faults, stats] = await Promise.all([
+  const [all, faults, stats, awaiting] = await Promise.all([
     getInbox(),
     getPipelineFaults(),
     getInboxStats(),
+    getAwaitingSend(),
   ]);
 
   // Filtering here rather than in SQL: the triage list is capped by the
@@ -94,6 +96,55 @@ export default async function Inbox({
         <div className="mt-5">
           <StatTiles stats={stats} />
         </div>
+
+        {awaiting.length > 0 && (
+          /* The one queue with a deadline. A draft in Gmail was invisible here
+             until now, so an application could sit unsent for a week while every
+             screen reported nothing outstanding. */
+          <section
+            aria-label="Drafts awaiting send"
+            className="mt-5 rounded-md border border-rule bg-surface p-5"
+          >
+            <p className="text-label uppercase text-muted">
+              {awaiting.length} draft{awaiting.length === 1 ? "" : "s"} waiting in Gmail
+            </p>
+            <ul className="mt-3 flex flex-col gap-2">
+              {awaiting.map((d) => (
+                <li key={d.leadId} className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <a
+                    href={`/lead/${d.leadId}`}
+                    className="text-body-sm text-primary underline underline-offset-2"
+                  >
+                    {d.company}
+                  </a>
+                  <span className="text-body-sm text-muted">{d.title}</span>
+                  <span
+                    title={
+                      d.age === "cold"
+                        ? "The posting has probably closed — worth checking before sending"
+                        : d.age === "stale"
+                          ? "Going cold: postings fill and threads get buried"
+                          : "Written recently"
+                    }
+                    className={`font-mono text-data-sm tabular-nums ${
+                      d.age === "cold"
+                        ? "text-stop"
+                        : d.age === "stale"
+                          ? "text-hold"
+                          : "text-faint"
+                    }`}
+                  >
+                    {d.ageDays === 0 ? "today" : `${d.ageDays}d old`}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-3 text-caption text-faint">
+              Read each one in Gmail, send it, then mark it sent on the lead so the follow-up
+              ladder starts.
+            </p>
+          </section>
+        )}
 
         {faults.length > 0 && (
           <div

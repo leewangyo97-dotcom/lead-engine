@@ -4,6 +4,7 @@ import { getDb } from "../lib/db";
 import { loadLocalEnv } from "../lib/env";
 import { leads, prospects, runMetrics, sources } from "../lib/db/schema";
 import { pipelineFaults, pipelineWarnings } from "../lib/health";
+import { getAwaitingSend } from "../lib/leads/awaiting-send";
 
 /**
  * The funnel, printed into the Actions log. This is the only place a quiet
@@ -56,6 +57,18 @@ async function main() {
       declined: sql<number>`count(*) filter (where status = 'do_not_contact')::int`,
     })
     .from(prospects);
+
+  // Drafts waiting in Gmail, oldest first. This is the only queue in the project
+  // with a deadline: a posting fills, the thread is buried, and an application
+  // sent three weeks late reads as one nobody cared to send on time.
+  const awaiting = await getAwaitingSend();
+  if (awaiting.length > 0) {
+    const worst = awaiting[0];
+    console.log(
+      `awaiting send: ${awaiting.length} draft(s) in Gmail, oldest ${worst.ageDays}d (${worst.company})` +
+        (worst.age === "cold" ? " — the posting has probably closed" : ""),
+    );
+  }
 
   if (geo && geo.total > 0) {
     console.log(
