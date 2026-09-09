@@ -29,7 +29,8 @@ export function ProspectContact({ id, whatsapp, email, contacted, declined, stat
   // is worse than one that asks. It needs asking — undoing this means editing
   // the suppression list by hand.
   const [confirming, setConfirming] = useState(false);
-  const [mailto, setMailto] = useState<string | null>(null);
+  // Held open until dismissed, for email only. See `open`.
+  const [sent, setSent] = useState<{ href: string; to?: string } | null>(null);
 
   async function markDeclined() {
     setBusy("decline");
@@ -45,16 +46,35 @@ export function ProspectContact({ id, whatsapp, email, contacted, declined, stat
     }
   }
 
+  /**
+   * Records the outreach, then hands over whatever the server said to open.
+   *
+   * WhatsApp opens a tab, because wa.me is a web page and always loads. Email
+   * cannot be treated the same way, and two attempts at it were both wrong.
+   *
+   * A mailto: set on a blank popup is ignored by browsers. Setting it on the
+   * current window is ignored too when no mail client is registered — silently,
+   * with no event to detect it. The fallback address that was meant to cover
+   * that never appeared either, because `router.refresh()` ran in the same
+   * breath: logging a contact sets the prospect to `contacted`, the top-25
+   * queue only lists `new`, so the row this component lives in was removed from
+   * the page and took the address with it.
+   *
+   * The visible result was a button that did nothing while quietly spending a
+   * prospect: the send logged, no mail window, no address, and the row gone.
+   *
+   * So email holds the row open instead. The panel carries a real anchor — a
+   * link the person clicks is the reliable way to reach a mail handler, unlike
+   * an assignment the browser may drop — and the address beside it, and nothing
+   * refreshes until they say they are done.
+   */
   async function open(channel: "whatsapp" | "email") {
     setBusy(channel);
     setError(null);
-    setMailto(null);
+    setSent(null);
 
-    // Only a web link gets a tab. A mailto: set on a blank popup is ignored by
-    // most browsers — the click appeared to do nothing at all, which is how this
-    // was found — so email hands the URL to the current window and lets the OS
-    // mail handler take it. Opened before the await either way: a popup blocker
-    // only trusts a window opened in the click's own turn.
+    // A popup blocker only trusts a window opened in the click's own turn, so
+    // this cannot wait for the await.
     const tab = channel === "whatsapp" ? window.open("", "_blank") : null;
 
     try {
@@ -71,14 +91,14 @@ export function ProspectContact({ id, whatsapp, email, contacted, declined, stat
         return;
       }
 
-      if (tab) tab.location.href = data.href;
-      else window.location.href = data.href;
+      if (channel === "whatsapp") {
+        if (tab) tab.location.href = data.href;
+        else window.location.href = data.href;
+        router.refresh();
+        return;
+      }
 
-      // Nothing opens if no mail client is registered, and the browser gives no
-      // event to detect that. Showing the address means the click is never a
-      // dead end: the message is already logged, so it can be sent by hand.
-      if (channel === "email" && data.to) setMailto(data.to);
-      router.refresh();
+      setSent({ href: data.href, to: data.to });
     } catch {
       tab?.close();
       setError("could not reach the server");
@@ -236,11 +256,29 @@ export function ProspectContact({ id, whatsapp, email, contacted, declined, stat
       {!whatsapp.available && whatsapp.reason && (
         <span className="text-caption text-faint">{whatsapp.reason}</span>
       )}
-      {mailto && (
-        <span className="text-caption text-muted">
-          logged. If your mail app did not open, write to{" "}
-          <span className="font-mono text-data-sm text-secondary">{mailto}</span>
-        </span>
+      {sent && (
+        <div className="mt-1 flex flex-col items-start gap-1 rounded-xs border border-rule bg-sunk p-3">
+          <span className="text-caption text-muted">Logged. Open it in your mail app:</span>
+          <a href={sent.href} className="text-body-sm text-accent underline underline-offset-2">
+            Compose the email
+          </a>
+          {sent.to && (
+            <span className="text-caption text-muted">
+              or write to{" "}
+              <span className="font-mono text-data-sm text-secondary">{sent.to}</span>
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              setSent(null);
+              router.refresh();
+            }}
+            className="text-caption text-secondary underline underline-offset-2 hover:text-primary"
+          >
+            done
+          </button>
+        </div>
       )}
 
       {error && (

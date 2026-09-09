@@ -11,6 +11,67 @@ function label(category: string): string {
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
 
+const DRAIN = "pnpm search:run --drain";
+
+/**
+ * What to do about a search that cannot run in a request.
+ *
+ * A country resolves to an OpenStreetMap area rather than a radius, and querying
+ * one takes minutes — longer than a serverless function may run. So it is
+ * queued, and the only thing that empties the queue is the worker on the command
+ * line. Saying that plainly, with the command to hand, is the difference between
+ * a queue and a dead end.
+ */
+function QueuedPanel({
+  searchId,
+  resolvedName,
+  copied,
+  onCopied,
+}: {
+  searchId: string;
+  resolvedName?: string;
+  copied: boolean;
+  onCopied: (v: boolean) => void;
+}) {
+  return (
+    <div className="mt-4 rounded-sm border border-hold bg-hold-tint p-4 text-body-sm">
+      <p className="text-primary">
+        Queued{resolvedName ? `: ${resolvedName.split(",")[0]}` : ""} — this is a whole area, not a
+        radius. A country-wide OpenStreetMap query takes minutes, which is longer than a web request
+        may stay open, so nothing is running yet.
+      </p>
+      <p className="mt-3 text-secondary">Start the worker in a terminal:</p>
+      <div className="mt-2 flex flex-wrap items-center gap-3">
+        <code className="rounded-xs border border-rule bg-surface px-3 py-1 font-mono text-data">
+          {DRAIN}
+        </code>
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(DRAIN);
+              onCopied(true);
+            } catch {
+              // Clipboard access is refused in some contexts. The command is on
+              // screen either way, so this only stops claiming it was copied.
+              onCopied(false);
+            }
+          }}
+          className="text-caption text-secondary underline underline-offset-2 hover:text-primary"
+        >
+          {copied ? "copied" : "copy"}
+        </button>
+      </div>
+      <p className="mt-3 text-caption text-muted">
+        It drains every queued search, this one included. When it finishes, the search appears under
+        Recent searches above — its chip reads <span className="font-mono text-data">queued</span>
+        {" "}until then. Search id{" "}
+        <span className="font-mono text-data-sm text-secondary">{searchId}</span>.
+      </p>
+    </div>
+  );
+}
+
 export function ProspectSearchForm({
   defaultQuery = "",
   defaultCategories,
@@ -28,7 +89,8 @@ export function ProspectSearchForm({
   const [radiusKm, setRadiusKm] = useState(15);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [note, setNote] = useState<string | null>(null);
+  const [queued, setQueued] = useState<{ searchId: string; resolvedName?: string } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   // A country resolves to an admin area, where a radius is meaningless. The
   // input only knows after geocoding, so this is a hint rather than a guarantee.
@@ -38,7 +100,8 @@ export function ProspectSearchForm({
     e.preventDefault();
     setBusy(true);
     setError(null);
-    setNote(null);
+    setQueued(null);
+    setCopied(false);
 
     try {
       const res = await fetch("/api/searches", {
@@ -53,7 +116,11 @@ export function ProspectSearchForm({
         return;
       }
       if (data.queued) {
-        setNote(data.note);
+        // Not the API's sentence. It said "Whole-country searches run in the
+        // background. Run `pnpm search:run --drain`." — accurate, and read as
+        // nothing happened: no worker runs by itself, so a person who does not
+        // go to a terminal is waiting for something that will never start.
+        setQueued({ searchId: data.searchId, resolvedName: data.resolvedName });
         return;
       }
       router.push(`/prospects?search=${data.searchId}` as Route);
@@ -139,9 +206,7 @@ export function ProspectSearchForm({
           {error}
         </p>
       )}
-      {note && (
-        <p className="mt-4 rounded-sm border border-hold bg-hold-tint p-3 text-body-sm">{note}</p>
-      )}
+      {queued && <QueuedPanel {...queued} copied={copied} onCopied={setCopied} />}
     </form>
   );
 }

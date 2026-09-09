@@ -48,6 +48,18 @@ function tsxFiles(dir: string): string[] {
   });
 }
 
+/**
+ * Comments out, before anything is matched.
+ *
+ * The scan reads raw source, and prose collides with the pattern: a comment
+ * saying "the top-25 queue only lists new" was reported as a dead `top-25`
+ * class. A CSS check that fails on an English sentence teaches people to
+ * reword comments, which is the wrong lesson.
+ */
+function stripComments(source: string): string {
+  return source.replace(/\/\*[\s\S]*?\*\//g, " ").replace(new RegExp("//[^\\n]*", "g"), " ");
+}
+
 /** Every `<prefix>-<number>` class in a file, with any responsive prefix dropped. */
 function spacingClasses(source: string): string[] {
   const pattern = new RegExp(
@@ -56,7 +68,7 @@ function spacingClasses(source: string): string[] {
       String.raw`)-(\d+(?:\.\d+)?)(?![\w.[-])`,
     "g",
   );
-  return [...source.matchAll(pattern)].map((m) => `${m[1]}-${m[2]}`);
+  return [...stripComments(source).matchAll(pattern)].map((m) => `${m[1]}-${m[2]}`);
 }
 
 describe("the spacing scale", () => {

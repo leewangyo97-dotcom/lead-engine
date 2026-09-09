@@ -1,0 +1,80 @@
+import { readFileSync } from "node:fs";
+import { describe, expect, it } from "vitest";
+
+/**
+ * The email button has now been broken twice in the same way, and neither break
+ * was visible from any unit test — there is no DOM test setup here, and the
+ * failure was a browser behaviour rather than a wrong value.
+ *
+ * What both breaks have in common is a shape in the source, so this checks the
+ * shape.
+ *
+ * 1. `window.open("", "_blank")` then a `mailto:` on the popup. Browsers ignore
+ *    it; the click did nothing.
+ * 2. `window.location.href = "mailto:..."` followed immediately by
+ *    `router.refresh()`. With no mail client registered the assignment does
+ *    nothing, and the refresh removed the row — logging a contact sets the
+ *    prospect to `contacted`, and the queue only lists `new` — so the fallback
+ *    address was unmounted before anyone could read it. A click that spends a
+ *    prospect and leaves nothing on screen.
+ *
+ * The rule that comes out of it: after an email is logged, the person must be
+ * left holding something they can act on. A real anchor, and no refresh until
+ * they dismiss it.
+ */
+const SOURCE = readFileSync("app/components/prospect-contact.tsx", "utf8");
+
+/** The body of `async function open(...)`, up to the next top-level function. */
+function openBody(): string {
+  const start = SOURCE.indexOf("async function open(");
+  expect(start).toBeGreaterThan(-1);
+  const rest = SOURCE.slice(start);
+  const end = rest.indexOf("\n  if (declined)");
+  return end === -1 ? rest : rest.slice(0, end);
+}
+
+describe("the prospect email path", () => {
+  it("assigns a href to a window only inside the whatsapp branch", () => {
+    // Both old shapes were an assignment reached on the email path: first the
+    // blank popup, then the current window. Every assignment must now sit
+    // between the whatsapp guard and the point where the email path takes over.
+    const body = openBody();
+    const whatsappFrom = body.indexOf('channel === "whatsapp"');
+    const emailFrom = body.indexOf("setSent({");
+    expect(whatsappFrom).toBeGreaterThan(-1);
+    expect(emailFrom).toBeGreaterThan(whatsappFrom);
+
+    const assignments = [...body.matchAll(/location\.href\s*=/g)];
+    expect(assignments.length).toBeGreaterThan(0);
+    for (const match of assignments) {
+      expect(match.index).toBeGreaterThan(whatsappFrom);
+      expect(match.index).toBeLessThan(emailFrom);
+    }
+  });
+
+  it("keeps the whatsapp tab, which is a web page and does load", () => {
+    expect(openBody()).toMatch(/channel === "whatsapp"/);
+    expect(openBody()).toMatch(/window\.open\(""/);
+  });
+
+  it("hands the email href to state rather than to the browser", () => {
+    expect(openBody()).toMatch(/setSent\(\{\s*href: data\.href/);
+  });
+
+  it("does not refresh on the email branch", () => {
+    // The refresh belongs to whatsapp and to the dismiss button. One here would
+    // unmount the row and take the address with it.
+    const body = openBody();
+    const emailBranch = body.slice(body.indexOf("setSent({"));
+    expect(emailBranch).not.toMatch(/router\.refresh\(\)/);
+  });
+
+  it("renders a real anchor carrying the mailto, and the address beside it", () => {
+    expect(SOURCE).toMatch(/<a\s+href=\{sent\.href\}/);
+    expect(SOURCE).toMatch(/\{sent\.to\}/);
+  });
+
+  it("refreshes only when the panel is dismissed", () => {
+    expect(SOURCE).toMatch(/setSent\(null\);\s*\n\s*router\.refresh\(\);/);
+  });
+});

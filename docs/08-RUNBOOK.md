@@ -330,3 +330,28 @@ is not the stale-chunk fault below either.
 it. Every page here is a two-flush page — the shell streams its nav counts and
 the engine-health line behind Suspense — so this affects all of them equally,
 and a page that renders in one flush would still stream the shell.
+
+## A country-wide search sits at "queued" and nothing happens
+
+**Symptom.** `Search` on a place with no comma — "Australia" — returns a note and
+no rows. The chip under Recent searches reads `queued` for ever.
+
+**Why.** A country geocodes to an OpenStreetMap *area* rather than a point and
+radius. Querying an area that size takes minutes, longer than a serverless
+function may run, so `POST /api/searches` writes the row and stops. Nothing
+drains the queue on its own — there is no worker process, by design.
+
+**What to do.**
+
+```bash
+pnpm search:run --drain
+```
+
+It processes every queued search in order and prints found/new/dupes for each.
+The `/prospects` form now says this on screen with the command to copy, so the
+queued state is not a dead end. Expect minutes per country and the odd Overpass
+504 — that is load, not a fault; run it again.
+
+**If you did not mean to queue one**, search a city instead: anything with a
+comma ("Sydney, Australia") geocodes to a radius and runs inside the request in
+two or three seconds.

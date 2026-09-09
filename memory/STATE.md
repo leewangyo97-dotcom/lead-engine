@@ -94,6 +94,14 @@ Nothing.
 
 ## Recently done
 
+- 2026-09-10 — The prospect Email button logged a send and then deleted its own
+  row: logging sets the prospect to `contacted` and the top-25 queue lists only
+  `new`, so `router.refresh()` unmounted the fallback address. Nothing opened,
+  nothing showed, prospect spent. Email now holds the row open with a real
+  mailto anchor until dismissed; guarded by `tests/prospect-contact-source.test.ts`.
+- 2026-09-10 — A country-wide search queues and nothing drains it. `/prospects`
+  now says so with `pnpm search:run --drain` to copy, instead of a note that
+  read as "nothing happened".
 - 2026-09-10 — Placeholder figures from a usage line were recorded as real:
   run_metrics held "18 scored, 7 drafted" for a night when 2 leads survived the
   filter. Row restored to 0/0/null/null; `lib/model/record-guard.ts` now refuses
