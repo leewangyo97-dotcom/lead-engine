@@ -121,3 +121,44 @@ one context, three model calls, ~22k tokens.
 
 If it ever moves server-side, the switch is one adapter in `lib/model/` and the
 funnel above is unchanged — which is the point of keeping judgment separate from work.
+
+## Checking it
+
+Two commands, and they answer different questions.
+
+`pnpm tokens` reports what runs **actually cost**, from `run_metrics`. The model
+calls happen inside Claude Code rather than server-side, so those figures are
+written by the session that made them:
+
+```
+pnpm tokens:record --in 6000 --out 1200 --scored 18 --drafted 7
+```
+
+Until a run is recorded that way, every row reads `(not measured)` — which is
+where this project has been since Phase 1.
+
+`pnpm tokens:estimate` answers the half that needs no model. The payloads are
+built by deterministic code, so their size is knowable at any time. It runs the
+four real emitters — `leads-for-scoring`, `leads-for-drafting`, `followups-due`
+and `prospects-for-enhance` — and sizes what came out:
+
+```
+scoring     rows=    0 chars=     29 ~tokens=     8
+drafting    rows=    0 chars=     29 ~tokens=     8
+follow-ups  rows=    0 chars=     33 ~tokens=     9
+enhance     rows=prose chars=   6630 ~tokens=  1658
+
+payloads estimate 1683 tokens, within the 25000 target.
+```
+
+It exits non-zero over the 40,000 ceiling, so it can gate a run.
+
+Two things it is not. It is **input only** — output is small here by design, but
+it is not counted. And four characters to a token is a rule of thumb, not a
+tokeniser: a real count needs the model that will read the text. What it catches
+is the failure that actually happens, which is a payload several times its usual
+size because a filter stopped filtering — not a ten-percent drift.
+
+`rows=prose` means the emitter writes a prompt rather than JSON, so there is
+nothing to count. It is not the same as `rows=0`, which means the pipeline has
+nothing to send.

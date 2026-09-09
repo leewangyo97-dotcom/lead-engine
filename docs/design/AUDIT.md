@@ -229,3 +229,35 @@ The rest stays out:
   list already lives. This page is about outcomes.
 - **Stat tiles.** The inbox has them. Repeating them here would be a second
   place for the same numbers to be right or wrong in.
+
+## The small-screen set, closed out
+
+`draft-review-xs` (3:2076), `follow-ups-xs` (3:2128), `settings-xs` (3:2209) and
+`weekly-review-xs` (3:2290) are mobile layouts of screens already audited above.
+They carry the same chrome as the other xs frames — iOS status bar, MobileTopBar,
+fixed MobileBottomNav — and the same divergences already recorded for it, plus
+the pinned action bars noted for `lead-detail-xs`. Nothing in them changes a
+decision made above. That closes all seventeen frames.
+
+## The mock's numbers are illustrative, and contradict each other
+
+Worth writing down because it is a trap: the same value differs between frames,
+so no figure in this file is a specification.
+
+| Thing | Large frame | Small frame |
+|---|---|---|
+| Score bands | 0-20, 21-40, 41-60, 61-80, 81-100 (3:1696) | <70, 70-79, 80-89, 90-100 (3:2323) |
+| Scoring weights | 35 / 25 / 20 / 10 / 10 percent (3:1584) | 0.4 / 0.3 / 0.3 (3:2256) |
+| Weight names | Stack match, Seniority, Timezone overlap, Company revenue, Contract preference | Django experience, Remote time overlap, SaaS profile match |
+| Minimum score | 60 (3:1620) | 70 (3:2276) |
+| Auto-archive | 30 days (3:1625) | 14 days (3:2280) |
+| Sources | RemoteOK, WeWorkRemotely, LinkedIn Jobs | Hacker News Ask, Indeed SaaS feed, YC Work at a Startup |
+
+The Gmail account differs too — `alex.prokhorov@gmail.com` in one, "Connected as
+Alex" in the other — which is the clearest sign that this is a person's name in
+a mock rather than anything to implement.
+
+So: take structure, hierarchy and component anatomy from these frames. Take no
+number. The real thresholds live in `lib/scoring/*` and `memory/RUBRIC.md`, and
+the score bands built for `/review` are the large frame's because five bands of
+twenty divide the range evenly, not because the mock is authoritative.

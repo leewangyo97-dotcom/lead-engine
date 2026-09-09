@@ -94,6 +94,14 @@ Nothing.
 
 ## Recently done
 
+- 2026-09-10 — `pnpm tokens:estimate` sizes the four real model payloads without
+  a model, so the 25k target is checkable today rather than after someone
+  records a run by hand. Tonight: 1,683 estimated input tokens, nearly all of it
+  the enhance prompt. `pnpm tokens` still reads "(not measured)" and still needs
+  `tokens:record` after a real /daily-run.
+- 2026-09-10 — Figma screen audit finished, all seventeen frames. The mock's
+  numbers contradict each other between sizes (score bands, weights, thresholds,
+  source names), so structure comes from it and no figure does.
 - 2026-09-10 — `/review` gained the score distribution (Figma 3:1694). It is the
   only thing on that page that can see leads nothing was ever sent to, so a
   scorer collapsed into one band stops looking like silence. Production draws

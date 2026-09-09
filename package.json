@@ -26,6 +26,7 @@
     "gmail:auth": "tsx scripts/gmail-auth.ts",
     "gmail:drafts": "tsx scripts/create-gmail-drafts.ts",
     "tokens": "tsx scripts/tokens.ts",
+    "tokens:estimate": "tsx scripts/token-estimate.ts",
     "followups": "tsx scripts/followups-due.ts",
     "review": "tsx scripts/weekly-review.ts",
     "nightly": "pnpm harvest && pnpm prefilter",
