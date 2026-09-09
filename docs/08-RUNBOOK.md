@@ -171,6 +171,24 @@ would be harvested again if it reappeared.
 The monthly run prints both numbers, so "deleted 40 ... kept 3 that carry
 outreach history" is the expected shape.
 
+## Hydration errors mentioning `bis_skin_checked`
+
+Not this app. A Bitdefender-family browser extension rewrites the DOM before
+React loads, adding `bis_skin_checked` to divs and `bis_register` to `<body>`.
+React compares its own output against a document someone else has edited and
+reports a mismatch. Neither attribute appears anywhere in this repo — grep for
+them and you get nothing.
+
+It is usually cosmetic, but React's message is honest that it "won't be patched
+up": when hydration is abandoned the page can be left on its loading skeleton,
+which on this dark theme reads as a black screen.
+
+To confirm it is the extension, open the same page in a private window with
+extensions disabled. To fix it, turn that extension off for localhost. Do not
+paper over it with `suppressHydrationWarning` on `<body>` — the injected
+attributes are on nested divs too, so it would silence the warning without
+fixing the render, and hide a real mismatch later.
+
 ## The nightly run did not happen
 
 GitHub queues scheduled workflows and drops them under load — it skipped 2
