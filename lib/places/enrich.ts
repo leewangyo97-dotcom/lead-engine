@@ -1,4 +1,4 @@
-import { and, eq, isNotNull, isNull } from "drizzle-orm";
+import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { getDb } from "../db";
 import { prospects } from "../db/schema";
 import { OSM_USER_AGENT } from "./nominatim";
@@ -273,6 +273,11 @@ export async function runEnrichment(
     })
     .from(prospects)
     .where(options.searchId ? and(pending, eq(prospects.searchId, options.searchId)) : pending)
+    // Best first. The nightly job enriches 25, and the queue reached 9,156 the
+    // day a country-wide search landed — unordered, that is a year of spending
+    // the budget on arbitrary rows while a reachable high scorer waits. Unscored
+    // rows sort last rather than as zero: not yet judged is not judged badly.
+    .orderBy(sql`${prospects.score} desc nulls last`, prospects.name)
     .limit(limit);
 
   const progress: EnrichProgress = {

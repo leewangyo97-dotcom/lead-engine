@@ -378,3 +378,37 @@ of the queue.
 
 **To retry a failed search**, set it back to `queued` and drain again — the
 content of the row is still good, only the write failed.
+
+## After a country-wide search
+
+One country changes the scale of everything downstream. Australia (clinics,
+veterinary, dentists) plus Australia (schools) plus a twelve-category Cebu City
+search took the table from 446 rows to 23,203 — 21 MB of a 512 MB database, so
+storage is not the constraint. These are:
+
+**Score them, or they are invisible.** `/prospects` sorts `score desc nulls
+last`, so 22,757 unscored rows sit below the few hundred that were already
+scored and never appear in the top 25.
+
+```bash
+pnpm prospects:score
+```
+
+Deterministic, no network, no model, and idempotent — 23,203 rows in about 11
+seconds now that it writes in batches rather than one statement per row.
+
+**Enrichment is the real bottleneck.** 9,156 of those rows have a website and
+are queued for enrichment, and the nightly job takes 25. That is a year of
+nights. It now takes the highest-scoring pending rows first, so the useful ones
+land in the first weeks, but the backlog is still a backlog. Three honest
+options:
+
+- Leave it. The queue is ordered, so the top of it is worked first.
+- Raise the nightly limit in `.github/workflows/nightly.yml`. Each row is one
+  HTTP fetch of someone's site, so this is politeness-bound, not cost-bound.
+- Delete a search that was not wanted: `delete from searches where id = '...'`
+  cascades to its prospects.
+
+**A search you did not mean to run** is worth deleting rather than leaving in the
+queue — a whole country of schools is 6,786 rows that will otherwise compete for
+enrichment budget for months.

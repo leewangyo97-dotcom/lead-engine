@@ -387,3 +387,17 @@ Phase work from 1 September, all closed:
   that false premise — harmless, and now asserted against the workflow file by
   tests/nightly-schedule.test.ts. The weekend false alarm fixed in the same
   session was real.
+
+## Per-search discovery figures, rotated out of STATE on 2026-09-10
+
+| Search | rows | websites | phones | emails |
+|---|---|---|---|---|
+| Cebu City — vets, clinics, dentists | 151 | 4 | 21 | 8 |
+| Austin — contractors, trades, pro services | 108 | 71 | 70 | 18 |
+| Sydney — contractors, trades, specialists | 187 | 75 | 64 | 21 |
+
+The country-wide searches that followed on 10 September: Australia
+clinics/veterinary/dentists 13,134 rows and 5,103 reachable; Australia schools
+6,786 and 2,105; a twelve-category Cebu City search 2,837 and 261. Cebu's
+reachability rate stays an order of magnitude below Australia's, which is the
+same finding at a hundred times the sample.

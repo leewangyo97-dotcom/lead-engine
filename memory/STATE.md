@@ -22,25 +22,25 @@ Two live chores: the Gmail refresh token expires seven days after each
 September — publishing the app ends the chore), and searches are manual, so
 prospect supply only grows when someone runs `pnpm search:run`.
 
+**23,203 prospects after the first country-wide searches** (Australia clinics/
+vet/dentists 13,134; Australia schools 6,786; a 12-category Cebu City search
+2,837). 7,643 reachable, 21 MB of a 512 MB database. All scored: 72 hot, 1,201
+warm, 21,930 cold. **9,156 are queued for enrichment and the nightly takes 25** —
+a year of nights, so the queue is now ordered by score. Deleting the schools
+search is a reasonable call; see RUNBOOK "After a country-wide search".
+
 **Geo prospect discovery is live in production.** `/prospects` searches
 OpenStreetMap by place and category, enriches websites, scores, and opens a
 pre-filled WhatsApp or email message. First real search (Cebu City — veterinary,
 clinics, dentists) found 151 businesses: 23 reachable, 4 with a website, 3
 enriched, 1 refused by its own robots.txt.
 
-Two markets, measured, and they behave nothing alike:
-
-| Search | rows | websites | phones | emails |
-|---|---|---|---|---|
-| Cebu City — vets, clinics, dentists | 151 | 4 | 21 | 8 |
-| Austin — contractors, trades, pro services | 108 | 71 | 70 | 18 |
-| Sydney — contractors, trades, specialists | 187 | 75 | 64 | 21 |
-
-In the Philippines almost nobody has a website, so WhatsApp is the only channel
-that reaches anyone and site-health scoring is inert. Abroad the opposite holds:
-US contractors had 33 websites in 37 rows, enrichment pulled real addresses off
-them, and the pitch has something to point at. `chooseChannel` picks per
-prospect for exactly this reason.
+Two markets, measured, and they behave nothing alike: in the Philippines almost
+nobody has a website (4 in 151 Cebu rows), so WhatsApp is the only channel that
+reaches anyone and site-health scoring is inert. Abroad the opposite holds — 71
+of 108 Austin rows had one, enrichment pulled real addresses off them, and the
+pitch has something to point at. `chooseChannel` picks per prospect for exactly
+this reason. Full per-search figures are in DECISIONS.
 
 Commands: `pnpm search:run "<place>" <categories>` · `pnpm enrich` ·
 `pnpm prospects:score` · `pnpm prospects:refresh` · `pnpm prospects:enhance` →
