@@ -333,3 +333,14 @@ since the start: 20 points for contract terms against a market advertising
 full-time roles. That is a decision about what work Joshua wants, not a
 threshold to tune.
 
+## Setup history, rotated out of STATE on 2026-09-09
+
+STATE.md hit its 150-line cap. These are closed and need no re-reading:
+
+- 2026-09-01 — Vercel deploy live, `/api/health` green.
+- 2026-09-01 — Neon linked, first migration applied, Neon MCP registered in
+  `.mcp.json`, Neon agent skills vendored into `.claude/skills/`.
+- 2026-09-01 — Phase 0 skeleton: app shell, Drizzle client, migrate script,
+  `runs` table for the Phase 3 keepalive, design-token layer, Vitest wired.
+- 2026-09-01 — Spec written: plan, architecture, stack, data model, UI, token
+  budget, features, orchestration. Agents, skills and memory bank defined.

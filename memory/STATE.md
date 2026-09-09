@@ -3,9 +3,29 @@
 **Cap: 150 lines.** When it exceeds that, roll closed items into `DECISIONS.md`
 and truncate. This file is read every session; every line costs tokens repeatedly.
 
-Last updated: 2026-09-02 · Phase: **all six complete, plus geo prospect discovery.**
+Last updated: 2026-09-09 · Phase: **all six complete, plus geo prospect discovery.**
 
 ## Right now
+
+**The machine ran unattended for a week and nothing broke.** Nightly runs on 3,
+4, 7 and 8 September all green; weekends correctly skipped. 341 leads, 44
+harvested in the last six days, 446 prospects, 298 tests passing.
+
+**Nothing has ever been sent.** `sent=0`, `contacted=0`, zero recorded outcomes.
+The follow-up ladder has never fired and the weekly review still needs 20 sends
+before it will say anything. Every remaining unknown in this project is
+downstream of that one number.
+
+Two live chores: the Gmail refresh token expires seven days after each
+`pnpm gmail:auth` while the consent screen is in Testing (it expired 8
+September — publishing the app ends the chore), and searches are manual, so
+prospect supply only grows when someone runs `pnpm search:run`.
+
+Corrected 2026-09-09: the "missed" nightly run of 2 September was not missed. It
+started at 20:24 UTC, four minutes after a check made at 04:20 Manila — the local
+date had rolled over and UTC had not. The cron was moved to 20:17 on a false
+premise; harmless, but the schedule was never broken. The weekend false alarm the
+same session fixed was real.
 
 **Geo prospect discovery is live in production.** `/prospects` searches
 OpenStreetMap by place and category, enriches websites, scores, and opens a
@@ -106,14 +126,6 @@ Nothing.
 - 2026-09-01 — Phase 1: full schema migrated, `hn-whoishiring` adapter, stack
   canonicaliser, `scripts/harvest.ts`, 10 tests. Exit test passes — second
   harvest inserts 0 rows.
-- 2026-09-01 — Vercel deploy live, `/api/health` green.
-- 2026-09-01 — Neon linked, first migration applied, Neon MCP registered in
-  `.mcp.json`, Neon agent skills vendored into `.claude/skills/`.
-- 2026-09-01 — Phase 0 skeleton: app shell, Drizzle client, migrate script,
-  `runs` table for the Phase 3 keepalive, design-token layer, Vitest wired.
-- 2026-09-01 — Spec written: plan, architecture, stack, data model, UI, token
-  budget, features, orchestration. Agents, skills and memory bank defined.
-
 ## Reminders that bite
 
 - WhatsApp capability needs `libphonenumber-js/max` — the default metadata
