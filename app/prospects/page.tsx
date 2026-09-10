@@ -9,10 +9,18 @@ import {
 import {
   getProspectStats,
   getProspects,
+  getQueueOptions,
   getSearch,
   getTopProspects,
   listSearches,
 } from "@/lib/places/prospect-queries";
+import {
+  categoryLabel,
+  filterHref,
+  isFiltered,
+  parseQueueFilter,
+  type QueueFilter,
+} from "@/lib/places/queue-filter";
 
 export const dynamic = "force-dynamic";
 
@@ -49,12 +57,64 @@ function Channel({
   );
 }
 
+/**
+ * The chips that narrow the queue.
+ *
+ * Each carries its count, because a chip that does not say how many rows are
+ * behind it is a guess — and the counts are the finding: 5,162 schools sitting
+ * above 1,206 clinics is why this exists. Clicking the active chip clears it, so
+ * a filter is never a one-way door.
+ */
+function FilterChips({
+  label,
+  active,
+  options,
+  current,
+  keyName,
+  format = (v: string) => v,
+}: {
+  label: string;
+  active?: string;
+  options: { name: string; count: number }[];
+  current: QueueFilter;
+  keyName: "city" | "category";
+  format?: (value: string) => string;
+}) {
+  if (!options.length) return null;
+  return (
+    <div className="mt-3 flex flex-wrap items-baseline gap-2">
+      <span className="mr-1 text-label uppercase text-muted">{label}</span>
+      {options.map((option) => {
+        const on = active === option.name;
+        return (
+          <a
+            key={option.name}
+            href={filterHref("/prospects", current, {
+              [keyName]: on ? undefined : option.name,
+            })}
+            aria-current={on ? "true" : undefined}
+            className={`rounded-xs border px-3 py-1 text-body-sm ${
+              on
+                ? "border-accent bg-accent-tint text-primary"
+                : "border-rule text-secondary hover:bg-hovered"
+            }`}
+          >
+            {format(option.name)}
+            <span className="ml-2 font-mono text-data-sm text-muted">{option.count}</span>
+          </a>
+        );
+      })}
+    </div>
+  );
+}
+
 export default async function Prospects({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string }>;
+  searchParams: Promise<{ search?: string; city?: string; category?: string }>;
 }) {
-  const { search: searchId } = await searchParams;
+  const { search: searchId, ...rest } = await searchParams;
+  const filter = parseQueueFilter(rest);
 
   // Four queries, and this page is dominated by their latency: it renders in
   // anything from 0.5s to 4.5s depending on how awake Neon is, which is what the
@@ -67,8 +127,11 @@ export default async function Prospects({
   // With no search chosen the rows are a work queue rather than an empty frame:
   // the best across every search, which is the question "who do I message next"
   // actually asks.
-  const rows = searchId ? await getProspects(searchId) : await getTopProspects();
+  const rows = searchId ? await getProspects(searchId) : await getTopProspects(25, filter);
   const stats = searchId ? await getProspectStats(searchId) : null;
+  // Only the queue is filterable. A search's own page answers "what did this
+  // search find", and narrowing that would answer a different question quietly.
+  const options = searchId ? null : await getQueueOptions();
 
   return (
     <Shell current="/prospects">
@@ -129,10 +192,46 @@ export default async function Prospects({
           </nav>
         )}
 
-        {!active && rows.length > 0 && (
-          <p className="mt-7 text-body-sm text-muted">
+        {!active && options && (
+          <div className="mt-7">
+            <FilterChips
+              label="Category"
+              active={filter.category}
+              options={options.categories}
+              current={filter}
+              keyName="category"
+              format={categoryLabel}
+            />
+            <FilterChips
+              label="City"
+              active={filter.city}
+              options={options.cities}
+              current={filter}
+              keyName="city"
+            />
+            {isFiltered(filter) && (
+              <p className="mt-3 text-body-sm text-muted">
+                {/* The count is kept apart from the category rather than agreed
+                    with it: "1 clinics" is wrong and singularising an arbitrary
+                    label ("veterinary" has no singular here) is not worth a
+                    lookup table. */}
+                Showing {rows.length} {rows.length === 1 ? "row" : "rows"}
+                {filter.category ? ` · ${categoryLabel(filter.category).toLowerCase()}` : ""}
+                {filter.city ? ` in ${filter.city}` : ""}.{" "}
+                <a className="text-accent underline underline-offset-2" href="/prospects">
+                  Clear
+                </a>
+              </p>
+            )}
+          </div>
+        )}
+
+        {!active && rows.length > 0 && !isFiltered(filter) && (
+          <p className="mt-5 text-body-sm text-muted">
             Best {rows.length} to message next, across every search. Contacted and declined rows
-            are not here — pick a search above to see everything it found.
+            are not here — pick a search above to see everything it found. Most rows carry no city:
+            OpenStreetMap names a suburb rather than a city in Australia, and only newly discovered
+            rows have it.
           </p>
         )}
 
@@ -158,7 +257,9 @@ export default async function Prospects({
               <p className="mt-6 rounded-md border border-rule bg-surface p-7 text-body text-muted">
                 {active?.status === "queued"
                   ? "Queued. Whole-country searches run in the background — run `pnpm search:run --drain`."
-                  : "Nothing found here. Try a wider radius or another category."}
+                  : isFiltered(filter)
+                    ? "Nothing in the queue matches that filter. Clear it, or pick another chip."
+                    : "Nothing found here. Try a wider radius or another category."}
               </p>
             ) : (
               <>

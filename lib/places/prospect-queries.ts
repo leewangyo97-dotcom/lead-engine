@@ -3,6 +3,7 @@ import { getDb } from "../db";
 import { prospects, searches } from "../db/schema";
 import { chooseChannel, type ContactOption } from "./contact";
 import { dedupeByPhone } from "./dedupe-queue";
+import type { QueueFilter } from "./queue-filter";
 import { isScoreProvisional, scoreProspect } from "./score";
 import { contactedIds } from "./outreach-log";
 
@@ -58,7 +59,61 @@ export async function listSearches(limit = 10) {
  * and declined rows are gone from it — this answers "who next", not "what did we
  * find".
  */
-export async function getTopProspects(limit = 25): Promise<ProspectRow[]> {
+/** The rows the queue draws from, before any narrowing. */
+const QUEUE_POPULATION = and(
+  eq(prospects.status, "new"),
+  or(isNotNull(prospects.phoneE164), isNotNull(prospects.email)),
+);
+
+/**
+ * What the queue can be narrowed by, with a count each.
+ *
+ * One query for both lists. A chip that does not say how many rows are behind it
+ * is a guess, and the counts are the reason to click one: 5,162 schools sitting
+ * above 1,206 clinics is the shape of this table, and invisible without them.
+ *
+ * Cities are capped because OpenStreetMap localities are a long tail — hundreds
+ * of Australian suburbs with one row each are not a filter, they are a list.
+ */
+export interface QueueOptions {
+  cities: { name: string; count: number }[];
+  categories: { name: string; count: number }[];
+}
+
+export async function getQueueOptions(cityLimit = 12): Promise<QueueOptions> {
+  const db = getDb();
+
+  const rows = await db.execute(sql`
+    with queue as (
+      select city, category from prospects
+      where status = 'new' and (phone_e164 is not null or email is not null)
+    )
+    -- Each arm is parenthesised: an unwrapped order-by-limit on the first
+    -- select binds to the whole union, which is a syntax error here and would
+    -- have been a wrong answer if it had parsed.
+    (
+      select 'city' as kind, city as name, count(*)::int as n
+        from queue where city is not null group by city
+        order by n desc limit ${cityLimit}
+    )
+    union all
+    (
+      select 'category' as kind, category as name, count(*)::int as n
+        from queue group by category order by n desc
+    )
+  `);
+
+  const all = rows.rows as unknown as { kind: string; name: string; n: number }[];
+  const pick = (kind: string) =>
+    all
+      .filter((r) => r.kind === kind)
+      .map((r) => ({ name: r.name, count: r.n }))
+      .sort((a, b) => b.count - a.count);
+
+  return { cities: pick("city"), categories: pick("category") };
+}
+
+export async function getTopProspects(limit = 25, filter: QueueFilter = {}): Promise<ProspectRow[]> {
   // Over-fetched, then thinned to one row per phone number. Ninety-five rows in
   // this table share a number with another business — a council switchboard
   // answering for twelve preschools — and serving those as separate work means
@@ -67,8 +122,9 @@ export async function getTopProspects(limit = 25): Promise<ProspectRow[]> {
   // it is one query either way.
   const rows = await queryProspects(
     and(
-      eq(prospects.status, "new"),
-      or(isNotNull(prospects.phoneE164), isNotNull(prospects.email)),
+      QUEUE_POPULATION,
+      filter.city ? eq(prospects.city, filter.city) : undefined,
+      filter.category ? eq(prospects.category, filter.category) : undefined,
     ),
     limit * 4,
   );

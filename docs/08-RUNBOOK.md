@@ -460,3 +460,37 @@ Enrichment had always applied `isUsableEmail` to addresses it scraped. Discovery
 trusted its source and did not. It now runs `firstUsableEmail`, which takes the
 first usable value out of a multi-value tag and returns null for a broken one.
 Both existing rows were corrected — one cleared, one recovered.
+
+## Narrowing the work queue
+
+`/prospects` with no search selected is the work queue, and it carries chips for
+category and city with a count on each:
+
+```
+/prospects?category=clinics
+/prospects?city=Cebu+City&category=clinics
+```
+
+The counts are the point. 5,162 schools sit above 1,206 clinics in this table,
+which is invisible until the chips say so. Clicking an active chip clears just
+that one; `Clear` drops both. An unknown category in a URL is ignored rather than
+matched, so a mistyped link shows the whole queue instead of an empty page.
+
+Only the queue filters. A search's own page (`?search=...`) answers "what did
+this search find", and narrowing that would quietly answer something else.
+
+**City is sparse, and that is an OpenStreetMap fact.** Australia names a suburb,
+not a city: `addr:city` was set on 217 of 20,107 Australian rows. The extractor
+now falls back through `addr:suburb`, `addr:town`, `addr:village`,
+`addr:municipality` and `addr:hamlet`, so newly discovered rows carry a locality
+— but rows already in the table keep whatever they were stored with until
+`pnpm prospects:refresh` reaches them, which is 200 a month.
+
+To fill them in sooner, raise that limit for one run:
+
+```bash
+pnpm prospects:refresh --limit=2000
+```
+
+Each row is an Overpass lookup, so this is politeness-bound. Do it in a few
+passes rather than all at once.

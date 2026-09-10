@@ -101,10 +101,39 @@ export function toRawPlace(
     whatsapp: tags["contact:whatsapp"],
     facebook: tags["contact:facebook"],
     addressLine: address || undefined,
-    city: tags["addr:city"],
+    city: localityOf(tags),
     postcode: tags["addr:postcode"],
     openingHours: tags.opening_hours,
   };
+}
+
+/**
+ * The locality a business is in, whatever OpenStreetMap calls it there.
+ *
+ * `addr:city` is the obvious tag and it is almost never set in Australia: 217 of
+ * 20,107 rows, because Australian addresses name a suburb, not a city. Reading
+ * only `addr:city` left the city column 97% empty and made it useless to filter
+ * or sort by — the data was there under a different key the whole time.
+ *
+ * Order matters: city first where it exists, then the more local names. A
+ * suburb is a better answer than a state, and any of them beats null.
+ */
+export function localityOf(tags: Record<string, string | undefined>): string | undefined {
+  // Each candidate is trimmed before it is judged. `??` alone would let a tag
+  // present but blank — `addr:city=" "` — win over a suburb that has a real
+  // value, since only null and undefined fall through it.
+  for (const key of [
+    "addr:city",
+    "addr:suburb",
+    "addr:town",
+    "addr:village",
+    "addr:municipality",
+    "addr:hamlet",
+  ]) {
+    const value = tags[key]?.trim();
+    if (value) return value;
+  }
+  return undefined;
 }
 
 /**

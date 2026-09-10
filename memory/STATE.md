@@ -9,7 +9,7 @@ Last updated: 2026-09-10 · Phase: **all six complete, plus geo prospect discove
 
 **The machine ran unattended for a week and nothing broke.** Nightly runs on 3,
 4, 7 and 8 September all green; weekends correctly skipped. 341 leads, 44
-harvested in the last six days, 414 tests passing. Prospect counts are below —
+harvested in the last six days, 433 tests passing. Prospect counts are below —
 they moved by two orders of magnitude on 10 September.
 
 **Fifteen sends, no replies yet.** Two leads by email (This Dot Labs, Atria) and
@@ -77,6 +77,11 @@ Nothing.
 
 ## Recently done
 
+- 2026-09-10 — `/prospects` queue now filters by category and city, chips with
+  counts, both combinable and each clearable. Behind it: `addr:city` is set on
+  217 of 20,107 Australian rows because OSM names a suburb there, so the
+  extractor falls back through suburb/town/village/municipality/hamlet. Existing
+  rows fill in as `prospects:refresh` reaches them.
 - 2026-09-10 — 95 rows share a phone with another business (twelve preschools on
   one council switchboard). The queue served them as separate work — twelve
   messages to one number — and now keeps the best row per number. Also: OSM
