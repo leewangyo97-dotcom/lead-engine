@@ -419,3 +419,14 @@ same finding at a hundred times the sample.
   refuses any class the scale has no key for.
 - 2026-09-10 — `/followups` draws the ladder as a track (Sent, Day 4, Day 11)
   from `ladderRungs()`, per Figma 3:1437, instead of printing "step 2".
+
+## Rotated out of STATE on 2026-09-10 (fourth pass)
+
+- `/settings` reports whether Gmail will accept a draft, by refreshing the token.
+  The only previous signal was `pnpm gmail:drafts` failing at the end of a run.
+- `lib/health.ts` computed the run schedule from `0 20` after the cron moved to
+  `17 20`; grace absorbed it so it never showed. `tests/nightly-schedule.test.ts`
+  parses the workflow and fails if the two copies drift again.
+- A country-wide search queues and nothing drains it. `/prospects` says so with
+  `pnpm search:run --drain` to copy, instead of a note that read as "nothing
+  happened".

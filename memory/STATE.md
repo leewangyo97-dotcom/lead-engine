@@ -108,9 +108,6 @@ Nothing.
   `new`, so `router.refresh()` unmounted the fallback address. Nothing opened,
   nothing showed, prospect spent. Email now holds the row open with a real
   mailto anchor until dismissed; guarded by `tests/prospect-contact-source.test.ts`.
-- 2026-09-10 — A country-wide search queues and nothing drains it. `/prospects`
-  now says so with `pnpm search:run --drain` to copy, instead of a note that
-  read as "nothing happened".
 - 2026-09-10 — `pnpm tokens:estimate` sizes the four real model payloads without
   a model, so the 25k target is checkable today rather than after someone
   records a run by hand. Tonight: 1,683 estimated input tokens, nearly all of it
@@ -120,16 +117,10 @@ Nothing.
   only thing on that page that can see leads nothing was ever sent to, so a
   scorer collapsed into one band stops looking like silence. Production draws
   0 / 6 / 51 / 66 / 49 across the five bands.
-- 2026-09-10 — `/settings` now says whether Gmail will accept a draft right now,
-  by refreshing the token. The only previous signal was `pnpm gmail:drafts`
-  failing at the end of a run.
 - 2026-09-10 — Figma second pass: the lead header now carries the design's
   ScoreMeter (3:1048 / 3:1973), which the page had never shown above the fold.
   The four 360px frames are audited and the mobile bottom nav is recorded as
   deliberate divergence — the nav is six items now, not the design's four.
-- 2026-09-10 — `lib/health.ts` computed the run schedule from `0 20` after the
-  cron moved to `17 20`. Grace absorbed it, so it never showed. A test now
-  parses the workflow and fails if the two copies drift again.
 
 ## Reminders that bite
 
