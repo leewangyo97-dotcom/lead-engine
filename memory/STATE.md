@@ -46,8 +46,7 @@ enriches (25) and re-scores; monthly refreshes map data.
 
 
 
-The working copy is `C:\dev\lead-engine`. `F:\lead-engine` is corrupted NTFS
-wreckage awaiting `chkdsk F: /f /r`.
+Working copy `C:\dev\lead-engine`; `F:\lead-engine` is corrupt, awaiting chkdsk.
 
 ## Seventeen enhanced drafts are waiting, all verified
 
