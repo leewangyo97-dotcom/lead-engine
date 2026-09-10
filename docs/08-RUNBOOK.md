@@ -412,3 +412,19 @@ options:
 **A search you did not mean to run** is worth deleting rather than leaving in the
 queue — a whole country of schools is 6,786 rows that will otherwise compete for
 enrichment budget for months.
+
+## Retention covers leads, not prospects
+
+`pnpm retention` prunes leads in a dead status (`disqualified`, `parked`,
+`closed`) after 45 days. It does not touch `prospects` at all, so that table only
+grows — 23,203 rows and 12 MB as of 10 September, against a 512 MB database.
+
+That is deliberate for now rather than an oversight, and it is written down here
+so the monthly job's "storage stays flat" comment is not read as covering both.
+At this rate the ceiling is roughly a million rows, which is years away, and any
+prospect deletion policy is a judgment about someone's own lead list — a
+`do_not_contact` row in particular is the record of a refusal and deleting it
+would lose the reason the suppression exists.
+
+If it ever needs cutting, the honest order is: a search nobody worked, whole
+(`delete from searches where id = '...'` cascades), before any per-row rule.

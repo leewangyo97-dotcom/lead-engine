@@ -1,5 +1,5 @@
 import { Suspense, type ReactNode } from "react";
-import { cachedNavStatus } from "@/lib/nav-status";
+import { cachedNavStatus, formatCount } from "@/lib/nav-status";
 
 /**
  * The app shell from `inbox-populated-lg` (Figma 3:787): a 56px topbar over a
@@ -190,8 +190,11 @@ async function NavCount({ href }: { href: string }) {
   const count = status?.counts[href];
   if (!count) return null;
   return (
-    <span className="ml-auto hidden rounded-xs bg-sunk px-2 py-1 font-mono text-data-sm tabular-nums text-muted md:inline">
-      {count}
+    <span
+      title={`${count.toLocaleString()} waiting`}
+      className="ml-auto hidden rounded-xs bg-sunk px-2 py-1 font-mono text-data-sm tabular-nums text-muted md:inline"
+    >
+      {formatCount(count)}
     </span>
   );
 }

@@ -83,6 +83,19 @@ export function classifyHealth(
 }
 
 /**
+ * What a badge prints.
+ *
+ * The prospects badge read 7627 the day a country-wide search landed. It was
+ * accurate and useless: the badge answers "does this section hold work", the
+ * page it points at shows the best 25, and a four-digit number in a 220px rail
+ * is a layout problem rather than information. Past a thousand the exact figure
+ * tells the reader nothing they can act on.
+ */
+export function formatCount(n: number): string {
+  return n > 999 ? "999+" : String(n);
+}
+
+/**
  * One query per request, however many badges ask for it.
  *
  * React's `cache` dedupes the call across the six nav items and the health line;
