@@ -119,16 +119,6 @@ on `pay`, which ranks nothing.
   page computes one at a time, so an empty inbox can be told apart from a broken
   filter. Rubric maxima moved out of the lead page into `prescore.ts` — they were
   a second copy.
-- 2026-09-10 — The prospect Email button logged a send and then deleted its own
-  row: logging sets the prospect to `contacted` and the top-25 queue lists only
-  `new`, so `router.refresh()` unmounted the fallback address. Nothing opened,
-  nothing showed, prospect spent. Email now holds the row open with a real
-  mailto anchor until dismissed; guarded by `tests/prospect-contact-source.test.ts`.
-- 2026-09-10 — `pnpm tokens:estimate` sizes the four real model payloads without
-  a model, so the 25k target is checkable today rather than after someone
-  records a run by hand. Tonight: 1,683 estimated input tokens, nearly all of it
-  the enhance prompt. `pnpm tokens` still reads "(not measured)" and still needs
-  `tokens:record` after a real /daily-run.
 - 2026-09-10 — Figma second pass: the lead header now carries the design's
   ScoreMeter (3:1048 / 3:1973), which the page had never shown above the fold.
   The four 360px frames are audited and the mobile bottom nav is recorded as

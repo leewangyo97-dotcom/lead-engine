@@ -540,3 +540,12 @@ worth building", not "is this definitely worthless".
   rows share a phone, so a blind delete would let businesses that genuinely
   refused back into the queue. Verified on the real council switchboard: undo A
   released 0 and kept 2, undo B released 2.
+
+- `pnpm tokens:estimate` sizes the four real model payloads without a model, so
+  the 25k target is checkable at any time rather than only after someone records
+  a run by hand. `pnpm tokens` still reads "(not measured)".
+- The prospect Email button logged a send and then deleted its own row: logging
+  sets the prospect to `contacted` and the top-25 queue lists only `new`, so
+  `router.refresh()` unmounted the fallback address. Nothing opened, nothing
+  showed, prospect spent. Email holds the row open with a real mailto anchor
+  until dismissed; guarded by `tests/prospect-contact-source.test.ts`.
