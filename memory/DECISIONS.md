@@ -454,3 +454,17 @@ same finding at a hundred times the sample.
   calendar 3:308, list 3:307, settings 3:309), replacing Lucide paths that were a
   different drawing at a heavier stroke. Weekly review has no counterpart in the
   set and says so. The other 34 symbols stay unimported.
+
+## Rotated out of STATE on 2026-09-10 (seventh pass)
+
+- 95 prospect rows share a phone with another business (twelve preschools on one
+  council switchboard). The queue served them as separate work — twelve messages
+  to one number — and now keeps the best row per number. OSM emails were also
+  stored unvalidated, so a no-TLD address and a `;`-separated pair both got in;
+  discovery runs `firstUsableEmail` now and both rows were corrected.
+- `search:run --drain` died with "Maximum call stack size exceeded": one INSERT
+  of tens of thousands of rows, which Drizzle cannot build (it merges SQL
+  fragments recursively) and Postgres would refuse at 65,535 bind parameters.
+  `persist` writes in batches of 500 (`lib/chunk.ts`). A city search with 12
+  categories had failed the same way with a different message. The drain names
+  each search before starting it and no longer strands the queue on one failure.

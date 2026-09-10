@@ -113,18 +113,6 @@ leads score 15/15 on `pay`, which ranks nothing.
   217 of 20,107 Australian rows because OSM names a suburb there, so the
   extractor falls back through suburb/town/village/municipality/hamlet. Existing
   rows fill in as `prospects:refresh` reaches them.
-- 2026-09-10 — 95 rows share a phone with another business (twelve preschools on
-  one council switchboard). The queue served them as separate work — twelve
-  messages to one number — and now keeps the best row per number. Also: OSM
-  emails were stored unvalidated, so a no-TLD address and a `;`-separated pair
-  both got in. Discovery now runs `firstUsableEmail`; both rows corrected.
-- 2026-09-10 — `search:run --drain` died with "Maximum call stack size
-  exceeded": one INSERT of tens of thousands of rows, which Drizzle cannot even
-  build (it merges SQL fragments recursively) and Postgres would refuse anyway at
-  65,535 bind parameters. `persist` now writes in batches of 500 (`lib/chunk.ts`).
-  A city search with 12 categories had failed the same way with a different
-  message. The drain also names each search before starting it and no longer
-  strands the queue when one fails.
 - 2026-09-10 — The prospect Email button logged a send and then deleted its own
   row: logging sets the prospect to `contacted` and the top-25 queue lists only
   `new`, so `router.refresh()` unmounted the fallback address. Nothing opened,
