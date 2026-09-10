@@ -119,13 +119,6 @@ on `pay`, which ranks nothing.
   page computes one at a time, so an empty inbox can be told apart from a broken
   filter. Rubric maxima moved out of the lead page into `prescore.ts` — they were
   a second copy.
-- 2026-09-10 — "They said no" was the only one-way door: nothing could undo it.
-  Declined rows now carry an undo. It releases an identifier only when no other
-  still-declined prospect owns it — 95 rows share a phone, so a blind delete
-  would let businesses that genuinely refused back into the queue. Verified on
-  the real switchboard: undo A released 0 kept 2, undo B released 2.
-- 2026-09-10 — Added `robots.ts` and a noindex: the public deployment was
-  crawlable and renders other people's phone numbers and emails.
 - 2026-09-10 — The prospect Email button logged a send and then deleted its own
   row: logging sets the prospect to `contacted` and the top-25 queue lists only
   `new`, so `router.refresh()` unmounted the fallback address. Nothing opened,

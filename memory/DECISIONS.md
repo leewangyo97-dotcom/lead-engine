@@ -529,3 +529,14 @@ actually is.
 
 Sample sizes are small and stated as such. 43 items settles "is this obviously
 worth building", not "is this definitely worthless".
+
+## Rotated out of STATE on 2026-09-10 (ninth pass)
+
+- `app/robots.ts` and a noindex were added: the public deployment was crawlable
+  and renders other people's phone numbers and email addresses. It stops indexing,
+  not access — the access question is still open, see RUNBOOK.
+- "They said no" was the only one-way door; declined rows now carry an undo. It
+  releases an identifier only when no other still-declined prospect owns it — 95
+  rows share a phone, so a blind delete would let businesses that genuinely
+  refused back into the queue. Verified on the real council switchboard: undo A
+  released 0 and kept 2, undo B released 2.
