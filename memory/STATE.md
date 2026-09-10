@@ -56,32 +56,26 @@ wreckage awaiting `chkdsk F: /f /r`.
 
 ## Seventeen enhanced drafts are waiting, all verified
 
-**Two were deleted for being false.** Leura Wellness was told they have no
-website; their email is at leurawellness.com.au, which serves a live 349KB site.
-`ownDomainFromEmail` now withholds the `no_website` signal when the email domain
-resembles the business name, which makes that claim unshippable — `verifyMessage`
-requires the signal. The other seventeen were checked: no violations, OSM
-confirms no website for any, sixteen are on free providers.
+Written 10 September, the first time the enhance loop had ever run — every one of
+the sixteen prospect messages sent before it was `firstMessage()` with the name
+swapped. Per-business, built only from recorded facts, stored unsent. Open
+`✦ Enhance` on a row to compare before sending.
 
-**One was deleted for being false.** A draft told CDW Studios their site has no
-viewport tag and no contact details; the site has both. The stored signals were
-measured on a bad response the night before — `extractSiteSignals` reads a
-52-byte `403 - Forbidden` body as "no viewport, no contacts". `looksLikePage`
-now requires markup before anything is measured. Three rows carried the
-fingerprint (`noViewport: true` with no platform); re-enriching corrected two,
-and the third genuinely has no viewport tag, checked against the live page.
+**Two of nineteen were deleted for being false, and both were caught by opening
+the site.** CDW Studios was told their site has no viewport tag and no contact
+details; it has both — the signals had been measured on a 52-byte `403` body, and
+`looksLikePage` now requires markup before anything is measured. Leura Wellness
+was told they have no website; their email is at leurawellness.com.au, which
+serves a live site, and `ownDomainFromEmail` now withholds the `no_website`
+signal when the domain resembles the business name, which makes the claim
+unshippable rather than merely discouraged.
+
+The remaining seventeen: zero verifier violations, OSM re-read and confirming no
+website for any, sixteen on free providers. Foodfiesta.ph was skipped for the
+same reason before it was written.
 
 **The rule:** before a message makes a checkable claim about someone's website,
 open the site. The record is evidence, not proof.
-
-## Seventeen enhanced drafts are waiting, all verified
-
-Written 10 September — the first time the enhance loop had ever run. Every one of
-the sixteen prospect messages sent before this was `firstMessage()` with the name
-swapped; there were zero drafts in the table. These are per-business, built only
-from recorded facts, and stored unsent. Open `✦ Enhance` on a row to compare
-before sending. Foodfiesta.ph was skipped deliberately: the record says no
-website and the business is named after a domain, so that opener could be wrong.
 
 ## Next three actions
 
