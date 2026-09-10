@@ -51,14 +51,6 @@ export async function listSearches(limit = 10) {
   return db.select().from(searches).orderBy(desc(searches.createdAt)).limit(limit);
 }
 
-/**
- * The work queue: the best prospects to message next, across every search.
- *
- * Without this the page could only show one search at a time, so working the
- * list meant choosing a search first and comparing scores by memory. Contacted
- * and declined rows are gone from it — this answers "who next", not "what did we
- * find".
- */
 /** The rows the queue draws from, before any narrowing. */
 const QUEUE_POPULATION = and(
   eq(prospects.status, "new"),
@@ -113,6 +105,14 @@ export async function getQueueOptions(cityLimit = 12): Promise<QueueOptions> {
   return { cities: pick("city"), categories: pick("category") };
 }
 
+/**
+ * The work queue: the best prospects to message next, across every search.
+ *
+ * Without this the page could only show one search at a time, so working the
+ * list meant choosing a search first and comparing scores by memory. Contacted
+ * and declined rows are gone from it — this answers "who next", not "what did we
+ * find".
+ */
 export async function getTopProspects(limit = 25, filter: QueueFilter = {}): Promise<ProspectRow[]> {
   // Over-fetched, then thinned to one row per phone number. Ninety-five rows in
   // this table share a number with another business — a council switchboard
@@ -131,11 +131,19 @@ export async function getTopProspects(limit = 25, filter: QueueFilter = {}): Pro
   return dedupeByPhone(rows).slice(0, limit);
 }
 
-export async function getProspects(searchId: string, limit = 200): Promise<ProspectRow[]> {
-  return queryProspects(eq(prospects.searchId, searchId), limit);
+export async function getProspects(
+  searchId: string,
+  limit = 200,
+  offset = 0,
+): Promise<ProspectRow[]> {
+  return queryProspects(eq(prospects.searchId, searchId), limit, offset);
 }
 
-async function queryProspects(where: SQL | undefined, limit: number): Promise<ProspectRow[]> {
+async function queryProspects(
+  where: SQL | undefined,
+  limit: number,
+  offset = 0,
+): Promise<ProspectRow[]> {
   const db = getDb();
 
   const rows = await db
@@ -169,8 +177,14 @@ async function queryProspects(where: SQL | undefined, limit: number): Promise<Pr
       sql`${prospects.score} desc nulls last`,
       desc(sql`(${prospects.whatsappE164} is not null)`),
       prospects.name,
+      // A unique last key, so paging is stable. Score, reachability and name all
+      // tie — a country search has hundreds of rows named "Medical Centre" on
+      // the same score — and Postgres is free to order tied rows differently
+      // between queries, which makes an offset skip some rows and repeat others.
+      prospects.id,
     )
-    .limit(limit);
+    .limit(limit)
+    .offset(offset);
 
   // One query for the contact history rather than one per row.
   const contacted = await contactedIds(rows.map((r) => r.id));

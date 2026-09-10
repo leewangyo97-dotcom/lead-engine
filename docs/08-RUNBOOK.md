@@ -410,8 +410,8 @@ options:
   cascades to its prospects.
 
 **A search you did not mean to run** is worth deleting rather than leaving in the
-queue — a whole country of schools is 6,786 rows that will otherwise compete for
-enrichment budget for months.
+queue — a whole country of schools is 13,134 rows, the largest single thing in
+this table, and it will otherwise compete for enrichment budget for months.
 
 ## Retention covers leads, not prospects
 
@@ -494,3 +494,28 @@ pnpm prospects:refresh --limit=2000
 
 Each row is an Overpass lookup, so this is politeness-bound. Do it in a few
 passes rather than all at once.
+
+## Reading past the first 200 of a search
+
+A search's own page shows 200 rows at a time with prev/next below the table, and
+the header says which slice you are on (`201–400 of 13134`). Before this it
+showed the first 200 and offered no way to the rest: 12,934 rows were in the
+table, counted in the header, and unreachable.
+
+```
+/prospects?search=<id>&page=2
+```
+
+A page past the end lands on the last one rather than showing nothing, so a
+bookmark kept after rows were pruned still works.
+
+**Why prev/next and not numbered pages.** 13,134 rows is 66 pages, and a strip of
+66 numbers is not navigation. The rows are ordered best-first, so anyone reading
+past page three is browsing rather than searching.
+
+**Paging is exact because the sort ends in the row id.** Score, reachability and
+name all tie in bulk — "Greencross Vets" is 20 branches at 20 addresses, "Denture
+Clinic" is 7 — and Postgres may order tied rows differently between queries,
+which makes an offset skip some and repeat others. With the id as the last key,
+zero row ids appear on two pages; the duplicate *names* across pages are real
+businesses.

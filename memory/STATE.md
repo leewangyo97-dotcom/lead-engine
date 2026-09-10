@@ -9,7 +9,7 @@ Last updated: 2026-09-10 · Phase: **all six complete, plus geo prospect discove
 
 **The machine ran unattended for a week and nothing broke.** Nightly runs on 3,
 4, 7 and 8 September all green; weekends correctly skipped. 341 leads, 44
-harvested in the last six days, 433 tests passing. Prospect counts are below —
+harvested in the last six days, 449 tests passing. Prospect counts are below —
 they moved by two orders of magnitude on 10 September.
 
 **Fifteen sends, no replies yet.** Two leads by email (This Dot Labs, Atria) and
@@ -23,9 +23,10 @@ Two live chores: the Gmail refresh token expires seven days after each
 September — publishing the app ends the chore), and searches are manual, so
 prospect supply only grows when someone runs `pnpm search:run`.
 
-**23,203 prospects after the first country-wide searches** (Australia clinics/
-vet/dentists 13,134; Australia schools 6,786; a 12-category Cebu City search
-2,837). 7,643 reachable, 21 MB of a 512 MB database. All scored: 72 hot, 1,201
+**23,203 prospects after the first country-wide searches** (Australia schools
+13,134; Australia clinics/vet/dentists 6,786; a 12-category Cebu City search
+2,837 — checked against the search ids on 10 September, having first written
+these two the wrong way round). 7,643 reachable, 21 MB of a 512 MB database. All scored: 72 hot, 1,201
 warm, 21,930 cold. **9,156 are queued for enrichment and the nightly takes 25** —
 a year of nights, so the queue is now ordered by score. Deleting the schools
 search is a reasonable call; see RUNBOOK "After a country-wide search".
@@ -77,6 +78,11 @@ Nothing.
 
 ## Recently done
 
+- 2026-09-10 — A search's page showed its first 200 rows and offered no way to
+  the rest — 12,934 of 13,134 unreachable. Prev/next paging added, and the sort
+  now ends in the row id: score, reachability and name tie in bulk (20 Greencross
+  Vets branches), so an offset without a unique key skips and repeats rows.
+  Verified: zero row ids appear on two pages.
 - 2026-09-10 — `/prospects` queue now filters by category and city, chips with
   counts, both combinable and each clearable. Behind it: `addr:city` is set on
   217 of 20,107 Australian rows because OSM names a suburb there, so the

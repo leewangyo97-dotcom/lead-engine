@@ -397,8 +397,11 @@ Phase work from 1 September, all closed:
 | Sydney — contractors, trades, specialists | 187 | 75 | 64 | 21 |
 
 The country-wide searches that followed on 10 September: Australia
-clinics/veterinary/dentists 13,134 rows and 5,103 reachable; Australia schools
-6,786 and 2,105; a twelve-category Cebu City search 2,837 and 261. Cebu's
+schools 13,134 rows; Australia clinics/veterinary/dentists 6,786; a
+twelve-category Cebu City search 2,837 and 261 reachable. (The two Australian
+searches were first recorded the wrong way round and corrected against their
+search ids the same day; the reachable split of 5,103 and 2,105 was attributed
+on that reversed reading and is not re-verified here.) Cebu's
 reachability rate stays an order of magnitude below Australia's, which is the
 same finding at a hundred times the sample.
 

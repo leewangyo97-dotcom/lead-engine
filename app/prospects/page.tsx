@@ -14,6 +14,7 @@ import {
   getTopProspects,
   listSearches,
 } from "@/lib/places/prospect-queries";
+import { PAGE_SIZE, pageLabel, pageOf, parsePage } from "@/lib/places/paging";
 import {
   categoryLabel,
   filterHref,
@@ -108,12 +109,58 @@ function FilterChips({
   );
 }
 
+/**
+ * Prev and next for a search's own results.
+ *
+ * Deliberately two links and a position rather than a numbered strip: 13,134
+ * rows is 66 pages, and a row of 66 numbers is not navigation. The rows are
+ * ordered best-first, so anyone reading past page three is browsing rather than
+ * looking for something, and browsing wants "more", not "page 41".
+ */
+function Pager({ searchId, page }: { searchId: string; page: ReturnType<typeof pageOf> }) {
+  if (page.pages <= 1) return null;
+  const href = (n: number) => `/prospects?search=${searchId}&page=${n}`;
+
+  return (
+    <nav
+      aria-label="Result pages"
+      className="mt-5 flex flex-wrap items-center justify-between gap-3"
+    >
+      {page.hasPrevious ? (
+        <a
+          href={href(page.number - 1)}
+          className="rounded-xs border border-rule px-3 py-1 text-body-sm text-secondary hover:bg-hovered"
+        >
+          ← Previous
+        </a>
+      ) : (
+        <span />
+      )}
+
+      <span className="font-mono text-data-sm tabular-nums text-muted">
+        page {page.number} of {page.pages}
+      </span>
+
+      {page.hasNext ? (
+        <a
+          href={href(page.number + 1)}
+          className="rounded-xs border border-rule px-3 py-1 text-body-sm text-secondary hover:bg-hovered"
+        >
+          Next →
+        </a>
+      ) : (
+        <span />
+      )}
+    </nav>
+  );
+}
+
 export default async function Prospects({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string; city?: string; category?: string }>;
+  searchParams: Promise<{ search?: string; city?: string; category?: string; page?: string }>;
 }) {
-  const { search: searchId, ...rest } = await searchParams;
+  const { search: searchId, page: pageParam, ...rest } = await searchParams;
   const filter = parseQueueFilter(rest);
 
   // Four queries, and this page is dominated by their latency: it renders in
@@ -127,8 +174,15 @@ export default async function Prospects({
   // With no search chosen the rows are a work queue rather than an empty frame:
   // the best across every search, which is the question "who do I message next"
   // actually asks.
-  const rows = searchId ? await getProspects(searchId) : await getTopProspects(25, filter);
   const stats = searchId ? await getProspectStats(searchId) : null;
+  // The count comes first, because the page number has to be clamped against a
+  // total before the rows are asked for. A search of 13,134 rows showed its
+  // first 200 and offered no way to the rest.
+  const page = stats ? pageOf(stats.total, parsePage(pageParam)) : null;
+  const rows =
+    searchId && page
+      ? await getProspects(searchId, PAGE_SIZE, page.offset)
+      : await getTopProspects(25, filter);
   // Only the queue is filterable. A search's own page answers "what did this
   // search find", and narrowing that would answer a different question quietly.
   const options = searchId ? null : await getQueueOptions();
@@ -237,9 +291,9 @@ export default async function Prospects({
 
         {(active || rows.length > 0) && (
           <>
-            {active && stats && (
+            {active && stats && page && (
               <div className="mt-7 flex flex-wrap gap-6 font-mono text-data-sm tabular-nums text-muted">
-                <span className="text-primary">{stats.total} found</span>
+                <span className="text-primary">{pageLabel(page)}</span>
                 <span className="text-go">{stats.withPhone} with a phone</span>
                 <span>{stats.withEmail} with an email</span>
                 <span>{stats.withWebsite} with a website</span>
@@ -400,6 +454,8 @@ export default async function Prospects({
             )}
           </>
         )}
+
+        {active && page && <Pager searchId={active.id} page={page} />}
 
         <p className="mt-6 text-caption text-faint">
           Place data © OpenStreetMap contributors, ODbL.
