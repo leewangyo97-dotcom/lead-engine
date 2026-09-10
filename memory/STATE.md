@@ -9,7 +9,7 @@ Last updated: 2026-09-10 · Phase: **all six complete, plus geo prospect discove
 
 **The machine ran unattended for a week and nothing broke.** Nightly runs on 3,
 4, 7 and 8 September all green; weekends correctly skipped. 341 leads, 44
-harvested in the last six days, 396 tests passing. Prospect counts are below —
+harvested in the last six days, 399 tests passing. Prospect counts are below —
 they moved by two orders of magnitude on 10 September.
 
 **Fifteen sends, no replies yet.** Two leads by email (This Dot Labs, Atria) and
