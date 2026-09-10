@@ -519,3 +519,49 @@ Clinic" is 7 — and Postgres may order tied rows differently between queries,
 which makes an offset skip some and repeat others. With the id as the last key,
 zero row ids appear on two pages; the duplicate *names* across pages are real
 businesses.
+
+## The deployment is public and has no access control
+
+Checked on 10 September against `lead-engine-one-beige.vercel.app`:
+
+- `/`, `/prospects` and `/api/health` all answer **200 to anyone**. There is no
+  middleware, no Vercel deployment protection, and no secret on any route.
+- `/prospects` renders 25 business names with their phone numbers and email
+  addresses. Paging through a search reaches all 7,643 reachable rows.
+- Every mutating endpoint is open: `POST /api/prospects/<id>/contact` logs an
+  outreach, `/decline` adds a business to the do-not-contact list, `/outcome`
+  records a reply, and `POST /api/searches` starts an OpenStreetMap search.
+
+`CLAUDE.md` says "Single user. No auth. No multi-tenancy." That rule is about not
+building a users table, and it is right. It is not the same as leaving write
+endpoints open to the internet, and the two got conflated.
+
+What is actually at risk, in order:
+
+1. **Other people's contact details.** The rows are businesses collected from
+   OpenStreetMap for one person to write to. Published, it is a contact directory
+   nobody asked to be in.
+2. **The learning loop's only data.** Anyone can log sends and outcomes. Reply
+   rates are the one thing this project is trying to measure, and there are
+   fifteen sends to measure from.
+3. **The queue itself.** `/decline` is not reversible from the UI — it writes a
+   suppression entry keyed on the number, email and domain.
+4. **Cost and courtesy.** `POST /api/searches` runs an Overpass query.
+
+`app/robots.ts` and a `noindex` are now in place, which stops a search engine
+turning this into an indexed contact database. **They do not make it private.**
+
+Three ways to close it, cheapest first:
+
+- **Vercel Deployment Protection** (Project → Settings → Deployment Protection →
+  Vercel Authentication). Zero code, no users table, access through the Vercel
+  account that already owns the project. This is the right answer for a personal
+  tool.
+- **A shared secret in middleware**, checked against an env var and stored in a
+  cookie after one prompt. Perhaps thirty lines, and it means remembering a
+  password for your own tool.
+- **Leave it and accept the risk**, which is defensible only while nobody knows
+  the URL — and the URL is in this repository's README.
+
+Not done without a decision, because any of them changes how the owner reaches
+their own app and the third would be locking in a risk on someone else's behalf.

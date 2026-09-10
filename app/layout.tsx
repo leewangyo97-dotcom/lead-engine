@@ -4,6 +4,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Lead Engine",
   description: "Personal lead-generation engine. Single user, drafts only.",
+  // Belt and braces with app/robots.ts: the file asks crawlers not to fetch,
+  // this asks them not to index what they fetched anyway. The pages carry other
+  // people's phone numbers and email addresses.
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

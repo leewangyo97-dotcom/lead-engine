@@ -67,7 +67,12 @@ wreckage awaiting `chkdsk F: /f /r`.
 
 ## Blocked
 
-Nothing.
+**Waiting on a decision: the deployment is public with no access control.**
+Checked 10 September — `/prospects` serves 25 businesses' phone numbers and email
+addresses to anyone, and every write endpoint (`contact`, `decline`, `outcome`,
+`searches`) is open. `robots.ts` and a noindex are in; they stop indexing, not
+access. Cheapest fix is Vercel Deployment Protection, which is a dashboard
+setting and no code. See RUNBOOK "The deployment is public".
 
 ## Open questions for Joshua
 
@@ -78,6 +83,8 @@ Nothing.
 
 ## Recently done
 
+- 2026-09-10 — Added `robots.ts` and a noindex: the public deployment was
+  crawlable and renders other people's phone numbers and emails.
 - 2026-09-10 — A search's page showed its first 200 rows and offered no way to
   the rest — 12,934 of 13,134 unreachable. Prev/next paging added, and the sort
   now ends in the row id: score, reachability and name tie in bulk (20 Greencross
