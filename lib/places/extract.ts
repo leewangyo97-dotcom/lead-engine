@@ -54,6 +54,28 @@ export function extractEmails(html: string): ExtractedEmail[] {
   return [...found].map(([email, confidence]) => ({ email, confidence }));
 }
 
+/**
+ * The first usable address out of an OpenStreetMap `email` tag.
+ *
+ * OSM stores multiple values separated by semicolons, so a real row reads
+ * `hello@grevillerdmd.com.au;admin@grevilleroadmc.com.au`. Stored whole it fails
+ * every check and the business looks unreachable by email; put into a mailto: it
+ * would address nobody. Another row arrived as `info@heathmontfamilydentistry`,
+ * with no top-level domain at all — people type these by hand and nothing
+ * upstream validates them.
+ *
+ * Taking the first usable value keeps a contact that would otherwise be thrown
+ * away, and returning null keeps a broken one out of the table.
+ */
+export function firstUsableEmail(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  for (const part of raw.split(/[;,]/)) {
+    const candidate = part.trim().toLowerCase();
+    if (candidate && isUsableEmail(candidate)) return candidate;
+  }
+  return null;
+}
+
 export function isUsableEmail(email: string): boolean {
   const lower = email.toLowerCase();
   if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(lower)) return false;

@@ -5,6 +5,7 @@ import { prospects, searches } from "../db/schema";
 import { geocode } from "./nominatim";
 import { overpassProvider } from "./overpass";
 import { normalizeName, rootDomain } from "./normalize";
+import { firstUsableEmail } from "./extract";
 import { toE164 } from "./phone";
 import { isPlaceCategory, type PlaceCategory } from "./osm-categories";
 import type { RawPlace } from "./types";
@@ -111,8 +112,13 @@ async function persist(
     countryCode,
     lat: p.lat,
     lon: p.lon,
-    email: p.email ?? null,
-    emailConfidence: p.email ? ("osm" as const) : null,
+    // OpenStreetMap tags are typed by people and nothing validates them on the
+    // way in. One row arrived as `info@heathmontfamilydentistry` — no top-level
+    // domain, so a mailto: that goes nowhere and a send spent on it. Enrichment
+    // has always applied this check to addresses it scrapes; discovery trusted
+    // its source and did not.
+    email: firstUsableEmail(p.email),
+    emailConfidence: firstUsableEmail(p.email) ? ("osm" as const) : null,
     // Normalised here, not stored raw: the column is called phoneE164 and the
     // WhatsApp link acts on it directly.
     phoneE164: toE164(p.phone, countryCode),

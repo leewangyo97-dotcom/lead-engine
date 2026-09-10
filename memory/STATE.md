@@ -9,7 +9,7 @@ Last updated: 2026-09-10 · Phase: **all six complete, plus geo prospect discove
 
 **The machine ran unattended for a week and nothing broke.** Nightly runs on 3,
 4, 7 and 8 September all green; weekends correctly skipped. 341 leads, 44
-harvested in the last six days, 399 tests passing. Prospect counts are below —
+harvested in the last six days, 414 tests passing. Prospect counts are below —
 they moved by two orders of magnitude on 10 September.
 
 **Fifteen sends, no replies yet.** Two leads by email (This Dot Labs, Atria) and
@@ -77,6 +77,11 @@ Nothing.
 
 ## Recently done
 
+- 2026-09-10 — 95 rows share a phone with another business (twelve preschools on
+  one council switchboard). The queue served them as separate work — twelve
+  messages to one number — and now keeps the best row per number. Also: OSM
+  emails were stored unvalidated, so a no-TLD address and a `;`-separated pair
+  both got in. Discovery now runs `firstUsableEmail`; both rows corrected.
 - 2026-09-10 — Latency checked at 23k rows and there is no regression: pages are
   0.7-1.4s warm, dominated by Neon round trips, not row counts. The nav badge
   read 7627 and now caps at 999+ with the exact figure in its tooltip. Retention

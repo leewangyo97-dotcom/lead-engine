@@ -2,6 +2,7 @@ import { and, desc, eq, isNotNull, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "../db";
 import { prospects, searches } from "../db/schema";
 import { chooseChannel, type ContactOption } from "./contact";
+import { dedupeByPhone } from "./dedupe-queue";
 import { isScoreProvisional, scoreProspect } from "./score";
 import { contactedIds } from "./outreach-log";
 
@@ -58,13 +59,20 @@ export async function listSearches(limit = 10) {
  * find".
  */
 export async function getTopProspects(limit = 25): Promise<ProspectRow[]> {
-  return queryProspects(
+  // Over-fetched, then thinned to one row per phone number. Ninety-five rows in
+  // this table share a number with another business — a council switchboard
+  // answering for twelve preschools — and serving those as separate work means
+  // messaging one number twelve times. Four times the limit is comfortably more
+  // than the worst run of shared numbers seen, and the extra rows cost nothing:
+  // it is one query either way.
+  const rows = await queryProspects(
     and(
       eq(prospects.status, "new"),
       or(isNotNull(prospects.phoneE164), isNotNull(prospects.email)),
     ),
-    limit,
+    limit * 4,
   );
+  return dedupeByPhone(rows).slice(0, limit);
 }
 
 export async function getProspects(searchId: string, limit = 200): Promise<ProspectRow[]> {

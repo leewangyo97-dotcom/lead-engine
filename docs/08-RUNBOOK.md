@@ -428,3 +428,35 @@ would lose the reason the suppression exists.
 
 If it ever needs cutting, the honest order is: a search nobody worked, whole
 (`delete from searches where id = '...'` cascades), before any per-row rule.
+
+## Two businesses, one phone number
+
+Across 23,203 prospects, 95 rows carry a phone number that another row already
+has. They are not duplicates: twelve preschools in Victoria answer on one council
+switchboard, three RMIT campuses share the university's line, "Vets of Geelong"
+appears three times on one number. OpenStreetMap has them right.
+
+The work queue used to serve those as separate work, which means messaging one
+number twelve times. `getTopProspects` now over-fetches and keeps the
+best-scoring row per number (`lib/places/dedupe-queue.ts`); a search's own page
+still shows everything it found, because "what did we find" and "who do I
+message next" are different questions.
+
+The reopen window in `outreach-log` cannot cover this — it guards a prospect
+against a second message, and these are genuinely different businesses.
+
+**If you message one and want the rest gone**, marking the prospect declined adds
+its number to the suppression list, which covers every row carrying it.
+
+## Emails come from OpenStreetMap unvalidated
+
+Two rows in 23,203 held an address the app could not use:
+`info@heathmontfamilydentistry` (no top-level domain) and
+`hello@…;admin@…` (OSM stores multiple values semicolon-separated). The first
+would build a mailto: that goes nowhere; the second addresses nobody, and stored
+whole it made a reachable business look unreachable.
+
+Enrichment had always applied `isUsableEmail` to addresses it scraped. Discovery
+trusted its source and did not. It now runs `firstUsableEmail`, which takes the
+first usable value out of a multi-value tag and returns null for a broken one.
+Both existing rows were corrected — one cleared, one recovered.
