@@ -549,3 +549,15 @@ worth building", not "is this definitely worthless".
   `router.refresh()` unmounted the fallback address. Nothing opened, nothing
   showed, prospect spent. Email holds the row open with a real mailto anchor
   until dismissed; guarded by `tests/prospect-contact-source.test.ts`.
+
+## Rotated out of STATE on 2026-09-10 (tenth pass)
+
+- 2026-09-10 — `pnpm leads:diagnose` added: aggregates the score parts the lead
+  page computes one at a time, so an empty inbox can be told apart from a broken
+  filter. Rubric maxima moved out of the lead page into `prescore.ts` — they were
+  a second copy.
+- 2026-09-10 — Figma second pass: the lead header now carries the design's
+  ScoreMeter (3:1048 / 3:1973), which the page had never shown above the fold.
+  The four 360px frames are audited and the mobile bottom nav is recorded as
+  deliberate divergence — the nav is six items now, not the design's four.
+
