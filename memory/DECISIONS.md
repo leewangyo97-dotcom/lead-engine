@@ -481,3 +481,51 @@ same finding at a hundred times the sample.
   rows because OSM names a suburb there, so `localityOf` falls back through
   suburb/town/village/municipality/hamlet. Rows already stored fill in as
   `prospects:refresh` reaches them, 200 a month.
+
+## 2026-09-10 — Source survey: Remotive and Himalayas. Neither built.
+
+`pnpm leads:diagnose` showed the job funnel needs a source carrying UTC+8-eligible
+work in the mobile stack. Following the `source-adapter` rule — measure before
+building — two candidates were surveyed with four API calls total. Neither
+adapter was written.
+
+**Remotive: ruled out without a survey.** `remotive.com/robots.txt` is behind a
+Cloudflare managed challenge, so the crawl rules cannot even be read without
+solving a JavaScript bot check. Rule 8 requires respecting robots.txt, and
+working around bot protection to harvest a site is not something this project
+will do.
+
+**Himalayas: surveyed, does not carry the work.** Public API at
+`himalayas.app/jobs/api`, robots allows it, no login. Of 43 unique jobs across
+two pages:
+
+| | count | share |
+|---|---|---|
+| eligible for UTC+8 | 2 | 5% |
+| in his stack | 1 | 2% |
+| contract | 8 | 19% |
+| **eligible and in stack** | **0** | **0%** |
+
+The two UTC+8-eligible postings were a Cyber Security Analyst and a Technical
+Mentor. 21 of 43 were United States only.
+
+Two operational notes for anyone who revisits it. The endpoint returns 20 items
+per call whatever `limit` says, and `category` is ignored — the same 20 come back
+with a sales and operations mix — so harvesting means cursor paging and
+client-side filtering, roughly 25 calls for 500 jobs. And it is the only source
+seen so far that publishes `timezoneRestrictions` as numeric UTC offsets, which
+is exactly the field the rubric's largest dimension needs. That is worth
+remembering if their catalogue ever changes; the data model is right and the
+inventory is wrong.
+
+**The finding underneath both surveys.** WeWorkRemotely was killed earlier on 25
+items (zero contract, zero mobile). Himalayas now on 43 (zero eligible-and-in-
+stack). Two independent general remote boards, both near zero. The reasonable
+reading is not "try a third board" — it is that general remote job boards do not
+carry UTC+8-eligible mobile contract work in any quantity, and the job funnel
+will stay near zero however many of them are added. The prospect funnel, where
+23,203 businesses are reachable directly, is where the addressable market
+actually is.
+
+Sample sizes are small and stated as such. 43 items settles "is this obviously
+worth building", not "is this definitely worthless".

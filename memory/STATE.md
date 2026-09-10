@@ -81,6 +81,12 @@ setting and no code. See RUNBOOK "The deployment is public".
 eligibility and 147 score zero on stack. Not a broken filter — the sources carry
 work that is not open to UTC+8, in stacks that are not his.
 
+Surveyed two boards on 10 September and built neither (see DECISIONS): Remotive
+sits behind a Cloudflare bot challenge so its robots.txt cannot be read;
+Himalayas carries 0 of 43 jobs that are both UTC+8-eligible and in his stack.
+With WeWorkRemotely killed earlier on the same test, the reading is that general
+remote boards do not carry this work — not that a third board is needed.
+
 **No single fix clears it.** Projected to full marks: timezone 56, stack 49,
 contract 47. The 21 leads already scoring full timezone average 57, with stack
 8.0/25. So a new source has to carry APAC-friendly roles *in his stack*, not just
