@@ -754,3 +754,42 @@ no website for any of them and sixteen of them on free providers.
 
 What this cannot prove is a negative. A business may have a site that
 OpenStreetMap has never recorded and whose address gives no hint.
+
+## Verifying drafts against the sites they talk about
+
+```bash
+pnpm drafts:verify
+```
+
+Read-only. It never edits a draft or a prospect — deciding what to do about a
+false claim is a person's job, and deleting someone's drafted work on a heuristic
+is not something a script should do unattended. Exits non-zero if any claim is
+false.
+
+For every unsent draft it does three things:
+
+1. Runs `verifyMessage` against the prospect's signals. Free, and catches a
+   message that drifted from the record.
+2. If the message says they have no website and none is on file, checks whether
+   their email domain serves a page.
+3. If the message makes a claim about a site that *is* on file — no viewport tag,
+   no contact details — fetches it and re-measures.
+
+Step 1 alone is not enough, which is the reason this exists: `verifyMessage`
+checks a message against the **stored signals**, so a message faithful to a wrong
+record passes it. Both false drafts of 10 September did.
+
+Three verdicts, and the middle one matters:
+
+- **false** — the site says otherwise. Delete or rewrite before sending.
+- **unverifiable** — nothing available settles it. Seventeen of seventeen drafts
+  land here today, because their businesses use gmail, yahoo or icloud and there
+  is no domain to probe. Not a pass.
+- **ok** — checked and confirmed.
+
+Verified against both real failures: with the false Leura draft re-planted, the
+signal check catches it when the site is on file, and the fetch catches it
+independently when it is not — `claims no website, but https://leurawellness.com.au/
+serves a page`.
+
+One request per site, a second apart, with the enricher's User-Agent.

@@ -45,6 +45,7 @@
     "enrich": "tsx scripts/enrich.ts",
     "prospects:enhance": "tsx scripts/prospects-for-enhance.ts",
     "apply:enhance": "tsx scripts/apply-enhance.ts",
+    "drafts:verify": "tsx scripts/verify-drafts.ts",
     "prospects:score": "tsx scripts/score-prospects.ts",
     "prospects:refresh": "tsx scripts/refresh-prospects.ts"
   },

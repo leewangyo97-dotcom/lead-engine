@@ -9,7 +9,7 @@ Last updated: 2026-09-10 · Phase: **all six complete, plus geo prospect discove
 
 **The machine ran unattended for a week and nothing broke.** Nightly runs on 3,
 4, 7 and 8 September all green; weekends correctly skipped. 341 leads, 44
-harvested in the last six days, 495 tests passing. Prospect counts are below —
+harvested in the last six days, 504 tests passing. Prospect counts are below —
 they moved by two orders of magnitude on 10 September.
 
 **Fifteen sends, no replies yet.** Two leads by email (This Dot Labs, Atria) and
@@ -74,8 +74,10 @@ The remaining seventeen: zero verifier violations, OSM re-read and confirming no
 website for any, sixteen on free providers. Foodfiesta.ph was skipped for the
 same reason before it was written.
 
-**The rule:** before a message makes a checkable claim about someone's website,
-open the site. The record is evidence, not proof.
+**The rule is now a command:** `pnpm drafts:verify` opens the sites a draft talks
+about and exits non-zero on a false claim. Today: 0 false, 17 unverifiable —
+every one on a free email provider, so there is no domain to probe. Unverifiable
+is not a pass.
 
 ## Next three actions
 
