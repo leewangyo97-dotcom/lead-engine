@@ -442,3 +442,15 @@ same finding at a hundred times the sample.
 - `/review` gained the score distribution (Figma 3:1694) — the only thing on that
   page that can see leads nothing was ever sent to, so a scorer collapsed into one
   band stops looking like silence. Production drew 0 / 6 / 51 / 66 / 49.
+
+## Rotated out of STATE on 2026-09-10 (sixth pass)
+
+- Latency checked at 23k rows: no regression. Pages 0.7-1.4s warm, dominated by
+  Neon round trips rather than row counts. The nav badge read 7627 and now caps
+  at 999+ with the exact figure in its tooltip. Retention covers leads only —
+  prospects grow unbounded, which is fine for years and is written down rather
+  than assumed.
+- The sidebar icons are the design's own (Icons/inbox 3:306, search 3:310,
+  calendar 3:308, list 3:307, settings 3:309), replacing Lucide paths that were a
+  different drawing at a heavier stroke. Weekly review has no counterpart in the
+  set and says so. The other 34 symbols stay unimported.

@@ -105,15 +105,6 @@ setting and no code. See RUNBOOK "The deployment is public".
   messages to one number — and now keeps the best row per number. Also: OSM
   emails were stored unvalidated, so a no-TLD address and a `;`-separated pair
   both got in. Discovery now runs `firstUsableEmail`; both rows corrected.
-- 2026-09-10 — Latency checked at 23k rows and there is no regression: pages are
-  0.7-1.4s warm, dominated by Neon round trips, not row counts. The nav badge
-  read 7627 and now caps at 999+ with the exact figure in its tooltip. Retention
-  covers leads only — prospects grow unbounded, which is fine for years and is
-  written down rather than assumed.
-- 2026-09-10 — The sidebar icons are the design's own now (Icons/inbox 3:306,
-  search 3:310, calendar 3:308, list 3:307, settings 3:309), replacing Lucide
-  paths that were a different drawing at a heavier stroke. Weekly review has no
-  counterpart in the set and says so. The other 34 symbols stay unimported.
 - 2026-09-10 — `search:run --drain` died with "Maximum call stack size
   exceeded": one INSERT of tens of thousands of rows, which Drizzle cannot even
   build (it merges SQL fragments recursively) and Postgres would refuse anyway at
