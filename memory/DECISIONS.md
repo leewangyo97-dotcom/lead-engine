@@ -468,3 +468,16 @@ same finding at a hundred times the sample.
   `persist` writes in batches of 500 (`lib/chunk.ts`). A city search with 12
   categories had failed the same way with a different message. The drain names
   each search before starting it and no longer strands the queue on one failure.
+
+## Rotated out of STATE on 2026-09-10 (eighth pass)
+
+- A search's page showed its first 200 rows and offered no way to the rest —
+  12,934 of 13,134 unreachable. Prev/next paging added, and the sort now ends in
+  the row id: score, reachability and name tie in bulk (20 Greencross Vets
+  branches), so an offset without a unique key skips and repeats rows. Verified
+  with a window function: zero row ids appear on two pages.
+- The `/prospects` queue filters by category and city, chips with counts, both
+  combinable and each clearable. `addr:city` is set on 217 of 20,107 Australian
+  rows because OSM names a suburb there, so `localityOf` falls back through
+  suburb/town/village/municipality/hamlet. Rows already stored fill in as
+  `prospects:refresh` reaches them, 200 a month.

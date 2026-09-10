@@ -108,16 +108,6 @@ on `pay`, which ranks nothing.
   the real switchboard: undo A released 0 kept 2, undo B released 2.
 - 2026-09-10 — Added `robots.ts` and a noindex: the public deployment was
   crawlable and renders other people's phone numbers and emails.
-- 2026-09-10 — A search's page showed its first 200 rows and offered no way to
-  the rest — 12,934 of 13,134 unreachable. Prev/next paging added, and the sort
-  now ends in the row id: score, reachability and name tie in bulk (20 Greencross
-  Vets branches), so an offset without a unique key skips and repeats rows.
-  Verified: zero row ids appear on two pages.
-- 2026-09-10 — `/prospects` queue now filters by category and city, chips with
-  counts, both combinable and each clearable. Behind it: `addr:city` is set on
-  217 of 20,107 Australian rows because OSM names a suburb there, so the
-  extractor falls back through suburb/town/village/municipality/hamlet. Existing
-  rows fill in as `prospects:refresh` reaches them.
 - 2026-09-10 — The prospect Email button logged a send and then deleted its own
   row: logging sets the prospect to `contacted` and the top-25 queue lists only
   `new`, so `router.refresh()` unmounted the fallback address. Nothing opened,
