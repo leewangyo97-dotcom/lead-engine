@@ -561,3 +561,6 @@ worth building", not "is this definitely worthless".
   The four 360px frames are audited and the mobile bottom nav is recorded as
   deliberate divergence — the nav is six items now, not the design's four.
 
+
+## Rotated out of STATE on 2026-09-10 (eleventh pass)
+
