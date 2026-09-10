@@ -1,8 +1,9 @@
 import { and, eq, isNotNull, or, sql } from "drizzle-orm";
 import { getDb } from "../lib/db";
 import { loadLocalEnv } from "../lib/env";
-import { prospects } from "../lib/db/schema";
+import { outreach, prospects } from "../lib/db/schema";
 import { buildEnhancePrompt } from "../lib/places/enhance";
+import { DRAFT_STEP } from "../lib/places/outreach-log";
 
 /**
  * Prints the prompt for rewriting first messages.
@@ -23,9 +24,21 @@ async function main() {
 
   // Only prospects worth writing to, and the filter belongs in SQL: applying it
   // after LIMIT would silently return fewer than asked, or none at all.
+  //
+  // A prospect that already has an unsent enhanced draft is excluded. Without
+  // this the emitter hands back the same ten businesses every time it runs —
+  // found by running the loop for the first time and watching the second prompt
+  // come out byte-identical to the first — so the workflow could never advance
+  // past the top of the queue, and applying the batch again would stack a second
+  // draft on rows that already had one.
   const reachable = and(
     eq(prospects.status, "new"),
     or(isNotNull(prospects.phoneE164), isNotNull(prospects.email)),
+    sql`not exists (
+      select 1 from ${outreach}
+      where ${outreach.prospectId} = ${prospects.id}
+        and ${outreach.step} = ${DRAFT_STEP}
+    )`,
   );
 
   const candidates = await db

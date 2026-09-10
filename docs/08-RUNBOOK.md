@@ -648,3 +648,35 @@ scores 15 of 15 on `pay` — that is a constant lifting every score equally, not
 weight, and the funding rubric is really being decided by the other three. Worth
 knowing before anyone tunes a number; not changed here, because weights are a
 `memory/RUBRIC.md` decision with a tuning log.
+
+## Writing better first messages
+
+Every prospect message sent so far was the same template with the business name
+swapped — `firstMessage()` in `lib/places/contact.ts`. The enhance loop exists to
+replace it per business and, until 10 September, had never been run: zero drafts
+in the table against sixteen sends.
+
+```bash
+pnpm prospects:enhance          # prints a prompt for the top 10 reachable
+# paste into Claude Code, get JSON back
+cat enhanced.json | pnpm apply:enhance
+```
+
+What it writes is an **unsent** `outreach` row at `step = -1`. `sentAt` stays
+null, which is what makes it a draft; nothing in the loop can promote one to
+sent. `logContact` prefers an accepted draft over the template, so the WhatsApp
+or mail link carries the better text once a draft exists.
+
+Two guards worth knowing before writing any: `apply:enhance` rejects the whole
+batch if a message claims a signal the prospect does not have, and
+`verifyMessage` refuses text that mentions reviews, opening hours, a visit that
+did not happen, or being local to them. The batch is all-or-nothing on purpose —
+a half-applied set leaves nobody able to say which messages were checked.
+
+**Ten drafts are waiting now** for restaurants, a hotel and a driving school in
+Cebu, Mandaue and Lapu-Lapu. Open `✦ Enhance` on a row to see the template and
+the draft side by side before sending.
+
+The emitter skips prospects that already have a draft. Without that it hands back
+the same ten every run — which is exactly what happened the first time, and the
+second prompt came out byte-identical to the first.

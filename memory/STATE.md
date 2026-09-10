@@ -54,6 +54,14 @@ and re-scores; the monthly job refreshes map data.
 The working copy is `C:\dev\lead-engine`. `F:\lead-engine` is corrupted NTFS
 wreckage awaiting `chkdsk F: /f /r`.
 
+## Ten enhanced drafts are waiting
+
+Written 10 September — the first time the enhance loop had ever run. Every one of
+the sixteen prospect messages sent before this was `firstMessage()` with the name
+swapped; there were zero drafts in the table. These ten are per-business, built
+only from the recorded facts (category, city, no website), and stored unsent.
+Open `✦ Enhance` on a row to compare before sending.
+
 ## Next three actions
 
 1. **Publish the Google OAuth consent screen.** While it is in Testing the
@@ -103,6 +111,10 @@ on `pay`, which ranks nothing.
 
 ## Recently done
 
+- 2026-09-10 — Ran the enhance loop for the first time: 10 per-business drafts
+  stored unsent, and the contact link now carries the enhanced text rather than
+  the template. Fixed a bug it exposed — the emitter did not skip prospects that
+  already had a draft, so it returned the same ten every run.
 - 2026-09-10 — `pnpm leads:diagnose` added: aggregates the score parts the lead
   page computes one at a time, so an empty inbox can be told apart from a broken
   filter. Rubric maxima moved out of the lead page into `prescore.ts` — they were
