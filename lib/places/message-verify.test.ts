@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { firstMessage } from "./contact";
 import { verifyMessage } from "./message-verify";
 
 const ok = (message: string, signals: string[]) => verifyMessage(message, signals).length === 0;
@@ -63,5 +64,47 @@ describe("verifyMessage", () => {
   it("reports the offending words, not just that something is wrong", () => {
     const [violation] = verifyMessage("I saw your 5-star reviews", ["no_website"]);
     expect(violation.quote.toLowerCase()).toContain("review");
+  });
+});
+
+describe("the honest framing of a missing website", () => {
+  it("is allowed when no website is on file", () => {
+    expect(verifyMessage("I couldn't find a website for you.", ["no_website"])).toEqual([]);
+  });
+
+  it("is allowed when the email domain suggests one, since that is the case for asking", () => {
+    expect(verifyMessage("I couldn't find a website for you.", ["email_domain"])).toEqual([]);
+  });
+
+  it("is refused when their website is sitting in the record", () => {
+    // Then the search did find one, and saying otherwise is not a softer claim,
+    // it is a false account of what happened.
+    const v = verifyMessage("I couldn't find a website for you.", ["website"]);
+    expect(v).toHaveLength(1);
+    expect(v[0].reason).toMatch(/one is on file/);
+  });
+
+  it("still refuses the assertive version without the signal", () => {
+    expect(verifyMessage("You don't have a website.", ["website"])).toHaveLength(1);
+  });
+});
+
+describe("the template the app actually sends", () => {
+  it("passes its own verifier for a prospect with no website", () => {
+    // The generated message and the rules that judge it live in different files
+    // and have drifted before. This ties them together: if either moves, this
+    // fails rather than a real business receiving the result.
+    const message = firstMessage({ name: "Aku Inn", city: "Cebu City" });
+    expect(verifyMessage(message, ["no_website", "category", "city"])).toEqual([]);
+  });
+
+  it("is refused for a prospect whose website is on file", () => {
+    const message = firstMessage({ name: "Aku Inn", city: "Cebu City" });
+    expect(verifyMessage(message, ["website"]).length).toBeGreaterThan(0);
+  });
+
+  it("passes for a prospect that does have a website", () => {
+    const message = firstMessage({ name: "CDW Studios", website: "https://cdwstudios.com/" });
+    expect(verifyMessage(message, ["website"])).toEqual([]);
   });
 });

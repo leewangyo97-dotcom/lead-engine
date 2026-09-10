@@ -60,10 +60,19 @@ export interface ContactPlan {
  *
  * Deliberately short and answerable. A cold WhatsApp message is read on a phone,
  * probably between customers, so it opens with who we are, names one thing we
- * noticed, and asks one question. It never claims to have seen something we did
- * not check — the "no website" line is only used when the record genuinely has
- * no website, because a business owner knows perfectly well whether they have
- * one and an opening lie ends the conversation.
+ * noticed, and asks one question.
+ *
+ * It says what was looked for, not what is true. "You don't have a website" is a
+ * claim about their business; "I couldn't find one" is a fact about the search,
+ * and only the second is something this project can stand behind. The record's
+ * idea of who has a website comes from OpenStreetMap, which is often simply
+ * missing one — a draft went out for review telling Leura Wellness they had no
+ * website while leurawellness.com.au was serving a 349KB site.
+ *
+ * The difference matters more here than it would elsewhere, because the reader
+ * is the one person on earth who knows the answer. Getting it wrong in the first
+ * line ends the conversation; asking instead costs nothing and invites a reply
+ * even when the guess is wrong.
  */
 export function firstMessage(place: ContactablePlace): string {
   const name = place.name.trim();
@@ -78,9 +87,9 @@ export function firstMessage(place: ContactablePlace): string {
     // fetched would make that a lie, and the owner is the one person who could
     // catch it by asking what I saw.
     ? `You already have a site — I had one or two ideas that might bring you more bookings through it.`
-    : `I noticed you don't have a website yet — most people looking for a ${
+    : `I couldn't find a website for you — most people looking for a ${
         place.city ? `${place.city} ` : ""
-      }business like yours start on Google.`;
+      }business like yours start on Google. If you have one and I missed it, tell me and I'll shut up.`;
 
   // One question, easy to answer with a word. "Let me know if interested" puts
   // the work on them and gets no reply.

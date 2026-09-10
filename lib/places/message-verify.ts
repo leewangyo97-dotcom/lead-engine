@@ -44,6 +44,15 @@ const RULES: Rule[] = [
       "a site is on file, or their email is at a domain that looks like their own",
   },
   {
+    // The honest framing of the same thing. It is not a claim about their
+    // business, so it needs no evidence about them — but it still cannot be
+    // said to someone whose website is sitting in the record, because then the
+    // search did find one and the sentence is a false account of what happened.
+    pattern: /\bcould ?n'?o?t find a (?:website|site)\b/i,
+    requires: ["no_website", "email_domain"],
+    reason: "says the search found no website, and one is on file for them",
+  },
+  {
     pattern: /\b(your (?:website|site)|you already have a (?:website|site))\b/i,
     requires: ["website"],
     reason: "refers to their website, and the record has none",

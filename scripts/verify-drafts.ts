@@ -28,7 +28,15 @@ import { DRAFT_STEP } from "../lib/places/outreach-log";
 const PAUSE_MS = 1_000;
 const TIMEOUT_MS = 20_000;
 
-type Verdict = "ok" | "unverifiable" | "false";
+/**
+ * `no-claims` is separate from `ok` on purpose.
+ *
+ * The first run after the drafts were rewritten reported "17 confirmed", which
+ * reads as seventeen claims checked and found true. Nothing had been checked:
+ * the messages no longer assert anything a fetch could settle. Counting those as
+ * confirmed would be the same error this tool exists to catch, told about itself.
+ */
+type Verdict = "ok" | "unverifiable" | "false" | "no-claims";
 
 interface Finding {
   name: string;
@@ -164,21 +172,33 @@ async function main() {
       await sleep(PAUSE_MS);
     }
 
-    if (!claims.length) notes.push("makes no claim a fetch could settle");
+    if (!claims.length) {
+      notes.push("makes no claim a fetch could settle");
+      if (verdict === "ok") verdict = "no-claims";
+    }
     findings.push({ name: row.name, verdict, notes });
   }
 
   for (const f of findings) {
-    const mark = f.verdict === "false" ? "FALSE" : f.verdict === "unverifiable" ? "unknown" : "ok";
+    const mark =
+      f.verdict === "false"
+        ? "FALSE"
+        : f.verdict === "unverifiable"
+          ? "unknown"
+          : f.verdict === "no-claims"
+            ? "-"
+            : "ok";
     console.log(`${mark.padEnd(8)} ${f.name}`);
     for (const n of f.notes) console.log(`         ${n}`);
   }
 
   const bad = findings.filter((f) => f.verdict === "false");
   const unknown = findings.filter((f) => f.verdict === "unverifiable");
+  const none = findings.filter((f) => f.verdict === "no-claims");
+  const confirmed = findings.length - bad.length - unknown.length - none.length;
   console.log(
-    `\n${findings.length} checked — ${bad.length} false, ${unknown.length} unverifiable, ` +
-      `${findings.length - bad.length - unknown.length} confirmed`,
+    `\n${findings.length} draft(s) — ${bad.length} false, ${unknown.length} unverifiable, ` +
+      `${confirmed} claim(s) checked and true, ${none.length} making no checkable claim`,
   );
 
   if (bad.length) {

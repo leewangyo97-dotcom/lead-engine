@@ -9,7 +9,7 @@ Last updated: 2026-09-10 · Phase: **all six complete, plus geo prospect discove
 
 **The machine ran unattended for a week and nothing broke.** Nightly runs on 3,
 4, 7 and 8 September all green; weekends correctly skipped. 341 leads, 44
-harvested in the last six days, 504 tests passing. Prospect counts are below —
+harvested in the last six days, 512 tests passing. Prospect counts are below —
 they moved by two orders of magnitude on 10 September.
 
 **Fifteen sends, no replies yet.** Two leads by email (This Dot Labs, Atria) and
@@ -42,10 +42,9 @@ website (4 in 151 Cebu rows), so WhatsApp is the only channel that reaches anyon
 Abroad the opposite — 71 of 108 Austin rows had one. `chooseChannel` picks per
 prospect for that reason. Figures in DECISIONS.
 
-Commands: `pnpm search:run "<place>" <categories>` · `pnpm enrich` ·
-`pnpm prospects:score` · `pnpm prospects:refresh` · `pnpm prospects:enhance` →
-Claude Code → `pnpm apply:enhance`. The nightly job now enriches (bounded at 25)
-and re-scores; the monthly job refreshes map data.
+Commands: `search:run` · `enrich` · `prospects:score` · `prospects:refresh` ·
+`prospects:enhance` → Claude Code → `apply:enhance` → `drafts:verify`. Nightly
+enriches (25) and re-scores; monthly refreshes map data.
 
 
 
@@ -73,9 +72,14 @@ website for any, sixteen on free providers. Foodfiesta.ph was skipped for the
 same reason before it was written.
 
 **The rule is now a command:** `pnpm drafts:verify` opens the sites a draft talks
-about and exits non-zero on a false claim. Today: 0 false, 17 unverifiable —
-every one on a free email provider, so there is no domain to probe. Unverifiable
-is not a pass.
+about and exits non-zero on a false claim.
+
+Seventeen came back unverifiable — all on free email providers, no domain to
+probe — so the messages were changed instead. "You don't have a website" became
+"I couldn't find a website for you", in the template and in every draft: a fact
+about the search rather than a claim about them, which is the half this project
+can stand behind. They now report `no checkable claim`, which the tool counts
+separately from `checked and true`.
 
 ## Next three actions
 

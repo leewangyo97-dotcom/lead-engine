@@ -779,13 +779,16 @@ Step 1 alone is not enough, which is the reason this exists: `verifyMessage`
 checks a message against the **stored signals**, so a message faithful to a wrong
 record passes it. Both false drafts of 10 September did.
 
-Three verdicts, and the middle one matters:
+Four verdicts, and the last two are not the same thing:
 
 - **false** — the site says otherwise. Delete or rewrite before sending.
-- **unverifiable** — nothing available settles it. Seventeen of seventeen drafts
-  land here today, because their businesses use gmail, yahoo or icloud and there
-  is no domain to probe. Not a pass.
-- **ok** — checked and confirmed.
+- **unverifiable** — a claim nothing available can settle. Not a pass.
+- **ok** — a claim checked against the site and found true.
+- **no checkable claim** — the message asserts nothing a fetch could decide.
+
+The first run after the drafts were rewritten reported "17 confirmed", which
+reads as seventeen claims checked and true. Nothing had been checked. That is the
+same error this tool exists to catch, so the verdicts were split.
 
 Verified against both real failures: with the false Leura draft re-planted, the
 signal check catches it when the site is on file, and the fetch catches it
@@ -793,3 +796,28 @@ independently when it is not — `claims no website, but https://leurawellness.c
 serves a page`.
 
 One request per site, a second apart, with the enricher's User-Agent.
+
+## Say what was looked for, not what is true
+
+The first message used to open "I noticed you don't have a website yet". That is
+a claim about their business, and the record it rests on comes from
+OpenStreetMap, which is frequently just missing one — Leura Wellness got that
+sentence while leurawellness.com.au was serving a 349KB site.
+
+It now reads:
+
+> I couldn't find a website for you — most people looking for a Cebu City
+> business like yours start on Google. If you have one and I missed it, tell me
+> and I'll shut up.
+
+Same information, and it is a fact about the search rather than about them. The
+reader is the one person who knows the answer, so getting it wrong in the first
+line ends the conversation, while asking costs nothing and invites a reply even
+when the guess is wrong.
+
+`verifyMessage` allows the new phrasing without any signal about them — it is not
+a claim — but still refuses it when a website *is* on file, because then the
+search did find one and the sentence is a false account of what happened.
+
+All seventeen drafts were rewritten the same way. Only the assertion changed; the
+per-business half, which is why they were written individually, is untouched.

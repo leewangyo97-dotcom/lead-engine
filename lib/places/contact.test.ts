@@ -100,11 +100,23 @@ describe("firstMessage", () => {
     expect(text.split("?").length - 1).toBe(1);
   });
 
-  it("only claims they have no website when the record says so", () => {
+  it("reports the search rather than asserting the absence", () => {
+    // "You don't have a website" is a claim about their business and the record
+    // is often wrong about it; "I couldn't find one" is a fact about the search,
+    // and it leaves them room to correct it rather than a reason to stop reading.
+    const text = firstMessage({ ...vet });
+    expect(text).toMatch(/couldn't find a website/);
+    expect(text).not.toMatch(/don'?t have a website/);
+    expect(text).toMatch(/if you have one and i missed it/i);
+  });
+
+  it("only mentions the missing website when the record says so", () => {
     // A business owner knows whether they have a website. Opening with a wrong
     // claim about it ends the conversation.
-    expect(firstMessage({ ...vet })).toMatch(/don't have a website/);
-    expect(firstMessage({ ...vet, website: "https://vet.ph" })).not.toMatch(/don't have a website/);
+    expect(firstMessage({ ...vet })).toMatch(/couldn't find a website/);
+    expect(firstMessage({ ...vet, website: "https://vet.ph" })).not.toMatch(
+      /couldn't find a website/,
+    );
   });
 
   it("mentions their city when known, and reads correctly without one", () => {
