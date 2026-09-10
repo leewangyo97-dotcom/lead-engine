@@ -107,10 +107,55 @@ export function ProspectContact({ id, whatsapp, email, contacted, declined, stat
     }
   }
 
+  async function undecline() {
+    setBusy("undecline");
+    setError(null);
+    try {
+      const res = await fetch(`/api/prospects/${id}/undecline`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "could not undo that");
+        return;
+      }
+      // An identifier another declined business also owns stays on the list, so
+      // the row can come back and still be unreachable. Saying so beats letting
+      // someone discover it by clicking WhatsApp and being refused.
+      if (data.kept?.length) {
+        setError(
+          `Back in the queue, but ${data.kept.length} identifier(s) stay suppressed — another ` +
+            "declined business shares them.",
+        );
+      }
+      router.refresh();
+    } catch {
+      setError("could not reach the server");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   if (declined) {
     return (
-      <span title="On the do-not-contact list" className="text-body-sm text-faint">
-        do not contact
+      <span className="flex flex-col items-start gap-1">
+        <span className="flex items-center gap-2">
+          <span title="On the do-not-contact list" className="text-body-sm text-faint">
+            do not contact
+          </span>
+          <button
+            type="button"
+            onClick={undecline}
+            disabled={busy !== null}
+            title="Put them back in the queue and take their details off the list"
+            className="text-caption text-secondary underline underline-offset-2 hover:text-primary disabled:opacity-50"
+          >
+            {busy === "undecline" ? "undoing…" : "undo"}
+          </button>
+        </span>
+        {error && (
+          <span role="alert" className="text-caption text-hold">
+            {error}
+          </span>
+        )}
       </span>
     );
   }

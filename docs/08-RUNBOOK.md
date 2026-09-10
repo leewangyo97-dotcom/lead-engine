@@ -565,3 +565,31 @@ Three ways to close it, cheapest first:
 
 Not done without a decision, because any of them changes how the owner reaches
 their own app and the third would be locking in a risk on someone else's behalf.
+
+## Undoing a decline
+
+"They said no" was the only one-way door in this app: one click behind one
+confirmation, and nothing could take it back. Declined rows now carry an **undo**
+beside "do not contact", and `POST /api/prospects/<id>/undecline` does the same.
+
+It is not a plain delete of what the decline wrote. Suppression entries are keyed
+on the value — the phone number, email and domain — rather than on the prospect,
+because a "no" comes from a business rather than from a row. Since 95 rows share
+a number with another business, releasing the entry could let someone who
+genuinely refused back into the queue.
+
+So an identifier is released only when no other still-declined prospect owns it.
+Verified against the real council switchboard that answers for twelve preschools:
+
+```
+decline preschool A          -> switchboard suppressed
+decline preschool B          -> still suppressed
+undo A                       -> released 0, kept 2   (B still refuses)
+undo B                       -> released 2           (nobody left holding it)
+```
+
+A prospect can therefore come back to the queue and still be unreachable, which
+the row says: "Back in the queue, but N identifier(s) stay suppressed."
+
+**Declined rows sort last**, so on a large search the undo is on the final page —
+row 2,837 of 2,837 in the twelve-category Cebu search.

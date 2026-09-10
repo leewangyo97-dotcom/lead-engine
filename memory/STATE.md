@@ -9,7 +9,7 @@ Last updated: 2026-09-10 · Phase: **all six complete, plus geo prospect discove
 
 **The machine ran unattended for a week and nothing broke.** Nightly runs on 3,
 4, 7 and 8 September all green; weekends correctly skipped. 341 leads, 44
-harvested in the last six days, 449 tests passing. Prospect counts are below —
+harvested in the last six days, 458 tests passing. Prospect counts are below —
 they moved by two orders of magnitude on 10 September.
 
 **Fifteen sends, no replies yet.** Two leads by email (This Dot Labs, Atria) and
@@ -83,6 +83,11 @@ setting and no code. See RUNBOOK "The deployment is public".
 
 ## Recently done
 
+- 2026-09-10 — "They said no" was the only one-way door: nothing could undo it.
+  Declined rows now carry an undo. It releases an identifier only when no other
+  still-declined prospect owns it — 95 rows share a phone, so a blind delete
+  would let businesses that genuinely refused back into the queue. Verified on
+  the real switchboard: undo A released 0 kept 2, undo B released 2.
 - 2026-09-10 — Added `robots.ts` and a noindex: the public deployment was
   crawlable and renders other people's phone numbers and emails.
 - 2026-09-10 — A search's page showed its first 200 rows and offered no way to

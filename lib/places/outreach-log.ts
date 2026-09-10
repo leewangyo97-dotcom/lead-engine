@@ -1,9 +1,10 @@
-import { and, desc, eq, gte, inArray } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, ne } from "drizzle-orm";
 import { getDb } from "../db";
 import { outreach, prospects, suppressions } from "../db/schema";
 import { rootDomain } from "./normalize";
 import { chooseChannel, type Channel } from "./contact";
 import { MAX_STEP } from "../followups";
+import { keyOf, releasable, type Identifier } from "./undecline";
 
 /**
  * Recording that a prospect was contacted, and refusing when they asked not to
@@ -125,6 +126,26 @@ export interface DeclineResult {
  * The row itself is marked rather than deleted: deleting it means the next
  * search finds the same business, knows nothing, and offers it again.
  */
+/**
+ * Everything a decline puts on the list for one prospect.
+ *
+ * Shared by `decline` and `undecline` so the two cannot disagree about what a
+ * refusal covers — an undo that derived this list differently would leave
+ * entries behind or take back ones it never wrote.
+ */
+type PlaceRow = typeof prospects.$inferSelect;
+
+export function identifiersOf(place: PlaceRow): Identifier[] {
+  const domain = place.rootDomain ?? (place.website ? rootDomain(place.website) : null);
+  return [
+    place.email ? ({ kind: "email", value: place.email } as const) : null,
+    place.phoneE164 ? ({ kind: "phone", value: place.phoneE164 } as const) : null,
+    place.whatsappE164 ? ({ kind: "phone", value: place.whatsappE164 } as const) : null,
+    // A platform domain identifies the builder, not the business.
+    domain && !isSharedHost(domain) ? ({ kind: "domain", value: domain } as const) : null,
+  ].filter((e): e is Identifier => e !== null);
+}
+
 export async function decline(
   prospectId: string,
   reason?: string,
@@ -135,14 +156,7 @@ export async function decline(
   const [place] = await db.select().from(prospects).where(eq(prospects.id, prospectId)).limit(1);
   if (!place) return { ok: false, suppressed: [], error: "no such prospect" };
 
-  const domain = place.rootDomain ?? (place.website ? rootDomain(place.website) : null);
-  const entries = [
-    place.email ? { kind: "email", value: place.email } : null,
-    place.phoneE164 ? { kind: "phone", value: place.phoneE164 } : null,
-    place.whatsappE164 ? { kind: "phone", value: place.whatsappE164 } : null,
-    // A platform domain identifies the builder, not the business.
-    domain && !isSharedHost(domain) ? { kind: "domain", value: domain } : null,
-  ].filter((e): e is { kind: string; value: string } => e !== null);
+  const entries = identifiersOf(place);
 
   for (const entry of entries) {
     await suppress(entry.kind, entry.value, reason ?? "asked not to be contacted");
@@ -154,6 +168,64 @@ export async function decline(
     .where(eq(prospects.id, prospectId));
 
   return { ok: true, suppressed: entries };
+}
+
+export interface UndeclineResult {
+  ok: boolean;
+  /** Entries actually taken off the list. */
+  released: Identifier[];
+  /** Entries kept because another declined prospect owns them too. */
+  kept: Identifier[];
+  error?: string;
+}
+
+/**
+ * Takes a prospect off the do-not-contact list.
+ *
+ * Declining is one click behind one confirmation, and until now it was the only
+ * one-way door in the app: nothing in the UI could undo it, and the entries it
+ * writes are keyed on the value rather than the prospect, so even by hand it was
+ * not obvious what to delete.
+ *
+ * An identifier shared with another still-declined prospect stays on the list.
+ * See `releasable` — a council switchboard released because one preschool was
+ * undone would let the eleven that genuinely refused back into the queue.
+ */
+export async function undecline(
+  prospectId: string,
+  now: () => Date = () => new Date(),
+): Promise<UndeclineResult> {
+  const db = getDb();
+
+  const [place] = await db.select().from(prospects).where(eq(prospects.id, prospectId)).limit(1);
+  if (!place) return { ok: false, released: [], kept: [], error: "no such prospect" };
+
+  const mine = identifiersOf(place);
+
+  const others = await db
+    .select()
+    .from(prospects)
+    .where(and(eq(prospects.status, "do_not_contact"), ne(prospects.id, prospectId)));
+
+  const heldByOthers = others.flatMap(identifiersOf);
+  const release = releasable(mine, heldByOthers);
+  const heldKeys = new Set(release.map(keyOf));
+  const kept = mine.filter((entry) => !heldKeys.has(keyOf(entry)));
+
+  for (const entry of release) {
+    await db
+      .delete(suppressions)
+      .where(
+        and(eq(suppressions.kind, entry.kind), eq(suppressions.value, entry.value.toLowerCase())),
+      );
+  }
+
+  await db
+    .update(prospects)
+    .set({ status: "new", updatedAt: now() })
+    .where(eq(prospects.id, prospectId));
+
+  return { ok: true, released: release, kept };
 }
 
 export interface LogContactResult {

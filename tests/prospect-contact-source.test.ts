@@ -29,8 +29,18 @@ function openBody(): string {
   const start = SOURCE.indexOf("async function open(");
   expect(start).toBeGreaterThan(-1);
   const rest = SOURCE.slice(start);
-  const end = rest.indexOf("\n  if (declined)");
-  return end === -1 ? rest : rest.slice(0, end);
+
+  // The earliest of several markers, not one of them. This used to cut at
+  // `if (declined)`; when an `undecline` function was added between the two, the
+  // range quietly grew to include it and reported that function's
+  // `router.refresh()` as a violation inside `open`. A guard that reads the
+  // wrong range fails on innocent code, which is the fastest way to get a guard
+  // deleted.
+  const ends = ["\n  async function ", "\n  function ", "\n  if (declined)"]
+    .map((marker) => rest.indexOf(marker, 1))
+    .filter((i) => i > 0);
+
+  return ends.length ? rest.slice(0, Math.min(...ends)) : rest;
 }
 
 describe("the prospect email path", () => {
