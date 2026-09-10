@@ -140,3 +140,39 @@ describe("signalKeys", () => {
     expect(new Set(keys)).toEqual(new Set(["category", "city", "website", "no_https"]));
   });
 });
+
+describe("a business that emails from its own domain", () => {
+  const leura = {
+    id: "x",
+    name: "Leura Wellness",
+    category: "clinics",
+    website: null,
+    email: "hello@leurawellness.com.au",
+  };
+
+  it("does not offer no_website, so the claim cannot be written", () => {
+    // verifyMessage requires no_website for any "you don't have a website"
+    // phrasing, so withholding the signal makes the false claim unshippable
+    // rather than merely discouraged.
+    const keys = buildSignals(leura).map((s) => s.key);
+    expect(keys).not.toContain("no_website");
+    expect(keys).toContain("email_domain");
+  });
+
+  it("names the domain to check", () => {
+    const fact = buildSignals(leura).find((s) => s.key === "email_domain")!.fact;
+    expect(fact).toContain("leurawellness.com.au");
+    expect(fact).toMatch(/check it/i);
+  });
+
+  it("still says no_website when the email is a free provider", () => {
+    const keys = buildSignals({ ...leura, email: "leurawellness@gmail.com" }).map((s) => s.key);
+    expect(keys).toContain("no_website");
+    expect(keys).not.toContain("email_domain");
+  });
+
+  it("still says no_website when the domain belongs to an institution", () => {
+    const school = { ...leura, name: "Tangke Elementary School", email: "137117@deped.gov.ph" };
+    expect(buildSignals(school).map((s) => s.key)).toContain("no_website");
+  });
+});

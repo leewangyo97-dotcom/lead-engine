@@ -39,7 +39,9 @@ const RULES: Rule[] = [
   {
     pattern: /\b(don'?t have a (?:website|site)|no website|without a website|haven'?t got a (?:website|site))\b/i,
     requires: ["no_website"],
-    reason: "says they have no website, and the record says they have one",
+    reason:
+      "says they have no website, and the record does not support that — either " +
+      "a site is on file, or their email is at a domain that looks like their own",
   },
   {
     pattern: /\b(your (?:website|site)|you already have a (?:website|site))\b/i,

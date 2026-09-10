@@ -717,3 +717,40 @@ live page, which is the only way to tell the two apart.
 **The rule that follows.** Before a message makes a specific, checkable claim
 about someone's website, open the site. The record is evidence, not proof, and
 this one was wrong in a way no amount of reading the code would reveal.
+
+## "No website in the record" is a fact about the record
+
+A draft told Leura Wellness they have no website. Their email is at
+`leurawellness.com.au`, which serves a 349KB site titled "Leura Wellness".
+OpenStreetMap has no website tag for them — so the record was right about itself
+and wrong about the business.
+
+`ownDomainFromEmail` closes it. When a prospect has no website on file but emails
+from a domain resembling its own name, `buildSignals` withholds `no_website` and
+offers `email_domain` instead, naming the domain to check. Withheld rather than
+annotated on purpose: `verifyMessage` requires `no_website` for any "you don't
+have a website" phrasing, so the claim is now unshippable rather than merely
+discouraged. Replaying the deleted message proves it:
+
+```
+signals offered: [ 'category', 'email_domain', 'mobile' ]
+violations: [ { quote: "don't have a website", ... } ]
+
+with a gmail address, same message -> violations: []
+```
+
+**The naive version of this rule is wrong.** Of 117 prospects with a non-free
+email domain and no website, most are at `deped.gov.ph` or `unsw.edu.au` — a
+department's domain or a university's, not the school's or the clinic's. Those
+businesses genuinely have no site. What separates them is resemblance to the
+business name, which is what the function tests; ISP mailboxes like
+`bigpond.com` are treated as free providers.
+
+**Verifying a batch of drafts.** For each: run `verifyMessage` against
+`signalKeys`, and for anything claiming no website, check the email domain and
+re-read the row from OpenStreetMap. On the eighteen drafts of 10 September that
+found one false claim; the other seventeen came back clean, with OSM confirming
+no website for any of them and sixteen of them on free providers.
+
+What this cannot prove is a negative. A business may have a site that
+OpenStreetMap has never recorded and whose address gives no hint.

@@ -1,5 +1,6 @@
 import { firstMessage, type ContactablePlace } from "./contact";
 import { isWhatsAppCapable } from "./phone";
+import { ownDomainFromEmail } from "./own-domain";
 
 /**
  * The "enhance" step: turning what is known about a prospect into a prompt, and
@@ -40,7 +41,26 @@ export function buildSignals(place: EnhanceablePlace): Signal[] {
   if (place.city) signals.push({ key: "city", fact: `City: ${place.city}` });
 
   if (!place.website) {
-    signals.push({ key: "no_website", fact: "No website in the record" });
+    // "No website in the record" is a fact about the record. When the business
+    // emails from a domain that looks like its own name, the record is probably
+    // just missing one — Leura Wellness had no website tag in OpenStreetMap and
+    // a live site at leurawellness.com.au, and a draft told them they had none.
+    //
+    // `no_website` is withheld in that case rather than merely annotated, which
+    // makes the claim unshippable: `verifyMessage` requires that signal for any
+    // "you don't have a website" phrasing, so the batch is rejected instead of
+    // relying on whoever writes the message to read a warning.
+    const owned = ownDomainFromEmail(place.name, place.email);
+    if (owned) {
+      signals.push({
+        key: "email_domain",
+        fact:
+          `Their email is at ${owned}, which looks like their own domain — ` +
+          "check it before saying anything about whether they have a website",
+      });
+    } else {
+      signals.push({ key: "no_website", fact: "No website in the record" });
+    }
   } else {
     signals.push({ key: "website", fact: `Website: ${place.website}` });
 

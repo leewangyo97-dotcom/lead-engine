@@ -9,7 +9,7 @@ Last updated: 2026-09-10 · Phase: **all six complete, plus geo prospect discove
 
 **The machine ran unattended for a week and nothing broke.** Nightly runs on 3,
 4, 7 and 8 September all green; weekends correctly skipped. 341 leads, 44
-harvested in the last six days, 480 tests passing. Prospect counts are below —
+harvested in the last six days, 495 tests passing. Prospect counts are below —
 they moved by two orders of magnitude on 10 September.
 
 **Fifteen sends, no replies yet.** Two leads by email (This Dot Labs, Atria) and
@@ -54,7 +54,14 @@ and re-scores; the monthly job refreshes map data.
 The working copy is `C:\dev\lead-engine`. `F:\lead-engine` is corrupted NTFS
 wreckage awaiting `chkdsk F: /f /r`.
 
-## Eighteen enhanced drafts are waiting
+## Seventeen enhanced drafts are waiting, all verified
+
+**Two were deleted for being false.** Leura Wellness was told they have no
+website; their email is at leurawellness.com.au, which serves a live 349KB site.
+`ownDomainFromEmail` now withholds the `no_website` signal when the email domain
+resembles the business name, which makes that claim unshippable — `verifyMessage`
+requires the signal. The other seventeen were checked: no violations, OSM
+confirms no website for any, sixteen are on free providers.
 
 **One was deleted for being false.** A draft told CDW Studios their site has no
 viewport tag and no contact details; the site has both. The stored signals were
@@ -67,7 +74,7 @@ and the third genuinely has no viewport tag, checked against the live page.
 **The rule:** before a message makes a checkable claim about someone's website,
 open the site. The record is evidence, not proof.
 
-## Eighteen enhanced drafts are waiting
+## Seventeen enhanced drafts are waiting, all verified
 
 Written 10 September — the first time the enhance loop had ever run. Every one of
 the sixteen prospect messages sent before this was `firstMessage()` with the name
