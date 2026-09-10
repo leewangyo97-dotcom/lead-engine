@@ -9,7 +9,7 @@ Last updated: 2026-09-10 · Phase: **all six complete, plus geo prospect discove
 
 **The machine ran unattended for a week and nothing broke.** Nightly runs on 3,
 4, 7 and 8 September all green; weekends correctly skipped. 341 leads, 44
-harvested in the last six days, 474 tests passing. Prospect counts are below —
+harvested in the last six days, 480 tests passing. Prospect counts are below —
 they moved by two orders of magnitude on 10 September.
 
 **Fifteen sends, no replies yet.** Two leads by email (This Dot Labs, Atria) and
@@ -54,13 +54,27 @@ and re-scores; the monthly job refreshes map data.
 The working copy is `C:\dev\lead-engine`. `F:\lead-engine` is corrupted NTFS
 wreckage awaiting `chkdsk F: /f /r`.
 
-## Ten enhanced drafts are waiting
+## Eighteen enhanced drafts are waiting
+
+**One was deleted for being false.** A draft told CDW Studios their site has no
+viewport tag and no contact details; the site has both. The stored signals were
+measured on a bad response the night before — `extractSiteSignals` reads a
+52-byte `403 - Forbidden` body as "no viewport, no contacts". `looksLikePage`
+now requires markup before anything is measured. Three rows carried the
+fingerprint (`noViewport: true` with no platform); re-enriching corrected two,
+and the third genuinely has no viewport tag, checked against the live page.
+
+**The rule:** before a message makes a checkable claim about someone's website,
+open the site. The record is evidence, not proof.
+
+## Eighteen enhanced drafts are waiting
 
 Written 10 September — the first time the enhance loop had ever run. Every one of
 the sixteen prospect messages sent before this was `firstMessage()` with the name
-swapped; there were zero drafts in the table. These ten are per-business, built
-only from the recorded facts (category, city, no website), and stored unsent.
-Open `✦ Enhance` on a row to compare before sending.
+swapped; there were zero drafts in the table. These are per-business, built only
+from recorded facts, and stored unsent. Open `✦ Enhance` on a row to compare
+before sending. Foodfiesta.ph was skipped deliberately: the record says no
+website and the business is named after a domain, so that opener could be wrong.
 
 ## Next three actions
 

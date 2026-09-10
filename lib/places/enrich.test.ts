@@ -239,6 +239,13 @@ function stubFetch(pages: Record<string, string>, seen: string[] = []) {
   }) as unknown as typeof fetch;
 }
 
+/*
+ * The homepage fixtures below are wrapped in html and body tags because
+ * `looksLikePage` now requires them before anything is measured on a response.
+ * Only the wrappers changed — every assertion is the one it was. Real pages
+ * carry those tags; these fixtures were fragments, and a guard that a real page
+ * passes and a fixture fails is a fixture problem.
+ */
 describe("enrichSite", () => {
   beforeEach(() => clearRobotsCache());
   const nap = async () => {};
@@ -246,9 +253,11 @@ describe("enrichSite", () => {
   it("reads contact details off a homepage", async () => {
     const fetchImpl = stubFetch({
       "https://vet.ph/robots.txt": "User-agent: *\nDisallow:",
-      "https://vet.ph/": `<a href="mailto:hi@vet.ph">mail</a>
+      "https://vet.ph/": `<html><body>
+                          <a href="mailto:hi@vet.ph">mail</a>
                           <a href="https://wa.me/639171234567">chat</a>
-                          <meta name="viewport" content="width=device-width">`,
+                          <meta name="viewport" content="width=device-width">
+                          </body></html>`,
     });
 
     const out = await enrichSite("https://vet.ph/", "PH", { fetchImpl, sleep: nap });
@@ -263,8 +272,8 @@ describe("enrichSite", () => {
     const fetchImpl = stubFetch(
       {
         "https://vet.ph/robots.txt": "User-agent: *\nDisallow:",
-        "https://vet.ph/": `<a href="/contact">Contact</a>`,
-        "https://vet.ph/contact": `<a href="mailto:hi@vet.ph">mail</a>`,
+        "https://vet.ph/": `<html><body><a href="/contact">Contact</a></body></html>`,
+        "https://vet.ph/contact": `<html><body><a href="mailto:hi@vet.ph">mail</a></body></html>`,
       },
       seen,
     );
@@ -279,8 +288,8 @@ describe("enrichSite", () => {
     const fetchImpl = stubFetch(
       {
         "https://vet.ph/robots.txt": "User-agent: *\nDisallow:",
-        "https://vet.ph/": `<a href="mailto:hi@vet.ph">mail</a><a href="/contact">Contact</a>`,
-        "https://vet.ph/contact": `<a href="mailto:other@vet.ph">mail</a>`,
+        "https://vet.ph/": `<html><body><a href="mailto:hi@vet.ph">mail</a><a href="/contact">Contact</a></body></html>`,
+        "https://vet.ph/contact": `<html><body><a href="mailto:other@vet.ph">mail</a></body></html>`,
       },
       seen,
     );
@@ -309,7 +318,7 @@ describe("enrichSite", () => {
   it("reports a site with no contact details apart from one that failed", async () => {
     const fetchImpl = stubFetch({
       "https://bare.ph/robots.txt": "User-agent: *\nDisallow:",
-      "https://bare.ph/": `<p>Open daily</p>`,
+      "https://bare.ph/": `<html><body><p>Open daily</p></body></html>`,
     });
     expect((await enrichSite("https://bare.ph/", "PH", { fetchImpl, sleep: nap })).status).toBe(
       "no_contact_found",
@@ -391,7 +400,7 @@ describe("parked domains", () => {
       const u = url.toString();
       if (u.endsWith("robots.txt")) return new Response("", { status: 404 });
       return new Response(
-        `<h1>lhprime.com</h1><p>This domain is for sale</p><a href="mailto:sales@hugedomains.com">buy</a>`,
+        `<html><body><h1>lhprime.com</h1><p>This domain is for sale</p><a href="mailto:sales@hugedomains.com">buy</a></body></html>`,
         { status: 200, headers: { "content-type": "text/html" } },
       );
     }) as unknown as typeof fetch;
@@ -408,7 +417,7 @@ describe("parked domains", () => {
   it("does not call an ordinary site parked", async () => {
     const fetchImpl = (async (url: string | URL) => {
       if (url.toString().endsWith("robots.txt")) return new Response("", { status: 404 });
-      return new Response(`<a href="mailto:hi@vet.ph">mail</a><p>We sell pet food and domain names of love</p>`, {
+      return new Response(`<html><body><a href="mailto:hi@vet.ph">mail</a><p>We sell pet food and domain names of love</p></body></html>`, {
         status: 200,
         headers: { "content-type": "text/html" },
       });

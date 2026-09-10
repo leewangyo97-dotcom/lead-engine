@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { firstUsableEmail, isUsableEmail } from "./extract";
+import { firstUsableEmail, isUsableEmail, looksLikePage } from "./extract";
 
 describe("isUsableEmail", () => {
   it("accepts an ordinary address", () => {
@@ -43,5 +43,36 @@ describe("firstUsableEmail", () => {
     expect(firstUsableEmail(null)).toBeNull();
     expect(firstUsableEmail("")).toBeNull();
     expect(firstUsableEmail("   ")).toBeNull();
+  });
+});
+
+describe("looksLikePage", () => {
+  const page = `<!DOCTYPE html><html lang="en"><head><title>x</title></head><body>${"a".repeat(300)}</body></html>`;
+
+  it("accepts a real page", () => {
+    expect(looksLikePage(page)).toBe(true);
+  });
+
+  it("rejects the error body that caused this", () => {
+    // 52 bytes, served with a 200 by some hosts. Measured for signals it reads
+    // as "no viewport tag, no contact details" — facts about an error message,
+    // recorded as facts about the business's website.
+    expect(looksLikePage("403 - Forbidden | Access to this page is forbidden.\n")).toBe(false);
+  });
+
+  it("rejects an empty body", () => {
+    expect(looksLikePage("")).toBe(false);
+  });
+
+  it("rejects a long response that is not html", () => {
+    expect(looksLikePage(JSON.stringify({ error: "blocked" }).padEnd(900, " "))).toBe(false);
+  });
+
+  it("accepts a genuinely tiny page, which a byte floor would have refused", () => {
+    expect(looksLikePage("<html><body>Call us</body></html>")).toBe(true);
+  });
+
+  it("accepts a page that opens with body rather than html", () => {
+    expect(looksLikePage(`<body>${"x".repeat(300)}</body>`)).toBe(true);
   });
 });

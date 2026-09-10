@@ -10,6 +10,7 @@ import {
   extractSocials,
   extractWhatsApp,
   isParkedDomain,
+  looksLikePage,
   type SiteSignals,
 } from "./extract";
 
@@ -105,6 +106,13 @@ async function fetchPage(url: string, fetchImpl: typeof fetch): Promise<FetchRes
   if (type && !type.includes("html")) return { kind: "unusable" };
 
   const body = await res.text();
+
+  // A 200 that is not a page is not a page. Some sites answer a crawler with a
+  // short error string and an OK status, and every signal measured on it reads
+  // as a fact about the business — "no viewport tag", "no contact details" —
+  // when it is a fact about an error message.
+  if (!looksLikePage(body)) return { kind: "unusable" };
+
   return { kind: "page", page: { url: res.url || url, html: body.slice(0, MAX_BYTES) } };
 }
 

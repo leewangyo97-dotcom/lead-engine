@@ -680,3 +680,40 @@ the draft side by side before sending.
 The emitter skips prospects that already have a draft. Without that it hands back
 the same ten every run — which is exactly what happened the first time, and the
 second prompt came out byte-identical to the first.
+
+## A site signal can be a fact about an error page
+
+**What happened.** An enhanced draft was written telling CDW Studios that
+cdwstudios.com has no viewport tag and lists no contact details. The site has
+both — a viewport meta tag and `info@cdwstudios.com` with a phone number. The
+draft was caught by fetching the site before sending, and deleted.
+
+**Why.** `extractSiteSignals` answers the same shape whatever it is given. A
+52-byte body reading `403 - Forbidden | Access to this page is forbidden.`
+contains no viewport tag, so it measures `noViewport: true` and finds no
+contacts — a fact about an error message, stored as a fact about the business's
+website, and then offered to the message writer as something to lean on.
+
+The enricher already refuses a 403 *status*. This was a bad body, and re-running
+the same URL the next day returned the correct signals, so it was transient.
+
+**Fixed.** `looksLikePage` in `lib/places/extract.ts`: a body must carry an html
+or body tag and clear 200 bytes before anything is measured on it. The test is
+loose on purpose — the failure it guards is an error string, not a small site.
+
+**How to spot the fingerprint** in data written before the guard:
+
+```sql
+select id, name, website from prospects
+where site_signals->>'noViewport' = 'true'
+  and site_signals->>'platform' is null;
+```
+
+`noViewport: true` with no platform detected is the shape: a real page usually
+identifies its platform. Three rows carried it; re-enriching corrected two, and
+the third (a Weebly site) genuinely has no viewport tag — verified against the
+live page, which is the only way to tell the two apart.
+
+**The rule that follows.** Before a message makes a specific, checkable claim
+about someone's website, open the site. The record is evidence, not proof, and
+this one was wrong in a way no amount of reading the code would reveal.

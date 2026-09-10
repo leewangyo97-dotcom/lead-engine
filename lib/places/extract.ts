@@ -156,6 +156,30 @@ export interface SiteSignals {
   platform?: "wordpress" | "wix" | "squarespace" | "shopify";
 }
 
+/**
+ * Whether a response body is a page at all.
+ *
+ * `extractSiteSignals` cannot tell a real page from an error body, and its
+ * answers are the same shape either way: a 52-byte `403 - Forbidden | Access to
+ * this page is forbidden.` contains no viewport tag, so it measures
+ * `noViewport: true` — a fact about the error page, recorded as a fact about the
+ * business's website.
+ *
+ * That reached a message. A draft went out to review telling CDW Studios their
+ * site has no viewport tag and lists no contact details; the site has both. The
+ * record was written on a bad response the night before, and re-enriching the
+ * same URL returned the correct signals.
+ *
+ * So a body has to look like a page before anything is measured on it: it must
+ * carry an html or body tag. Nothing more. A byte floor was tried first and
+ * rejected five real fixtures — the failure this guards is an error string
+ * without markup, not a small site, and a threshold picked from one sample
+ * would have quietly refused genuinely tiny pages.
+ */
+export function looksLikePage(html: string): boolean {
+  return /<html[\s>]|<body[\s>]/i.test(html);
+}
+
 export function extractSiteSignals(html: string, url: string): SiteSignals {
   const lower = html.toLowerCase();
   return {
