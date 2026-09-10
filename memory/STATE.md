@@ -102,11 +102,6 @@ Nothing.
   search 3:310, calendar 3:308, list 3:307, settings 3:309), replacing Lucide
   paths that were a different drawing at a heavier stroke. Weekly review has no
   counterpart in the set and says so. The other 34 symbols stay unimported.
-- 2026-09-10 — Two more unordered queues found at the new scale: enrichment took
-  an arbitrary 25 of 9,156 and monthly refresh an arbitrary 200 of 23,203.
-  Enrichment now goes best-first, refresh oldest-first, so each budget rotates
-  instead of redrawing the same sample. Token payloads re-measured after the
-  country load: still 1,672 estimated, because the enhance prompt is capped at 10.
 - 2026-09-10 — `search:run --drain` died with "Maximum call stack size
   exceeded": one INSERT of tens of thousands of rows, which Drizzle cannot even
   build (it merges SQL fragments recursively) and Postgres would refuse anyway at
@@ -124,10 +119,6 @@ Nothing.
   records a run by hand. Tonight: 1,683 estimated input tokens, nearly all of it
   the enhance prompt. `pnpm tokens` still reads "(not measured)" and still needs
   `tokens:record` after a real /daily-run.
-- 2026-09-10 — `/review` gained the score distribution (Figma 3:1694). It is the
-  only thing on that page that can see leads nothing was ever sent to, so a
-  scorer collapsed into one band stops looking like silence. Production draws
-  0 / 6 / 51 / 66 / 49 across the five bands.
 - 2026-09-10 — Figma second pass: the lead header now carries the design's
   ScoreMeter (3:1048 / 3:1973), which the page had never shown above the fold.
   The four 360px frames are audited and the mobile bottom nav is recorded as

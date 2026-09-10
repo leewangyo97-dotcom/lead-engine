@@ -433,3 +433,12 @@ same finding at a hundred times the sample.
 - A country-wide search queues and nothing drains it. `/prospects` says so with
   `pnpm search:run --drain` to copy, instead of a note that read as "nothing
   happened".
+
+## Rotated out of STATE on 2026-09-10 (fifth pass)
+
+- Enrichment took an arbitrary 25 of 9,156 pending and the monthly refresh an
+  arbitrary 200 of 23,203. Enrichment now goes best-scoring first, refresh
+  oldest-first, so each budget rotates instead of redrawing the same sample.
+- `/review` gained the score distribution (Figma 3:1694) — the only thing on that
+  page that can see leads nothing was ever sent to, so a scorer collapsed into one
+  band stops looking like silence. Production drew 0 / 6 / 51 / 66 / 49.
