@@ -9,7 +9,7 @@ Last updated: 2026-09-10 · Phase: **all six complete, plus geo prospect discove
 
 **The machine ran unattended for a week and nothing broke.** Nightly runs on 3,
 4, 7 and 8 September all green; weekends correctly skipped. 341 leads, 44
-harvested in the last six days, 458 tests passing. Prospect counts are below —
+harvested in the last six days, 469 tests passing. Prospect counts are below —
 they moved by two orders of magnitude on 10 September.
 
 **Fifteen sends, no replies yet.** Two leads by email (This Dot Labs, Atria) and
@@ -74,6 +74,15 @@ addresses to anyone, and every write endpoint (`contact`, `decline`, `outcome`,
 access. Cheapest fix is Vercel Deployment Protection, which is a dashboard
 setting and no code. See RUNBOOK "The deployment is public".
 
+## The lead funnel is supply-starved, and now says so
+
+`pnpm leads:diagnose` (new). Over 345 leads: the average job lead scores **33 of
+100** against a threshold of 75. 162 of 322 score **zero** on timezone
+eligibility and 147 score zero on stack. That is not a broken filter — the
+sources carry work that is not open to UTC+8, in stacks that are not his. The
+lever is a new source adapter, not a weight. It also flags that all 23 funding
+leads score 15/15 on `pay`, which ranks nothing.
+
 ## Open questions for Joshua
 
 - Public or private GitHub repo? Public = unlimited Actions minutes; private =
@@ -83,6 +92,10 @@ setting and no code. See RUNBOOK "The deployment is public".
 
 ## Recently done
 
+- 2026-09-10 — `pnpm leads:diagnose` added: aggregates the score parts the lead
+  page computes one at a time, so an empty inbox can be told apart from a broken
+  filter. Rubric maxima moved out of the lead page into `prescore.ts` — they were
+  a second copy.
 - 2026-09-10 — "They said no" was the only one-way door: nothing could undo it.
   Declined rows now carry an undo. It releases an identifier only when no other
   still-declined prospect owns it — 95 rows share a phone, so a blind delete

@@ -10,6 +10,48 @@ export const RUBRIC_VERSION = "1.1.0";
 
 export const NEEDS_DRAFT_THRESHOLD = 75;
 
+/**
+ * What each dimension can award, and what to call it.
+ *
+ * The lead page and the funnel diagnostic both need these, and they used to live
+ * in the page component alone. Two copies of a rubric is how a table comes to
+ * print "25 / 10" — the failure that file already documents — so they live here,
+ * beside the code that awards the points.
+ *
+ * Funding leads are scored on different dimensions, which is why there are two
+ * sets rather than one with unused rows.
+ */
+export const JOB_MAXIMA = {
+  timezone: 30,
+  contract: 20,
+  stack: 25,
+  contact: 10,
+  pay: 10,
+  freshness: 5,
+} as const;
+
+export const FUNDING_MAXIMA = {
+  freshness: 30,
+  stack: 30,
+  contact: 25,
+  pay: 15,
+} as const;
+
+export const DIMENSION_LABELS: Record<string, string> = {
+  timezone: "Timezone eligibility",
+  contract: "Contract terms",
+  stack: "Stack match",
+  contact: "Direct contact",
+  pay: "Pay signal",
+  freshness: "Trigger freshness",
+};
+
+/** Funding leads reuse two keys for different questions. */
+export const FUNDING_LABELS: Record<string, string> = {
+  ...DIMENSION_LABELS,
+  pay: "Stage signal",
+};
+
 export interface PrescoreInput {
   kind?: "job" | "funding" | "cofounder";
   title: string;

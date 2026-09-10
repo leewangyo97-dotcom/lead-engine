@@ -593,3 +593,41 @@ the row says: "Back in the queue, but N identifier(s) stay suppressed."
 
 **Declined rows sort last**, so on a large search the undo is on the final page —
 row 2,837 of 2,837 in the twelve-category Cebu search.
+
+## The inbox is empty and you want to know why
+
+```bash
+pnpm leads:diagnose
+```
+
+Deterministic, no model, no network — it aggregates the score parts the lead page
+already computes one lead at a time. Run it whenever the funnel goes quiet.
+
+As of 10 September, over 345 leads:
+
+```
+leads: 345 total, 48 in the last 7 days — 171 disqualified, 171 parked,
+       0 still in play, 3 drafted or beyond
+
+job leads (322)
+  timezone     7.1 / 30   24% of max  zero:  162/322  full:   21
+  stack        9.5 / 25   38% of max  zero:  147/322  full:    4
+  contract     5.9 / 20   30% of max  zero:    0/322
+  pay          5.2 / 10   52% of max  zero:    0/322
+```
+
+**The average job lead scores 33 of 100 against a threshold of 75.** That is not
+a broken filter. Half the postings score *nothing* on timezone eligibility, and
+147 of 322 score nothing on stack — the sources are carrying work that is not
+open to someone in UTC+8, in stacks that are not his.
+
+The useful conclusion is about supply, not weights. Loosening timezone to clear
+the threshold would draft applications to jobs that will not hire from this
+timezone; the rubric already judged those correctly. What moves this number is
+sources that carry APAC-friendly remote roles, which is a `source-adapter` job.
+
+**It also reports dimensions that rank nothing.** Every one of 23 funding leads
+scores 15 of 15 on `pay` — that is a constant lifting every score equally, not a
+weight, and the funding rubric is really being decided by the other three. Worth
+knowing before anyone tunes a number; not changed here, because weights are a
+`memory/RUBRIC.md` decision with a tuning log.

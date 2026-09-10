@@ -1,6 +1,14 @@
 import { notFound } from "next/navigation";
 import { getLead, tierOf } from "@/lib/leads/queries";
-import { fromLead, prescore, type PrescoreResult } from "@/lib/scoring/prescore";
+import {
+  DIMENSION_LABELS,
+  FUNDING_LABELS,
+  FUNDING_MAXIMA,
+  JOB_MAXIMA,
+  fromLead,
+  prescore,
+  type PrescoreResult,
+} from "@/lib/scoring/prescore";
 import { Pill, ScoreMeter } from "@/app/components/pills";
 import { OutcomeButtons } from "@/app/components/outcome-buttons";
 import { Shell } from "@/app/components/shell";
@@ -11,25 +19,23 @@ export const dynamic = "force-dynamic";
 /**
  * Rubric line items, so a wrong score is diagnosable rather than mysterious.
  *
- * Two sets, because rubric 1.1.0 scores founder leads on different dimensions.
- * Showing the job maxima against funding parts produced "25 / 10" and
- * "18 / 5" — arithmetic that tells the reader the page is lying to them.
+ * The maxima come from `lib/scoring/prescore.ts` rather than being written here
+ * a second time. Two sets, because rubric 1.1.0 scores founder leads on
+ * different dimensions: showing the job maxima against funding parts produced
+ * "25 / 10" and "18 / 5", arithmetic that tells the reader the page is lying to
+ * them.
  */
-const JOB_ROWS: [keyof PrescoreResult["parts"], string, number][] = [
-  ["timezone", "Timezone eligibility", 30],
-  ["contract", "Contract terms", 20],
-  ["stack", "Stack match", 25],
-  ["contact", "Direct contact", 10],
-  ["pay", "Pay signal", 10],
-  ["freshness", "Trigger freshness", 5],
-];
+type Row = [keyof PrescoreResult["parts"], string, number];
 
-const FUNDING_ROWS: [keyof PrescoreResult["parts"], string, number][] = [
-  ["freshness", "Trigger freshness", 30],
-  ["stack", "Stack match", 30],
-  ["contact", "Direct contact", 25],
-  ["pay", "Stage signal", 15],
-];
+const rowsFrom = (maxima: Record<string, number>, labels: Record<string, string>): Row[] =>
+  Object.entries(maxima).map(([key, max]) => [
+    key as keyof PrescoreResult["parts"],
+    labels[key] ?? key,
+    max,
+  ]);
+
+const JOB_ROWS = rowsFrom(JOB_MAXIMA, DIMENSION_LABELS);
+const FUNDING_ROWS = rowsFrom(FUNDING_MAXIMA, FUNDING_LABELS);
 
 export default async function LeadDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
