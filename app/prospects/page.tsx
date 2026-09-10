@@ -7,6 +7,7 @@ import {
   RefreshAllButton,
 } from "@/app/components/prospect-row-actions";
 import {
+  getProspect,
   getProspectStats,
   getProspects,
   getQueueOptions,
@@ -158,10 +159,21 @@ function Pager({ searchId, page }: { searchId: string; page: ReturnType<typeof p
 export default async function Prospects({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string; city?: string; category?: string; page?: string }>;
+  searchParams: Promise<{
+    search?: string;
+    city?: string;
+    category?: string;
+    page?: string;
+    prospect?: string;
+  }>;
 }) {
-  const { search: searchId, page: pageParam, ...rest } = await searchParams;
+  const { search: searchId, page: pageParam, prospect: focusId, ...rest } = await searchParams;
   const filter = parseQueueFilter(rest);
+
+  // One business, whatever its status. The follow-up list links here: every row
+  // on it has been contacted, and the queue lists only `new`, so without this a
+  // prospect follow-up pointed at a page that could not contain it.
+  const focused = focusId ? await getProspect(focusId) : null;
 
   // Four queries, and this page is dominated by their latency: it renders in
   // anything from 0.5s to 4.5s depending on how awake Neon is, which is what the
@@ -174,18 +186,19 @@ export default async function Prospects({
   // With no search chosen the rows are a work queue rather than an empty frame:
   // the best across every search, which is the question "who do I message next"
   // actually asks.
-  const stats = searchId ? await getProspectStats(searchId) : null;
+  const stats = searchId && !focused ? await getProspectStats(searchId) : null;
   // The count comes first, because the page number has to be clamped against a
   // total before the rows are asked for. A search of 13,134 rows showed its
   // first 200 and offered no way to the rest.
   const page = stats ? pageOf(stats.total, parsePage(pageParam)) : null;
-  const rows =
-    searchId && page
+  const rows = focused
+    ? [focused]
+    : searchId && page
       ? await getProspects(searchId, PAGE_SIZE, page.offset)
       : await getTopProspects(25, filter);
   // Only the queue is filterable. A search's own page answers "what did this
   // search find", and narrowing that would answer a different question quietly.
-  const options = searchId ? null : await getQueueOptions();
+  const options = searchId || focused ? null : await getQueueOptions();
 
   return (
     <Shell current="/prospects">
@@ -246,7 +259,7 @@ export default async function Prospects({
           </nav>
         )}
 
-        {!active && options && (
+        {!active && !focused && options && (
           <div className="mt-7">
             <FilterChips
               label="Category"
@@ -280,7 +293,18 @@ export default async function Prospects({
           </div>
         )}
 
-        {!active && rows.length > 0 && !isFiltered(filter) && (
+        {focused && (
+          <p className="mt-7 rounded-md border border-rule bg-surface p-5 text-body-sm text-secondary">
+            Showing one business, found from a follow-up. Its status is{" "}
+            <span className="font-mono text-data-sm text-primary">{focused.status}</span>, which is
+            why it is not in the queue.{" "}
+            <a className="text-accent underline underline-offset-2" href="/prospects">
+              Back to the queue
+            </a>
+          </p>
+        )}
+
+        {!active && !focused && rows.length > 0 && !isFiltered(filter) && (
           <p className="mt-5 text-body-sm text-muted">
             Best {rows.length} to message next, across every search. Contacted and declined rows
             are not here — pick a search above to see everything it found. Most rows carry no city:

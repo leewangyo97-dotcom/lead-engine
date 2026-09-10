@@ -15,13 +15,15 @@ they moved by two orders of magnitude on 10 September.
 **Fifteen sends, no replies yet.** Two leads by email (This Dot Labs, Atria) and
 thirteen prospects by WhatsApp and email, all on Wednesday 9 September, one row
 per prospect — the reopen window is holding, no click storm this time. The
-ladder is armed for the first time: day 4 comes due 13 September. `/review`
+ladder is verified, not assumed: asking `getDueFollowups` with a future date
+gives 18 due by 15 September — 16 prospects, 2 leads, all step 1 — with the first
+becoming due **Sunday 13 September at 19:31 Manila**, so Monday morning is when
+to work them. `/review`
 wants 20 sends before it will call a difference real, so it is close.
 
-Two live chores: the Gmail refresh token expires seven days after each
-`pnpm gmail:auth` while the consent screen is in Testing (it expired 8
-September — publishing the app ends the chore), and searches are manual, so
-prospect supply only grows when someone runs `pnpm search:run`.
+Two live chores: the Gmail token expires seven days after each `pnpm gmail:auth`
+while the consent screen is in Testing (publishing ends it), and searches are
+manual.
 
 **23,203 prospects after the first country-wide searches** (Australia schools
 13,134; Australia clinics/vet/dentists 6,786; a 12-category Cebu City search

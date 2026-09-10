@@ -131,6 +131,22 @@ export async function getTopProspects(limit = 25, filter: QueueFilter = {}): Pro
   return dedupeByPhone(rows).slice(0, limit);
 }
 
+/**
+ * One prospect, whatever its status.
+ *
+ * The follow-up list links here. Every row on it has been contacted, and the
+ * queue lists only `new`, so before this a prospect follow-up linked to a page
+ * that could not contain it — sixteen of them come due on 13 September and every
+ * link would have gone nowhere useful.
+ *
+ * No status filter on purpose: a contacted prospect is exactly who this is for,
+ * and a declined one should still be reachable so the undo can be found.
+ */
+export async function getProspect(id: string): Promise<ProspectRow | null> {
+  const [row] = await queryProspects(eq(prospects.id, id), 1);
+  return row ?? null;
+}
+
 export async function getProspects(
   searchId: string,
   limit = 200,

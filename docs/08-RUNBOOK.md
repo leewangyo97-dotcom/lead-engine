@@ -821,3 +821,30 @@ search did find one and the sentence is a false account of what happened.
 
 All seventeen drafts were rewritten the same way. Only the assertion changed; the
 per-business half, which is why they were written individually, is untouched.
+
+## The follow-up ladder, checked before it fires
+
+Eighteen sends went out on 9 September and nobody had confirmed the ladder covers
+*prospects* as well as leads. Asking `getDueFollowups` with a future date settles
+it without waiting:
+
+```
+13 Sept 19:31 Manila   first one becomes due
+by 15 Sept             18 due — 16 prospects, 2 leads, all at step 1
+```
+
+That first moment is a **Sunday evening**. Nothing in the system schedules by
+time of day, so the list will simply be full on Monday morning, which is when to
+work it — a WhatsApp message to a small business at 7:31pm on a Sunday is not
+the same message at 9am on a Monday.
+
+Binary-searching that crossover through `getDueFollowups` rather than computing
+it from `sent_at` was deliberate: two hand calculations disagreed because
+`sent_at` is stored without a timezone, and the function that decides is the only
+authority worth asking.
+
+**A prospect follow-up used to link nowhere useful.** `/prospects` lists only
+`status = 'new'` and every row on the follow-up list has been contacted, so all
+sixteen links pointed at a page that could not contain them. They now go to
+`/prospects?prospect=<id>`, which shows that one business whatever its status,
+says why it is not in the queue, and keeps its contact controls.
