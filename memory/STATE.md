@@ -122,10 +122,9 @@ on `pay`, which ranks nothing.
 
 ## Open questions for Joshua
 
-- Public or private GitHub repo? Public = unlimited Actions minutes; private =
-  2,000/month, which is still plenty. Public also means the code is visible —
-  fine, since no secrets are in it, and it doubles as a portfolio piece.
-- Resume says "seeking full-time remote"; the tool is built for contract. Which is it?
+- Public or private GitHub repo? Public gives unlimited Actions minutes and
+  doubles as a portfolio piece; no secrets are in the code either way.
+- Resume says "seeking full-time remote"; the tool is built for contract. Which?
 
 ## Recently done
 
