@@ -33,9 +33,7 @@ search is a reasonable call; see RUNBOOK "After a country-wide search".
 
 **Geo prospect discovery is live in production.** `/prospects` searches
 OpenStreetMap by place and category, enriches websites, scores, and opens a
-pre-filled WhatsApp or email message. First real search (Cebu City — veterinary,
-clinics, dentists) found 151 businesses: 23 reachable, 4 with a website, 3
-enriched, 1 refused by its own robots.txt.
+pre-filled WhatsApp or email message.
 
 Two markets that behave nothing alike: in the Philippines almost nobody has a
 website (4 in 151 Cebu rows), so WhatsApp is the only channel that reaches anyone.
