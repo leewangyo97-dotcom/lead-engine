@@ -37,12 +37,10 @@ pre-filled WhatsApp or email message. First real search (Cebu City — veterinar
 clinics, dentists) found 151 businesses: 23 reachable, 4 with a website, 3
 enriched, 1 refused by its own robots.txt.
 
-Two markets, measured, and they behave nothing alike: in the Philippines almost
-nobody has a website (4 in 151 Cebu rows), so WhatsApp is the only channel that
-reaches anyone and site-health scoring is inert. Abroad the opposite holds — 71
-of 108 Austin rows had one, enrichment pulled real addresses off them, and the
-pitch has something to point at. `chooseChannel` picks per prospect for exactly
-this reason. Full per-search figures are in DECISIONS.
+Two markets that behave nothing alike: in the Philippines almost nobody has a
+website (4 in 151 Cebu rows), so WhatsApp is the only channel that reaches anyone.
+Abroad the opposite — 71 of 108 Austin rows had one. `chooseChannel` picks per
+prospect for that reason. Figures in DECISIONS.
 
 Commands: `pnpm search:run "<place>" <categories>` · `pnpm enrich` ·
 `pnpm prospects:score` · `pnpm prospects:refresh` · `pnpm prospects:enhance` →
