@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import { getDb } from "../lib/db";
 import { loadLocalEnv } from "../lib/env";
 import { leads } from "../lib/db/schema";
-import { headline, inert, summarise } from "../lib/scoring/diagnose";
+import { headline, inert, projections, summarise } from "../lib/scoring/diagnose";
 import {
   FUNDING_MAXIMA,
   JOB_MAXIMA,
@@ -73,6 +73,25 @@ async function main() {
       );
     }
     console.log(`\n  ${headline(stats, NEEDS_DRAFT_THRESHOLD)}`);
+
+    // What one perfect dimension would buy. Ranking by points lost says where
+    // the points go; it does not say whether closing that hole is enough, and
+    // on this data it is not.
+    const projected = projections(parts, maxima, NEEDS_DRAFT_THRESHOLD);
+    const enough = projected.filter((p) => p.clears);
+    console.log(
+      "\n  If one dimension were perfect: " +
+        projected
+          .slice(0, 3)
+          .map((p) => `${p.key} ${p.projected.toFixed(0)}`)
+          .join(", "),
+    );
+    console.log(
+      enough.length
+        ? `  ${enough.map((p) => p.key).join(" or ")} alone would clear ${NEEDS_DRAFT_THRESHOLD}.`
+        : `  No single dimension reaches ${NEEDS_DRAFT_THRESHOLD} on its own — the constraint is ` +
+          "not one thing, and no single source change fixes it.",
+    );
 
     for (const dead of inert(stats)) {
       const how = dead.full === dead.count ? "full marks to every lead" : "nothing to any lead";

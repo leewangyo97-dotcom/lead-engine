@@ -621,10 +621,27 @@ a broken filter. Half the postings score *nothing* on timezone eligibility, and
 147 of 322 score nothing on stack — the sources are carrying work that is not
 open to someone in UTC+8, in stacks that are not his.
 
-The useful conclusion is about supply, not weights. Loosening timezone to clear
+The useful conclusion is about supply, not weights: loosening timezone to clear
 the threshold would draft applications to jobs that will not hire from this
-timezone; the rubric already judged those correctly. What moves this number is
-sources that carry APAC-friendly remote roles, which is a `source-adapter` job.
+timezone, and the rubric already judged those correctly.
+
+**But no single fix is enough, and the headline alone implies otherwise.** The
+tool now projects each dimension to full marks:
+
+```
+If one dimension were perfect: timezone 56, stack 49, contract 47
+No single dimension reaches 75 on its own.
+```
+
+Checked against the leads that are already timezone-perfect: the 21 with full
+marks average **57**, not 75, and their stack averages 8.0 of 25. So a source
+carrying APAC-friendly roles raises the average by roughly 23 points and still
+lands short. It has to carry APAC-friendly roles *in his stack* — which is one
+adapter, not two, but it is a narrower ask than "more remote jobs".
+
+Postings are also old: `posted_at` is never null, and 119 of 322 are over thirty
+days old, which is where 138 freshness zeros come from. Applying to a month-old
+posting is low yield whatever it scores.
 
 **It also reports dimensions that rank nothing.** Every one of 23 funding leads
 scores 15 of 15 on `pay` — that is a constant lifting every score equally, not a

@@ -55,6 +55,49 @@ export function summarise(
 }
 
 /**
+ * What the average would become if one dimension were perfect.
+ *
+ * The headline ranks dimensions by points lost, which answers "where are the
+ * points going" and is the wrong question for "what would fix this". Both were
+ * conflated on the first reading of this tool: timezone is the largest hole in
+ * the job rubric, so the advice was to find timezone-friendly sources — but
+ * among the 21 leads that already score full marks on timezone, the average is
+ * 57 against a threshold of 75. Fixing the biggest hole would not have been
+ * enough, and the tool said nothing about that.
+ *
+ * So this projects each dimension to its maximum and reports the average that
+ * results. A projection that still falls short says the constraint is not one
+ * dimension, and no single source change will clear the bar.
+ */
+export interface Projection {
+  key: string;
+  /** Average score if every lead scored full marks here, other parts unchanged. */
+  projected: number;
+  clears: boolean;
+}
+
+export function projections(
+  parts: readonly Record<string, number>[],
+  maxima: Record<string, number>,
+  threshold: number,
+): Projection[] {
+  if (!parts.length) return [];
+
+  const total = (p: Record<string, number>) =>
+    Object.keys(maxima).reduce((n, key) => n + (p[key] ?? 0), 0);
+
+  const base = parts.reduce((n, p) => n + total(p), 0) / parts.length;
+
+  return Object.entries(maxima)
+    .map(([key, max]) => {
+      const gain = parts.reduce((n, p) => n + (max - (p[key] ?? 0)), 0) / parts.length;
+      const projected = base + gain;
+      return { key, projected, clears: projected >= threshold };
+    })
+    .sort((a, b) => b.projected - a.projected);
+}
+
+/**
  * Dimensions that are not doing any ranking.
  *
  * Found by reading this tool's own first output: every one of 23 funding leads

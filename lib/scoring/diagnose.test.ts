@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { headline, inert, summarise } from "./diagnose";
+import { headline, inert, projections, summarise } from "./diagnose";
 
 const MAXIMA = { timezone: 30, stack: 25, contract: 20 };
 
@@ -70,6 +70,42 @@ describe("inert", () => {
 
   it("says nothing when nothing has been scored", () => {
     expect(inert(summarise([], { stack: 25 }))).toEqual([]);
+  });
+});
+
+describe("projections", () => {
+  const MAX = { timezone: 30, stack: 25, contract: 20, contact: 10, pay: 10, freshness: 5 };
+
+  it("says when fixing the biggest hole still would not clear the bar", () => {
+    // The real shape: timezone is the largest hole, and leads that already score
+    // full marks on it average 57 against a threshold of 75. Ranking by points
+    // lost alone pointed at a fix that does not fix it.
+    const lead = { timezone: 0, stack: 8, contract: 8, contact: 4, pay: 5, freshness: 2 };
+    const result = projections([lead, lead], MAX, 75);
+    const timezone = result.find((p) => p.key === "timezone")!;
+    expect(timezone.projected).toBe(57);
+    expect(timezone.clears).toBe(false);
+  });
+
+  it("says when one dimension would be enough", () => {
+    const lead = { timezone: 0, stack: 25, contract: 20, contact: 10, pay: 10, freshness: 5 };
+    const timezone = projections([lead], MAX, 75).find((p) => p.key === "timezone")!;
+    expect(timezone.projected).toBe(100);
+    expect(timezone.clears).toBe(true);
+  });
+
+  it("ranks the most promising dimension first", () => {
+    const lead = { timezone: 0, stack: 0, contract: 20, contact: 10, pay: 10, freshness: 5 };
+    expect(projections([lead], MAX, 75)[0].key).toBe("timezone");
+  });
+
+  it("leaves a dimension already at full marks projecting the current average", () => {
+    const lead = { timezone: 30, stack: 0, contract: 0, contact: 0, pay: 0, freshness: 0 };
+    expect(projections([lead], MAX, 75).find((p) => p.key === "timezone")!.projected).toBe(30);
+  });
+
+  it("is empty when nothing has been scored", () => {
+    expect(projections([], MAX, 75)).toEqual([]);
   });
 });
 
