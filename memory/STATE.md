@@ -3,7 +3,7 @@
 **Cap: 150 lines.** When it exceeds that, roll closed items into `DECISIONS.md`
 and truncate. This file is read every session; every line costs tokens repeatedly.
 
-Last updated: 2026-09-10 · Phase: **all six complete, plus geo prospect discovery.**
+Last updated: 2026-09-11 · Phase: **all six complete, plus geo prospect discovery.**
 
 ## Right now
 
@@ -12,15 +12,17 @@ Last updated: 2026-09-10 · Phase: **all six complete, plus geo prospect discove
 harvested in the last six days, 532 tests passing. Prospect counts are below —
 they moved by two orders of magnitude on 10 September.
 
-**Fifteen sends, no replies yet.** Two leads by email (This Dot Labs, Atria) and
-thirteen prospects by WhatsApp and email, all on Wednesday 9 September, one row
-per prospect — the reopen window is holding, no click storm this time. The
-ladder is verified and now has messages of its own — until 11 September a
-prospect follow-up would have re-sent the opening message. Verified, not assumed: asking `getDueFollowups` with a future date
-gives 18 due by 15 September — 16 prospects, 2 leads, all step 1 — with the first
-becoming due **Sunday 13 September at 19:31 Manila**, so Monday morning is when
-to work them. `/review`
-wants 20 sends before it will call a difference real, so it is close.
+**Eighteen sends, no replies yet.** Two leads by email (This Dot Labs, Atria) and
+sixteen prospects by WhatsApp and email, all on Wednesday 9 September, one row
+per prospect — the reopen window is holding, no click storm this time. `/review`
+wants 20 before it will call a difference real, so it is close.
+
+**The ladder is verified and now has messages of its own.** Asking
+`getDueFollowups` with a future date gives 18 due by 15 September — 16 prospects,
+2 leads, all step 1 — the first becoming due **Sunday 13 September at 19:31
+Manila**, so Monday morning is when to work them. Until 11 September a prospect
+follow-up would have re-sent the opening message word for word; `followUpMessage`
+writes steps 1 and 2 now.
 
 Two live chores: the Gmail token expires seven days after each `pnpm gmail:auth`
 while the consent screen is in Testing (publishing ends it), and searches are
@@ -28,11 +30,10 @@ manual.
 
 **23,203 prospects after the first country-wide searches** (Australia schools
 13,134; Australia clinics/vet/dentists 6,786; a 12-category Cebu City search
-2,837 — checked against the search ids on 10 September, having first written
-these two the wrong way round). 7,643 reachable, 21 MB of a 512 MB database. All scored: 72 hot, 1,201
-warm, 21,930 cold. **9,156 are queued for enrichment and the nightly takes 25** —
-a year of nights, so the queue is now ordered by score. Deleting the schools
-search is a reasonable call; see RUNBOOK "After a country-wide search".
+2,837). 7,643 reachable, 21 MB of 512 MB. Scored: 72 hot, 1,201 warm, 21,930
+cold. **9,156 queued for enrichment against a nightly 25** — a year of nights, so
+the queue is ordered by score. Deleting the schools search is a reasonable call;
+see RUNBOOK "After a country-wide search".
 
 **Geo prospect discovery is live in production.** `/prospects` searches
 OpenStreetMap by place and category, enriches websites, scores, and opens a
@@ -85,9 +86,10 @@ separately from `checked and true`.
 
 1. **Publish the Google OAuth consent screen.** While it is in Testing the
    refresh token dies every seven days and `pnpm gmail:drafts` stops with it.
-2. **Work the day-4 follow-ups on 13 September.** Five sends come due at once.
-   `/daily-run` writes them in one batched call; each item must carry its
-   `"step"`, because `apply:drafts` refuses a rung that is out of order.
+2. **Work the follow-ups on Monday 14 September.** 18 come due — 16 prospects, 2
+   leads. Prospect follow-ups are written by the app; the two lead follow-ups
+   come from `/daily-run` and must carry their `"step"`, because `apply:drafts`
+   refuses a rung that is out of order.
 3. The contract weight is still open, but less urgently: a full-time posting just
    cleared 75 on stack merit alone. `/rejected` still quantifies the cost —
    1 qualifies today, 6 would if full-time counted as acceptable terms.
@@ -129,7 +131,8 @@ on `pay`, which ranks nothing.
 
 ## Recently done
 
-
+Today's work is in DECISIONS — 11 September added the prospect follow-up
+messages, `drafts:verify`, and the two false-claim fixes behind them.
 
 ## Reminders that bite
 
