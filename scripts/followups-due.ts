@@ -1,5 +1,5 @@
 import { loadLocalEnv } from "../lib/env";
-import { getDueFollowups } from "../lib/leads/followup-queries";
+import { forLeadDrafting, getDueFollowups } from "../lib/leads/followup-queries";
 
 /**
  * Emits the follow-up payload for `/daily-run`, in the same shape and with the
@@ -13,7 +13,19 @@ import { getDueFollowups } from "../lib/leads/followup-queries";
 async function main() {
   loadLocalEnv();
   const due = await getDueFollowups();
-  process.stdout.write(JSON.stringify({ count: due.length, followups: due }, null, 1));
+  const leads = forLeadDrafting(due);
+
+  // Said on stderr so the payload on stdout stays clean for a pipe, and said at
+  // all because "2" here against "18" on /followups is otherwise alarming.
+  const prospects = due.length - leads.length;
+  if (prospects > 0) {
+    console.error(
+      `followups: ${prospects} prospect follow-up(s) are due and not in this payload — ` +
+        "the app writes those itself, no model needed.",
+    );
+  }
+
+  process.stdout.write(JSON.stringify({ count: leads.length, followups: leads }, null, 1));
 }
 
 main().catch((err) => {

@@ -876,3 +876,25 @@ nothing here can support an opinion about it.
 `messageFor` is the rule, extracted so it can be tested without a database: step
 0 is the opener (an accepted draft if one exists), every step after it is a
 follow-up.
+
+## The follow-up payload is leads only
+
+`pnpm followups` emits what the copywriter has to write. That is not the same
+list as `/followups`, and conflating them was a bug waiting for 13 September:
+eighteen were due, sixteen of them prospects.
+
+`apply:drafts` lets any id carrying a step past its "awaiting a draft" check —
+that is how follow-up leads are allowed in — so a prospect id would have reached
+the insert and died on the lead foreign key, taking the daily run with it.
+
+Prospect follow-ups need no model: `followUpMessage` writes them from the trade
+and the step when the button is clicked. So the payload is leads only, and the
+count difference is announced on stderr rather than left to look like data loss:
+
+```
+followups: 16 prospect follow-up(s) are due and not in this payload —
+           the app writes those itself, no model needed.
+```
+
+Checked against Monday by asking with a future date: 18 due, payload of 2, and
+`checkStep` accepts a step-1 draft for both — `highestSent=0`, no unsent draft.

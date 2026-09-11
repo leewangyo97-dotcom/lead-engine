@@ -24,6 +24,24 @@ export interface FollowupRow {
  * an outcome is logged, and a stale one would queue a follow-up to someone who
  * already replied. Deriving it means a reply cancels the ladder by existing.
  */
+/**
+ * The follow-ups a model still has to write.
+ *
+ * `getDueFollowups` answers for both funnels, which is right for the page: a
+ * person working Monday wants one list. The `/daily-run` payload is a different
+ * question, and feeding it both was a bug waiting for 13 September — sixteen of
+ * the eighteen due are prospects, and `apply:drafts` allows any id carrying a
+ * step through its "awaiting a draft" check, so a prospect id would have reached
+ * the insert and died on the lead foreign key.
+ *
+ * Prospect follow-ups are written by `followUpMessage` from the trade and the
+ * step, with no model involved, so there is nothing for the copywriter to do
+ * with them.
+ */
+export function forLeadDrafting(rows: readonly FollowupRow[]): FollowupRow[] {
+  return rows.filter((r) => r.kind === "lead");
+}
+
 export async function getDueFollowups(now = new Date()): Promise<FollowupRow[]> {
   const db = getDb();
 

@@ -86,9 +86,9 @@ tool counts separately from `checked and true`.
 1. **Publish the Google OAuth consent screen.** While it is in Testing the
    refresh token dies every seven days and `pnpm gmail:drafts` stops with it.
 2. **Work the follow-ups on Monday 14 September.** 18 come due — 16 prospects, 2
-   leads. Prospect follow-ups are written by the app; the two lead follow-ups
-   come from `/daily-run` and must carry their `"step"`, because `apply:drafts`
-   refuses a rung that is out of order.
+   leads (Atria, This Dot Labs). Prospect follow-ups are written by the app on
+   the click. `pnpm followups` emits the two leads only and says so; both pass
+   `checkStep` at step 1, and each item must carry its `"step"`.
 3. The contract weight is still open, but less urgently: a full-time posting just
    cleared 75 on stack merit alone. `/rejected` still quantifies the cost —
    1 qualifies today, 6 would if full-time counted as acceptable terms.
