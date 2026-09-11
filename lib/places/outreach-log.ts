@@ -3,6 +3,7 @@ import { getDb } from "../db";
 import { outreach, prospects, suppressions } from "../db/schema";
 import { rootDomain } from "./normalize";
 import { chooseChannel, type Channel } from "./contact";
+import { messageFor } from "./follow-up-message";
 import { MAX_STEP } from "../followups";
 import { keyOf, releasable, type Identifier } from "./undecline";
 
@@ -292,12 +293,6 @@ export async function logContact(
     .where(and(eq(outreach.prospectId, prospectId), eq(outreach.step, DRAFT_STEP)))
     .limit(1);
 
-  const plan = chooseChannel(place, draft?.body);
-  const option = channel === "whatsapp" ? plan.whatsapp : plan.email;
-  if (!option.available || !option.href) {
-    return { ok: false, blocked: option.reason ?? "channel unavailable" };
-  }
-
   // Step counts what has already gone out, so the follow-up rules see a real
   // sequence rather than a pile of first touches.
   const [previous] = await db
@@ -314,19 +309,44 @@ export async function logContact(
   // and three sends counted where one was made. WhatsApp and email both hand off
   // to another application, so a click is a request to open, not evidence of a
   // second conversation.
-  if (previous && withinReopenWindow(previous.sentAt, now())) {
-    return { ok: true, outreachId: undefined, href: option.href, reopened: true };
-  }
+  const reopening = Boolean(previous && withinReopenWindow(previous.sentAt, now()));
 
-  const step = previous ? previous.step + 1 : 0;
+  // Reopening shows the message that was already sent, so it keeps the previous
+  // step rather than advancing to one nobody has seen.
+  const step = reopening ? previous!.step : previous ? previous.step + 1 : 0;
 
   // Three touches is the ladder. A fourth is pestering, and it would arrive here
   // as step 3, which no follow-up rule knows what to do with.
-  if (step > MAX_STEP) {
+  if (!reopening && step > MAX_STEP) {
     return {
       ok: false,
       blocked: `the ${MAX_STEP + 1}-message sequence is finished for this prospect`,
     };
+  }
+
+  // The message depends on where in the sequence this is, which is why the plan
+  // is built after the step and not before.
+  //
+  // Every message used to come from `firstMessage` or the accepted draft,
+  // whatever the step — so a prospect reaching day four would have received
+  // their opening message again, word for word, from someone they had already
+  // ignored once. Sixteen of those came due on 13 September.
+  const body = messageFor({
+    step,
+    draftBody: draft?.body,
+    name: place.name,
+    category: place.category,
+    hasWebsite: Boolean(place.website),
+  });
+
+  const plan = chooseChannel(place, body);
+  const option = channel === "whatsapp" ? plan.whatsapp : plan.email;
+  if (!option.available || !option.href) {
+    return { ok: false, blocked: option.reason ?? "channel unavailable" };
+  }
+
+  if (reopening) {
+    return { ok: true, outreachId: undefined, href: option.href, reopened: true };
   }
 
   const [row] = await db

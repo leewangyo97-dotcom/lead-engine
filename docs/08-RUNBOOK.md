@@ -848,3 +848,31 @@ authority worth asking.
 sixteen links pointed at a page that could not contain them. They now go to
 `/prospects?prospect=<id>`, which shows that one business whatever its status,
 says why it is not in the queue, and keeps its contact controls.
+
+## What a prospect follow-up actually says
+
+Until 11 September, nothing. `logContact` built every message from
+`firstMessage` or an accepted draft whatever the step, so a prospect reaching day
+four would have received their opening message again, word for word, from
+someone they had already ignored once. Sixteen of those were due on the 13th.
+
+`followUpMessage` writes steps 1 and 2. Deterministic, no model, and it claims
+nothing about their business — the opener carries the observation and the risk of
+being wrong about it, and repeating that in a follow-up doubles the exposure for
+nothing. What it adds instead is smaller and safer: what the page would actually
+contain, by trade, and an explicit way out.
+
+- **Day 4** — references the earlier message in one line, gets concrete about the
+  offer, ends "Worth a look, or shall I leave it?"
+- **Day 11** — says it is the last one. A ladder with an end only works if the
+  person on the other side can tell it has ended.
+
+The offer splits on whether they already have a site. "One page showing your
+menu" to a restaurant whose website already has a menu reads as not having
+looked; those get "I'd mock up one page — … — so you can put it beside what you
+have now". Neither version passes judgement on the site they have, because
+nothing here can support an opinion about it.
+
+`messageFor` is the rule, extracted so it can be tested without a database: step
+0 is the opener (an accepted draft if one exists), every step after it is a
+follow-up.

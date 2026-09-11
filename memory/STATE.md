@@ -9,13 +9,14 @@ Last updated: 2026-09-10 · Phase: **all six complete, plus geo prospect discove
 
 **The machine ran unattended for a week and nothing broke.** Nightly runs on 3,
 4, 7 and 8 September all green; weekends correctly skipped. 341 leads, 44
-harvested in the last six days, 512 tests passing. Prospect counts are below —
+harvested in the last six days, 532 tests passing. Prospect counts are below —
 they moved by two orders of magnitude on 10 September.
 
 **Fifteen sends, no replies yet.** Two leads by email (This Dot Labs, Atria) and
 thirteen prospects by WhatsApp and email, all on Wednesday 9 September, one row
 per prospect — the reopen window is holding, no click storm this time. The
-ladder is verified, not assumed: asking `getDueFollowups` with a future date
+ladder is verified and now has messages of its own — until 11 September a
+prospect follow-up would have re-sent the opening message. Verified, not assumed: asking `getDueFollowups` with a future date
 gives 18 due by 15 September — 16 prospects, 2 leads, all step 1 — with the first
 becoming due **Sunday 13 September at 19:31 Manila**, so Monday morning is when
 to work them. `/review`
