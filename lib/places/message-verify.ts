@@ -64,6 +64,27 @@ const RULES: Rule[] = [
       "comments on how the site behaves on a phone, which is only checkable when a viewport tag was measured missing",
   },
   {
+    // Page weight is measurable and worth raising, but only when it was
+    // measured. `pnpm lh` stores it for one prospect at a time and most rows
+    // have never been through it, so the default state of this claim is
+    // unsupported.
+    pattern: /\b(\d+(?:\.\d+)? ?(?:mb|megabytes?|kb)|page ?weight|loads? slowly|slow to load|heavy (?:page|homepage|site))\b/i,
+    requires: ["page_weight"],
+    reason:
+      "says something about how much their page weighs or how slowly it loads, " +
+      "and no Lighthouse measurement is on file for them — run `pnpm lh <id>` first",
+  },
+  {
+    // The score, specifically. It is not offered as a signal and never will be:
+    // the same dentist's site scored 63, then 48, 56 and 52. There is no state
+    // of the record that makes this sentence safe, so it is a `never`.
+    pattern: /\b(lighthouse|pagespeed|page ?speed|performance score|scores? \d{1,3}\/100|core web vitals)\b/i,
+    never: true,
+    reason:
+      "quotes a performance score or the tool that produced it — measured to move " +
+      "fifteen points on one site between two sessions, so it is not a fact about their business",
+  },
+  {
     pattern: /\b(reviews?|ratings?|testimonials?|stars on google)\b/i,
     never: true,
     reason: "mentions reviews or ratings, which this project never collects",

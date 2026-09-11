@@ -1,4 +1,5 @@
 import { firstMessage, type ContactablePlace } from "./contact";
+import { HEAVY_PAGE_BYTES, measuredOn, storedLighthouse } from "./lighthouse-signals";
 import { isWhatsAppCapable } from "./phone";
 import { ownDomainFromEmail } from "./own-domain";
 
@@ -77,6 +78,22 @@ export function buildSignals(place: EnhanceablePlace): Signal[] {
       signals.push({
         key: "no_viewport",
         fact: "Site has no viewport meta tag, so it does not adapt to phone screens",
+      });
+    }
+
+    // Lighthouse, if `pnpm lh` has been run on this prospect. Only the page
+    // weight becomes a signal: it is the one measurement here that survived two
+    // runs byte for byte, and the one this project could not otherwise take —
+    // the HTML enricher never fetches subresources, so a 10.5 MB homepage reads
+    // to it as three clean booleans. The performance score is deliberately not
+    // offered: it moved fifteen points on one site between two sessions.
+    const lh = storedLighthouse(place.siteSignals);
+    if (lh && measuredOn(lh, place.website) && lh.totalBytes >= HEAVY_PAGE_BYTES) {
+      signals.push({
+        key: "page_weight",
+        fact:
+          `Their homepage loads ${lh.totalBytesLabel.replace(/^Total size was /, "")} ` +
+          `(measured with Lighthouse on ${lh.measuredAt.slice(0, 10)})`,
       });
     }
   }

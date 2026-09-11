@@ -590,3 +590,48 @@ APAC-friendly roles — corrected from my first reading, which named timezone al
 119 of 322 postings are also over 30 days old. All 23 funding leads score 15/15
 on `pay`, which ranks nothing.
 
+
+## Lighthouse is on-demand, and its score is never stored (11 September)
+
+Measured before deciding, against five real prospect sites. **12.6s per site on
+the mobile preset, 13.8s on desktop** — the cost is page load plus the audit
+suite, so the lighter preset buys nothing. Two hundred sites is 42 minutes
+against a fifteen-minute nightly budget that enrichment already takes four of.
+So `pnpm lh <prospectId>` runs one site at a time, by hand, and is deliberately
+absent from `nightly.yml`.
+
+**The headline number did not survive the measurement.** Same site, three
+consecutive runs, one browser:
+
+    The Roofing Guy        perf 55, 58, 58   LCP 6.0s, 5.8s, 5.7s
+    Lynnette Chu, D.M.D.   perf 48, 56, 52   LCP 5.0s, 8.2s, 8.3s
+
+Eight points and 3.3 seconds of LCP untouched, and fifteen points for that
+dentist between two sessions an hour apart. Two drafts have already gone out
+with false claims about a prospect's website; a Lighthouse score in a message
+would be the same failure with better branding. `message-verify` therefore has a
+`never` rule for it — there is no state of the record that makes the sentence
+safe, so it is not gated on a signal.
+
+**The allow-list is the mechanism.** Diffing every audit across two runs:
+first-contentful-paint, largest-contentful-paint, speed-index,
+total-blocking-time, interactive, unused-css-rules and image-delivery-insight
+moved; total-byte-weight (10,475 KiB both runs, byte for byte), unsized-images,
+color-contrast, link-name, unminified-css and unused-javascript did not. Audits
+describing the page hold, audits describing the clock do not, and only the first
+kind is read — by allow-list, so a new Lighthouse version adding a timing audit
+has to be opted in rather than noticed later.
+
+**One bug worth recording.** The byte-efficiency audits carry `numericUnit:
+"millisecond"`. `unused-javascript` reported `numericValue: 150` on a page whose
+display value said "Est savings of 24 KiB" — reading `numericValue` as bytes
+would have stored a modelled *timing* estimate in a field promising only
+what survives two runs. The bytes are in `details.overallSavingsBytes`.
+
+**What justifies the dependency at all:** the roofer whose homepage pulls 10.5 MB
+was on file as `{noHttps: false, noViewport: false, hasBookingForm: true}`. The
+HTML enricher never fetches subresources, so page weight is the one measurement
+the rest of the pipeline cannot take. At or above 3 MB — a judgement, not a
+measurement; the median page is around 2.5 MB — it becomes a `page_weight`
+signal, dated, and `message-verify` rejects any megabyte or slow-loading claim
+made without it.

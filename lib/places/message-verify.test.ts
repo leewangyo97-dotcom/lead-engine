@@ -108,3 +108,49 @@ describe("the template the app actually sends", () => {
     expect(verifyMessage(message, ["website"])).toEqual([]);
   });
 });
+
+describe("claims about weight and speed", () => {
+  const measured = ["website", "page_weight"];
+
+  it("allows the megabyte figure when Lighthouse measured it", () => {
+    expect(
+      verifyMessage("Your homepage pulls about 10 MB before it finishes loading.", measured),
+    ).toHaveLength(0);
+  });
+
+  it("refuses the same sentence when nothing was measured", () => {
+    const violations = verifyMessage("Your homepage pulls about 10 MB.", ["website"]);
+    expect(violations).toHaveLength(1);
+    expect(violations[0].reason).toContain("pnpm lh");
+  });
+
+  it("refuses a vague speed claim with no measurement behind it", () => {
+    expect(verifyMessage("Your site is slow to load on a phone.", ["website"]).length).toBeGreaterThan(0);
+  });
+
+  it("refuses the performance score even with the measurement on file", () => {
+    // There is no state of the record that makes this safe. The same dentist's
+    // site scored 63, then 48, 56 and 52.
+    const violations = verifyMessage("Your Lighthouse score is 61.", measured);
+    expect(violations.length).toBeGreaterThan(0);
+    expect(violations.some((v) => v.reason.includes("fifteen points"))).toBe(true);
+  });
+
+  it("refuses a PageSpeed or Core Web Vitals mention too", () => {
+    expect(verifyMessage("I ran PageSpeed on your site.", measured).length).toBeGreaterThan(0);
+    expect(verifyMessage("Your Core Web Vitals are failing.", measured).length).toBeGreaterThan(0);
+  });
+
+  it("leaves ordinary wording alone", () => {
+    // A rule that fires on innocent sentences trains you to pass --force. These
+    // are the shapes the real drafts actually use.
+    const innocent = [
+      "I build booking pages for clinics and would be glad to show you one.",
+      "Happy to put together a quick mockup if that is useful.",
+      "I noticed your booking form and had one small idea about it.",
+    ];
+    for (const message of innocent) {
+      expect(verifyMessage(message, ["website"])).toHaveLength(0);
+    }
+  });
+});

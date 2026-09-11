@@ -4,6 +4,7 @@ import { prospects } from "../db/schema";
 import { OSM_USER_AGENT } from "./nominatim";
 import pMap from "p-map";
 import { groupByHost } from "./host-groups";
+import { storedLighthouse } from "./lighthouse-signals";
 import { getRobots, isAllowed } from "./robots";
 import { normaliseSocial } from "./social";
 import {
@@ -308,6 +309,7 @@ export async function runEnrichment(
     .select({
       id: prospects.id,
       website: prospects.website,
+      siteSignals: prospects.siteSignals,
       countryCode: prospects.countryCode,
       email: prospects.email,
       emailConfidence: prospects.emailConfidence,
@@ -362,6 +364,9 @@ export async function runEnrichment(
     else if (result.status === "no_website") progress.noWebsite++;
     else progress.failed++;
 
+    const stored = storedLighthouse(row.siteSignals);
+    const keptLighthouse = stored ? { lighthouse: stored } : {};
+
     // Scraped values fill gaps and never overwrite what OSM already held. An
     // OSM tag was written by someone who knows the business; a number in a
     // footer may belong to the agency that built the site. Merging in JS rather
@@ -379,7 +384,14 @@ export async function runEnrichment(
         phoneE164: row.phoneE164 ?? result.phoneE164 ?? null,
         whatsappE164: row.whatsappE164 ?? result.whatsappE164 ?? null,
         // Kept so scoring can read measured facts later without fetching again.
-      siteSignals: result.signals ? { ...result.signals } : null,
+        //
+        // A Lighthouse block, if `pnpm lh` left one, is carried across. This
+        // measures the HTML; that measures the loaded page, and neither knows
+        // anything about the other's fields — so overwriting wholesale would
+        // silently delete a 47-second measurement on the next nightly run. It is
+        // kept rather than trusted: the block stores the URL it was taken on, and
+        // `measuredOn` decides later whether it still describes this site.
+      siteSignals: result.signals ? { ...result.signals, ...keptLighthouse } : null,
       // An http:// link that redirects to https is common in OpenStreetMap. The
       // record should hold where the site actually is, or every later reader —
       // scoring, the message prompt — reasons from a stale URL.

@@ -1020,3 +1020,66 @@ before it is a technical one: every one of these is a small business's website.
 
 `concurrency` is an option on `runEnrichment`, defaulting to 5, so a one-off
 backfill can be told to go faster or slower without editing the workflow.
+
+## Measuring one prospect's site properly: `pnpm lh`
+
+    pnpm lh <prospectId>          measure and store
+    pnpm lh <prospectId> --dry    measure and print, store nothing
+
+Runs Lighthouse in a headless Chrome against that prospect's website and merges
+what it finds into `siteSignals` under a `lighthouse` key. On demand only. It is
+not in the nightly job and should not be added to it.
+
+**Why not nightly.** Measured against five real prospect sites before any of it
+was written: 12.6 seconds each on the mobile preset, 13.8 on desktop. The cost
+is page load plus the audit suite, so the lighter preset buys nothing. Two
+hundred sites is 42 minutes against a fifteen-minute job budget that enrichment
+already takes four of. One site, right before you write to its owner, is the
+only place the cost makes sense.
+
+**Why the score is not stored.** The same site, three consecutive runs, one
+browser:
+
+    The Roofing Guy        perf 55, 58, 58   LCP 6.0s, 5.8s, 5.7s
+    Lynnette Chu, D.M.D.   perf 48, 56, 52   LCP 5.0s, 8.2s, 8.3s
+
+Eight points and 3.3 seconds of LCP without touching the site, and fifteen
+points for that dentist across two sessions an hour apart. Nothing that moves
+like that can be said to the person who owns the site.
+
+Diffing every audit across two runs sorted them cleanly. **Moved:**
+first-contentful-paint, largest-contentful-paint, speed-index,
+total-blocking-time, interactive, unused-css-rules, image-delivery-insight.
+**Identical:** total-byte-weight — 10,475 KiB both runs, byte for byte —
+unsized-images, color-contrast, link-name, unminified-css, unused-javascript.
+
+Audits that describe the page hold. Audits that describe the clock do not. Only
+the first kind is read, by an allow-list in `lib/places/lighthouse-signals.ts`,
+so a new Lighthouse version adding another timing audit has to be opted in.
+
+**What it adds that nothing else could.** Enrichment fetches the HTML and never
+the subresources, so a 10.5 MB homepage reads to it as three clean booleans:
+
+    { "noHttps": false, "noViewport": false, "hasBookingForm": true }
+
+That was the stored record for a roofing company whose homepage pulls ten and a
+half megabytes. Page weight is the one measurement here the rest of the pipeline
+has no way to take.
+
+**Where it ends up.** A page at or above 3 MB becomes a `page_weight` signal in
+the message prompt, dated. Below that it is stored but not offered — the median
+page is around 2.5 MB, so a 2 MB site is not a thing to open a conversation
+with. `message-verify` will now reject a draft that mentions megabytes, page
+weight or slow loading without that signal present, and reject any mention of a
+Lighthouse or PageSpeed score whatever the record says.
+
+**It survives re-enrichment.** `pnpm enrich` rewrites `siteSignals` wholesale
+and would otherwise delete the measurement on the next nightly run, so the block
+is carried across. It is kept, not trusted: the block stores the URL it was
+measured on, and a reading whose host no longer matches the record is ignored
+rather than repeated about a site that has moved.
+
+**A Windows wart.** `chrome-launcher` fails to delete its own temp profile
+directory and throws `EPERM` out of `kill()`. Chrome itself exits; the directory
+is left behind. The script swallows that throw, because losing a measured run to
+a cleanup error would be absurd.

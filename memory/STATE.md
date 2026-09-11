@@ -9,7 +9,7 @@ Last updated: 2026-09-11 · Phase: **all six complete, plus geo prospect discove
 
 **The machine ran unattended for a week and nothing broke.** Nightly runs on 3,
 4, 7 and 8 September all green; weekends correctly skipped. 341 leads, 44
-harvested in the last six days, 532 tests passing. Prospect counts are below —
+harvested in the last six days, 599 tests passing. Prospect counts are below —
 they moved by two orders of magnitude on 10 September.
 
 **Eighteen sends, no replies yet.** Two leads by email (This Dot Labs, Atria) and
@@ -45,9 +45,14 @@ picks per prospect. Figures in DECISIONS.
 
 The loop is `/prospect-run` (new 11 September — the prospect side had no command
 while the lead side had one, which was backwards given which funnel produces
-anything). Nightly enriches 25 and re-scores; monthly refreshes map data.
+anything). Nightly enriches 200 and re-scores; monthly refreshes map data.
 
-
+**`pnpm lh <prospectId>` measures one site properly** — headless Chrome, 10-47s,
+on demand and never nightly (200 sites would be 42 min against a 15-min budget).
+Only audits proven identical across two runs are stored; the performance score is
+not, and `message-verify` rejects any draft quoting one. A page at or above 3 MB
+becomes a `page_weight` signal — the one fact the HTML enricher cannot reach: a
+roofer pulling 10.5 MB was on file as three clean booleans. RUNBOOK has the rest.
 
 Working copy `C:\dev\lead-engine`; `F:\lead-engine` is corrupt, awaiting chkdsk.
 
@@ -59,26 +64,21 @@ swapped. Per-business, built only from recorded facts, stored unsent. Open
 `✦ Enhance` on a row to compare before sending.
 
 **Two of nineteen were deleted for being false, and both were caught by opening
-the site.** CDW Studios was told their site has no viewport tag and no contact
-details; it has both — the signals had been measured on a 52-byte `403` body, and
-`looksLikePage` now requires markup before anything is measured. Leura Wellness
-was told they have no website; their email is at leurawellness.com.au, which
-serves a live site, and `ownDomainFromEmail` now withholds the `no_website`
-signal when the domain resembles the business name, which makes the claim
-unshippable rather than merely discouraged.
+the site** — CDW Studios (signals measured on a 52-byte `403`; `looksLikePage`
+now requires markup) and Leura Wellness (told they had no website; theirs is at
+leurawellness.com.au, so `ownDomainFromEmail` now withholds `no_website`, making
+the claim unshippable rather than discouraged). Both write-ups in RUNBOOK.
 
-The remaining seventeen: zero verifier violations, OSM re-read and confirming no
-website for any, sixteen on free providers. Foodfiesta.ph was skipped for the
-same reason before it was written.
+The remaining seventeen: zero verifier violations, OSM re-read confirming no
+website for any, sixteen on free providers.
 
 **The rule is now a command:** `pnpm drafts:verify` opens the sites a draft talks
 about and exits non-zero on a false claim.
 
 All seventeen came back unverifiable — free email providers, no domain to probe —
-so the messages changed instead. "You don't have a website" became "I couldn't
-find a website for you", in the template and every draft: a fact about the search
-rather than a claim about them. They now report `no checkable claim`, which the
-tool counts separately from `checked and true`.
+so the messages changed instead: "you don't have a website" became "I couldn't
+find a website for you", a fact about the search rather than a claim about them.
+They now report `no checkable claim`, counted separately from `checked and true`.
 
 ## Next three actions
 

@@ -176,3 +176,53 @@ describe("a business that emails from its own domain", () => {
     expect(buildSignals(school).map((s) => s.key)).toContain("no_website");
   });
 });
+
+describe("page weight, when it has actually been measured", () => {
+  const lighthouse = {
+    url: "https://theroofingguy.co/",
+    totalBytes: 10_726_400,
+    totalBytesLabel: "Total size was 10,475 KiB",
+    unsizedImages: 1,
+    contrastFailures: 1,
+    namelessLinks: 1,
+    unminifiedCssBytes: 3121,
+    unusedJsBytes: 24762,
+    measuredAt: "2026-09-11T04:00:00.000Z",
+  };
+  const roofer = { ...base, website: "https://theroofingguy.co/", siteSignals: { lighthouse } };
+
+  it("offers a heavy page as a signal, with the measured wording", () => {
+    const signal = buildSignals(roofer).find((s) => s.key === "page_weight");
+    expect(signal).toBeDefined();
+    expect(signal!.fact).toContain("10,475 KiB");
+    // Dated, because a site can be rebuilt the week after it was measured.
+    expect(signal!.fact).toContain("2026-09-11");
+  });
+
+  it("says nothing about an ordinary page", () => {
+    const light = { ...roofer, siteSignals: { lighthouse: { ...lighthouse, totalBytes: 400_000 } } };
+    expect(buildSignals(light).map((s) => s.key)).not.toContain("page_weight");
+  });
+
+  it("drops a reading taken on a site the record no longer points at", () => {
+    // Re-enrichment carries the block across so a 47-second measurement is not
+    // lost, which means a moved site would otherwise be described by the old
+    // server's numbers.
+    const moved = { ...roofer, website: "https://theroofingguy.com/" };
+    expect(buildSignals(moved).map((s) => s.key)).not.toContain("page_weight");
+  });
+
+  it("says nothing when nobody has run the measurement", () => {
+    const unmeasured = {
+      ...base,
+      website: "https://theroofingguy.co/",
+      siteSignals: { noHttps: false, noViewport: false, hasBookingForm: true },
+    };
+    expect(buildSignals(unmeasured).map((s) => s.key)).not.toContain("page_weight");
+  });
+
+  it("never offers the performance score, whatever is stored", () => {
+    const withScore = { ...roofer, siteSignals: { lighthouse: { ...lighthouse, score: 61 } } };
+    expect(JSON.stringify(buildSignals(withScore))).not.toContain("61");
+  });
+});
