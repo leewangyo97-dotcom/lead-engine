@@ -9,7 +9,8 @@ product decision rather than an omission.
 
 **Cost: $0/month.** Vercel Hobby + Neon free + GitHub Actions + Gmail API.
 
-Deployed: `lead-engine-one-beige.vercel.app`
+Deployed on Vercel behind Vercel Authentication — the URL is in the project
+dashboard rather than here, because publishing it is the only way anyone finds it.
 
 ---
 
