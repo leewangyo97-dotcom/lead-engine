@@ -247,9 +247,12 @@ export function contactOutcome(
   draftedInGmail: boolean,
 ): { mode: "gmail-draft" | "mailto" | "whatsapp"; countsAsSent: boolean } {
   if (channel === "whatsapp") return { mode: "whatsapp", countsAsSent: true };
-  return draftedInGmail
-    ? { mode: "gmail-draft", countsAsSent: false }
-    : { mode: "mailto", countsAsSent: true };
+  // Neither email path records a send. The mailto: one used to, on the grounds
+  // that nothing here would ever observe it — but that reasoning made the
+  // fallback a back door to exactly the bug the Gmail path was built to close.
+  // The token expires weekly while the consent screen is in Testing, so the
+  // fallback is not an edge case; it is next week.
+  return { mode: draftedInGmail ? "gmail-draft" : "mailto", countsAsSent: false };
 }
 
 export interface LogContactResult {
@@ -455,12 +458,18 @@ export async function logContact(
 }
 
 /**
- * Records that a Gmail draft was actually sent.
+ * Records that an email actually went out.
  *
- * The one thing this system cannot observe. Gmail will not tell us without a
- * read scope the app deliberately does not hold — `gmail.compose` creates
- * drafts and can see nothing else — so a person says so, and the ladder starts
- * from that moment rather than from the click that wrote the draft.
+ * The one thing this system cannot observe, by either route. Gmail will not tell
+ * us without a read scope the app deliberately does not hold — `gmail.compose`
+ * creates drafts and can see nothing else — and a `mailto:` link vanishes into
+ * whatever handles it. So a person says so, and the ladder starts from that
+ * moment rather than from the click.
+ *
+ * Matched on an unsent row rather than on a draft id, so it covers both paths. A
+ * WhatsApp row can never match: those are recorded sent at the click, because
+ * wa.me opens a page that is unambiguously the message, and there is no draft
+ * step in between to have failed.
  */
 export async function markProspectSent(
   prospectId: string,
@@ -471,17 +480,27 @@ export async function markProspectSent(
   const [row] = await db
     .select({ id: outreach.id })
     .from(outreach)
+    /*
+     * `step >= 0` is load-bearing, not tidiness.
+     *
+     * The seventeen enhanced messages waiting for review are prospect outreach
+     * rows at `DRAFT_STEP` (-1) with a null `sentAt` — indistinguishable from a
+     * pending confirmation on those two columns alone. Matching on them marked
+     * "Enhanced message for Otaku-Yaki Restaurant" as sent, a message nobody had
+     * opened. Caught by calling the endpoint expecting a refusal and getting an
+     * id back.
+     */
     .where(
       and(
         eq(outreach.prospectId, prospectId),
-        isNotNull(outreach.gmailDraftId),
         isNull(outreach.sentAt),
+        gte(outreach.step, 0),
       ),
     )
     .orderBy(desc(outreach.createdAt))
     .limit(1);
 
-  if (!row) return { ok: false, error: "no unsent Gmail draft for this prospect" };
+  if (!row) return { ok: false, error: "nothing awaiting confirmation for this prospect" };
 
   await db.update(outreach).set({ sentAt: now() }).where(eq(outreach.id, row.id));
   return { ok: true, outreachId: row.id };

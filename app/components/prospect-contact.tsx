@@ -328,28 +328,13 @@ export function ProspectContact({ id, whatsapp, email, contacted, declined, stat
               >
                 Open your Gmail drafts
               </a>
-              {marked ? (
-                <span className="text-caption text-muted">Marked as sent.</span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const res = await fetch(`/api/prospects/${id}/sent`, { method: "POST" });
-                    if (res.ok) setMarked(true);
-                    else setError((await res.json()).error ?? "could not mark it sent");
-                  }}
-                  className="text-caption text-accent underline underline-offset-2"
-                >
-                  I sent it — start the follow-up clock
-                </button>
-              )}
             </>
           ) : (
             <>
               <span className="text-caption text-muted">
                 {sent.gmailError
-                  ? "Gmail was unavailable, so this is a mail-app link. Logged as sent."
-                  : "Logged. Open it in your mail app:"}
+                  ? "Gmail was unavailable, so this is a mail-app link. Nothing has been sent."
+                  : "Logged. Open it in your mail app — nothing has been sent yet:"}
               </span>
               <a href={sent.href} className="text-body-sm text-accent underline underline-offset-2">
                 Compose the email
@@ -364,6 +349,27 @@ export function ProspectContact({ id, whatsapp, email, contacted, declined, stat
                 <span className="text-caption text-faint">{sent.gmailError}</span>
               )}
             </>
+          )}
+          {/*
+            * Both email paths ask, because neither can be observed. The mailto:
+            * one used to record a send on the click, which made the fallback a
+            * back door to the bug the Gmail path closed — and the token expires
+            * weekly, so the fallback is not an edge case.
+            */}
+          {marked ? (
+            <span className="text-caption text-muted">Marked as sent.</span>
+          ) : (
+            <button
+              type="button"
+              onClick={async () => {
+                const res = await fetch(`/api/prospects/${id}/sent`, { method: "POST" });
+                if (res.ok) setMarked(true);
+                else setError((await res.json()).error ?? "could not mark it sent");
+              }}
+              className="text-caption text-accent underline underline-offset-2"
+            >
+              I sent it — start the follow-up clock
+            </button>
           )}
           <button
             type="button"

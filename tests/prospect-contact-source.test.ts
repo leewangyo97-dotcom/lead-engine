@@ -100,14 +100,20 @@ describe("the prospect email path", () => {
     expect(SOURCE).toMatch(/Nothing has been sent/);
   });
 
-  it("only offers to start the follow-up clock on the Gmail branch", () => {
-    // The mailto branch already recorded a send; asking again there would let
-    // one message be counted twice.
-    const gmail = SOURCE.slice(
-      SOURCE.indexOf('sent.mode === "gmail-draft"'),
-      SOURCE.indexOf("Logged. Open it in your mail app"),
-    );
-    expect(gmail).toContain("/sent`");
-    expect(SOURCE.slice(SOURCE.indexOf("Logged. Open it in your mail app"))).not.toContain("/sent`");
+  it("asks whether it was sent on both email paths, not just the Gmail one", () => {
+    // The confirmation sits outside the branch, so the mailto fallback cannot
+    // quietly record a send the way it used to.
+    expect(SOURCE).toContain("/sent`");
+    const confirm = SOURCE.indexOf("I sent it");
+    const gmailBranch = SOURCE.indexOf('sent.mode === "gmail-draft"');
+    const mailtoBranch = SOURCE.indexOf("Compose the email");
+    expect(confirm).toBeGreaterThan(gmailBranch);
+    expect(confirm).toBeGreaterThan(mailtoBranch);
+  });
+
+  it("never tells the user an email was sent just because they clicked", () => {
+    // The sentence that used to appear on the fallback. Its return would mean
+    // the send count is counting clicks again.
+    expect(SOURCE).not.toContain("Logged as sent");
   });
 });
