@@ -172,6 +172,10 @@ async function queryProspects(
       email: prospects.email,
       phoneE164: prospects.phoneE164,
       whatsappE164: prospects.whatsappE164,
+      // Needed by `chooseChannel`, which offers email first in countries where a
+      // cold WhatsApp message to a business is the wrong door. Without it in the
+      // projection that rule is silently inert on every row this page renders.
+      countryCode: prospects.countryCode,
       enrichmentStatus: prospects.enrichmentStatus,
       lastRefreshedAt: prospects.lastRefreshedAt,
       status: prospects.status,

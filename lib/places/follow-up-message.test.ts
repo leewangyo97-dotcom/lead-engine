@@ -143,3 +143,37 @@ describe("a prospect who already has a website", () => {
     );
   });
 });
+
+describe("the categories the Austin and Sydney searches produce", () => {
+  it("offers a trade a quote form, not a booking slot", () => {
+    // A roofer is hired off a quote. The previous default offered them "a button
+    // that opens WhatsApp", which was the Cebu assumption reaching Texas.
+    const message = followUpMessage({ name: "Alta Roofing, LLC", step: 1, category: "trades" });
+    expect(message).toContain("a form that asks for a quote");
+    expect(message).toContain("the areas you cover");
+    expect(message).not.toMatch(/whatsapp/i);
+  });
+
+  it("covers every category the live searches actually use", () => {
+    // The map had entries for the Cebu categories only, so ten of the sixteen
+    // follow-ups due on 14 September fell through to the default.
+    const live = [
+      "trades", "contractors", "professionalServices", "medicalSpecialists",
+      "clinics", "veterinary", "dentists",
+    ];
+    for (const category of live) {
+      const message = followUpMessage({ name: "Test Co", step: 1, category });
+      expect(message, category).not.toContain("what you offer, where you are");
+    }
+  });
+
+  it("says nothing about which app when the category is unknown", () => {
+    const message = followUpMessage({ name: "Test Co", step: 1, category: "somethingNew" });
+    expect(message).not.toMatch(/whatsapp/i);
+  });
+
+  it("still names WhatsApp for a Cebu restaurant, where it is the right door", () => {
+    const message = followUpMessage({ name: "Abaseria Deli & Cafe", step: 1, category: "restaurants" });
+    expect(message).toMatch(/whatsapp/i);
+  });
+});

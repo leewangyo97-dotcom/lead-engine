@@ -15,11 +15,29 @@ import { buildWhatsAppLink, isWhatsAppCapable } from "./phone";
 export interface ContactablePlace {
   name: string;
   city?: string | null;
+  countryCode?: string | null;
   email?: string | null;
   phoneE164?: string | null;
   whatsappE164?: string | null;
   website?: string | null;
 }
+
+/**
+ * Where a cold message to a business goes by email, not WhatsApp.
+ *
+ * `confidence` below already says a "likely" WhatsApp number is "a good guess in
+ * the Philippines and a coin toss in the United States". This is that sentence
+ * acting on itself. Nine of the sixteen follow-ups due on 14 September were
+ * Austin trades — roofers, AC repair, a mortgage broker — all routed to WhatsApp
+ * on a +1512 number that classified as mobile, and every one of them has a
+ * working address like `estimates@goodmorningtreeservice.com` on file. A message
+ * nobody opens is not a message; part of "no replies yet" may be this.
+ *
+ * A blocklist rather than an allowlist, because the default should stay WhatsApp
+ * for the markets this project was built for and only step aside where it is
+ * known to be the wrong door.
+ */
+const EMAIL_FIRST = new Set(["US", "CA", "GB", "IE", "AU", "NZ"]);
 
 export type Channel = "whatsapp" | "email";
 
@@ -141,8 +159,22 @@ export function chooseChannel(place: ContactablePlace, message?: string): Contac
       }
     : { channel: "email", available: false, reason: "no email address" };
 
+  /*
+   * A guess defers to a certainty in email-first countries.
+   *
+   * Only the inferred case steps aside. A business that published a WhatsApp
+   * number is telling us where to write, wherever it is — Dresden Vision in
+   * Sydney advertises one, and AU is on the list, and they still get WhatsApp.
+   * Both options stay available either way; this changes which one is offered
+   * first, not which ones exist.
+   */
+  const emailFirst = EMAIL_FIRST.has((place.countryCode ?? "").toUpperCase());
+  const guessed = whatsapp.available && whatsapp.confidence !== "confirmed";
+  const deferToEmail = emailFirst && guessed && email.available;
+
   return {
-    preferred: whatsapp.available ? "whatsapp" : email.available ? "email" : null,
+    preferred:
+      whatsapp.available && !deferToEmail ? "whatsapp" : email.available ? "email" : null,
     whatsapp,
     email,
     message: text,

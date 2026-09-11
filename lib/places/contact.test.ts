@@ -164,3 +164,60 @@ describe("isSharedHost", () => {
     expect(isSharedHost("WEEBLY.COM")).toBe(true);
   });
 });
+
+describe("where a cold message to a business actually goes", () => {
+  const austin = {
+    name: "Alta Roofing, LLC",
+    countryCode: "US",
+    email: "info@altaroofingpros.com",
+    phoneE164: "+17372607765", // classifies as mobile; in the US that means little
+    website: "https://www.altaroofingpros.com",
+  };
+
+  it("offers email first to a US business, where a WhatsApp guess is a coin toss", () => {
+    // Nine of the sixteen follow-ups due on 14 September were Austin trades
+    // routed to WhatsApp on exactly this basis, each with a working address.
+    expect(chooseChannel(austin).preferred).toBe("email");
+  });
+
+  it("still offers WhatsApp as an option, it is only no longer the default", () => {
+    const plan = chooseChannel(austin);
+    expect(plan.whatsapp.available).toBe(true);
+    expect(plan.whatsapp.confidence).toBe("likely");
+  });
+
+  it("keeps WhatsApp when the business published the number itself", () => {
+    // Dresden Vision advertises +61 2 5300 3003 and AU is on the list. Their
+    // claim outranks a country default, same as it outranks the classifier.
+    const dresden = {
+      name: "Dresden Vision",
+      countryCode: "AU",
+      email: "newtownnorth@au.dresden.vision",
+      whatsappE164: "+61253003003",
+    };
+    const plan = chooseChannel(dresden);
+    expect(plan.whatsapp.confidence).toBe("confirmed");
+    expect(plan.preferred).toBe("whatsapp");
+  });
+
+  it("leaves the Philippines alone, which is what the guess was built for", () => {
+    const cebu = {
+      name: "Dr. C Veterinary Center",
+      countryCode: "PH",
+      email: "charlou.cabangal@yahoo.com",
+      phoneE164: "+639232122296",
+    };
+    expect(chooseChannel(cebu).preferred).toBe("whatsapp");
+  });
+
+  it("falls back to WhatsApp in an email-first country with no address on file", () => {
+    // Deferring to email is only sensible when there is an email to defer to.
+    const noEmail = { ...austin, email: null };
+    expect(chooseChannel(noEmail).preferred).toBe("whatsapp");
+  });
+
+  it("is unchanged when the country is unknown", () => {
+    const { countryCode, ...rest } = austin;
+    expect(chooseChannel(rest).preferred).toBe("whatsapp");
+  });
+});

@@ -36,7 +36,16 @@ export interface FollowUpInput {
   hasWebsite?: boolean;
 }
 
-/** What a one-pager would show, by trade. Nothing here is a claim about them. */
+/**
+ * What a one-pager would show, by trade. Nothing here is a claim about them.
+ *
+ * This map was written for the Cebu categories and had no entry for the ones the
+ * Austin and Sydney searches produce, so ten of the sixteen follow-ups due on 14
+ * September fell through to the default — which offered a WhatsApp button to a
+ * roofing company in Texas. The trade decides what the page shows; the country
+ * decides how someone gets in touch, and assuming WhatsApp does both was the
+ * Philippines leaking into the other two funnels.
+ */
 const SHOWS: Record<string, string> = {
   restaurants: "your menu, where you are, and a button that opens WhatsApp",
   hotels: "your rooms, your rates, and an enquiry button",
@@ -45,9 +54,16 @@ const SHOWS: Record<string, string> = {
   dentists: "your services and a way to ask for an appointment",
   salons: "your treatments, your prices, and a booking button",
   schools: "your courses, your rates, and how to enrol",
+  // Austin and Sydney. A trade is hired off a quote, not a booking slot, and
+  // the areas covered is the question a roofer gets asked before any other.
+  trades: "what you do, the areas you cover, and a form that asks for a quote",
+  contractors: "what you do, the areas you cover, and a form that asks for a quote",
+  professionalServices: "what you offer and a short form that starts an enquiry",
+  medicalSpecialists: "your services and a way to ask for an appointment",
 };
 
-const DEFAULT_SHOWS = "what you offer, where you are, and a button that opens WhatsApp";
+/** Deliberately says nothing about which app. The categories now span three countries. */
+const DEFAULT_SHOWS = "what you offer, where you are, and an easy way to get in touch";
 
 export function followUpMessage({
   name,
