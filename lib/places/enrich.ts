@@ -3,6 +3,7 @@ import { getDb } from "../db";
 import { prospects } from "../db/schema";
 import { OSM_USER_AGENT } from "./nominatim";
 import { getRobots, isAllowed } from "./robots";
+import { normaliseSocial } from "./social";
 import {
   extractEmails,
   extractPhones,
@@ -223,9 +224,12 @@ export async function enrichSite(
     emailConfidence: emails[0]?.confidence,
     phoneE164: phones[0],
     whatsappE164: whatsapp ?? undefined,
-    facebookUrl: socials.facebook,
-    instagramUrl: socials.instagram,
-    linkedinUrl: socials.linkedin,
+    // Normalised here as well as at discovery: scraping a page for the first
+    // facebook.com URL finds share buttons and tracking pixels long before it
+    // finds the business.
+    facebookUrl: normaliseSocial("facebook", socials.facebook) ?? undefined,
+    instagramUrl: normaliseSocial("instagram", socials.instagram) ?? undefined,
+    linkedinUrl: normaliseSocial("linkedin", socials.linkedin) ?? undefined,
     signals,
   };
 }

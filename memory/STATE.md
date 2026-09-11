@@ -39,10 +39,9 @@ see RUNBOOK "After a country-wide search".
 OpenStreetMap by place and category, enriches websites, scores, and opens a
 pre-filled WhatsApp or email message.
 
-Two markets that behave nothing alike: in the Philippines almost nobody has a
-website (4 in 151 Cebu rows), so WhatsApp is the only channel that reaches anyone.
-Abroad the opposite — 71 of 108 Austin rows had one. `chooseChannel` picks per
-prospect for that reason. Figures in DECISIONS.
+Two markets that behave nothing alike: almost nobody in the Philippines has a
+website (4 in 151 Cebu rows) while 71 of 108 Austin rows did, so `chooseChannel`
+picks per prospect. Figures in DECISIONS.
 
 The loop is `/prospect-run` (new 11 September — the prospect side had no command
 while the lead side had one, which was backwards given which funnel produces
@@ -125,6 +124,9 @@ messages, `drafts:verify`, and the two false-claim fixes behind them.
 - `refreshProspects({ ids, enrich: true })` now passes those ids to
   `runEnrichment`; without it, it enriched the global top of the pending queue
   and left the requested rows at `pending`
+- OSM values are normalised at the write path, never stored raw: emails via
+  `firstUsableEmail`, social accounts via `normaliseSocial` (a handle is not a
+  link, and `/p/` means a page on Facebook but a post on Instagram)
 - HTML is parsed with `cheerio`, not regexes — two regexes had produced real
   false claims. `.text()` fuses adjacent elements, so `stripTags` joins text
   nodes with a space

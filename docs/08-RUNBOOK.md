@@ -960,3 +960,30 @@ across 9,100 pending rows, against a nightly budget of 25.
 The nine not installed — `rss-parser`, `robots-parser`, `p-throttle`,
 `bottleneck`, `nock`, `msw`, `undici`, `linkedom`, `node-html-parser` — are
 conveniences for problems this project does not have yet.
+
+## Social links: 81 of 638 were not links
+
+OpenStreetMap's `contact:facebook` holds a URL or a bare page handle, and both
+are common. Stored raw, 81 rows carried values like `@manimokocebu`,
+`cdwstudios` and `metrosports.lahug` — the row showed something and clicking it
+went nowhere. `normaliseSocial` turns a handle into the URL it is the tail of,
+and runs at both write paths: discovery, where these came from, and enrichment,
+where scraping finds share buttons and tracking pixels before it finds the
+business.
+
+**The dry run earned its keep twice**, and both were errors in my own rule:
+
+- `/p/` is a post on Instagram and a **page** on Facebook.
+  `facebook.com/p/Bonenone-Korean-Chicken-100091435368532` is a real business
+  page; one shared blocklist would have cleared 89 live links.
+- `facebook.com/pages/Pet-Universe/117779078266601` is the older page format, and
+  `pages` looked like a platform path.
+
+Final pass over 643 values: **379 rewritten, 58 cleared**. Everything cleared was
+genuine junk — `facebook.com/tr` tracking pixels, bare `/people` and
+`/profile.php`, and three values in the facebook column that pointed at a
+different site entirely. Afterwards every stored facebook value is a real
+`https://www.facebook.com/…` URL.
+
+Run a backfill dry first and read what it would discard. Both mistakes above
+looked like tidying until the list was printed.

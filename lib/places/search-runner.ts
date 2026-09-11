@@ -6,6 +6,7 @@ import { geocode } from "./nominatim";
 import { overpassProvider } from "./overpass";
 import { normalizeName, rootDomain } from "./normalize";
 import { firstUsableEmail } from "./extract";
+import { normaliseSocial } from "./social";
 import { toE164 } from "./phone";
 import { isPlaceCategory, type PlaceCategory } from "./osm-categories";
 import type { RawPlace } from "./types";
@@ -123,7 +124,9 @@ async function persist(
     // WhatsApp link acts on it directly.
     phoneE164: toE164(p.phone, countryCode),
     whatsappE164: toE164(p.whatsapp, countryCode),
-    facebookUrl: p.facebook ?? null,
+    // OpenStreetMap's contact:facebook holds a URL or a bare handle, and both
+    // are common. Stored raw, a handle is a dead link on the row.
+    facebookUrl: normaliseSocial("facebook", p.facebook),
     enrichmentStatus: (p.website ? "pending" : "no_website") as "pending" | "no_website",
   }));
 
