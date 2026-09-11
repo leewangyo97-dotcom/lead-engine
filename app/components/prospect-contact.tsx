@@ -30,7 +30,13 @@ export function ProspectContact({ id, whatsapp, email, contacted, declined, stat
   // the suppression list by hand.
   const [confirming, setConfirming] = useState(false);
   // Held open until dismissed, for email only. See `open`.
-  const [sent, setSent] = useState<{ href: string; to?: string } | null>(null);
+  const [sent, setSent] = useState<{
+    href: string;
+    to?: string;
+    mode?: "gmail-draft" | "mailto" | "whatsapp";
+    gmailError?: string;
+  } | null>(null);
+  const [marked, setMarked] = useState(false);
 
   async function markDeclined() {
     setBusy("decline");
@@ -98,7 +104,7 @@ export function ProspectContact({ id, whatsapp, email, contacted, declined, stat
         return;
       }
 
-      setSent({ href: data.href, to: data.to });
+      setSent({ href: data.href, to: data.to, mode: data.mode, gmailError: data.gmailError });
     } catch {
       tab?.close();
       setError("could not reach the server");
@@ -303,20 +309,67 @@ export function ProspectContact({ id, whatsapp, email, contacted, declined, stat
       )}
       {sent && (
         <div className="mt-1 flex flex-col items-start gap-1 rounded-xs border border-rule bg-sunk p-3">
-          <span className="text-caption text-muted">Logged. Open it in your mail app:</span>
-          <a href={sent.href} className="text-body-sm text-accent underline underline-offset-2">
-            Compose the email
-          </a>
-          {sent.to && (
-            <span className="text-caption text-muted">
-              or write to{" "}
-              <span className="font-mono text-data-sm text-secondary">{sent.to}</span>
-            </span>
+          {sent.mode === "gmail-draft" ? (
+            <>
+              {/*
+                * Nothing has been sent, and the panel says so in those words.
+                * The draft is in the account; pressing send is still a person's
+                * act, and until they say they did it the row carries no sentAt
+                * and the follow-up ladder has not started.
+                */}
+              <span className="text-caption text-muted">
+                Draft created in Gmail. Nothing has been sent.
+              </span>
+              <a
+                href="https://mail.google.com/mail/u/0/#drafts"
+                target="_blank"
+                rel="noreferrer"
+                className="text-body-sm text-accent underline underline-offset-2"
+              >
+                Open your Gmail drafts
+              </a>
+              {marked ? (
+                <span className="text-caption text-muted">Marked as sent.</span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const res = await fetch(`/api/prospects/${id}/sent`, { method: "POST" });
+                    if (res.ok) setMarked(true);
+                    else setError((await res.json()).error ?? "could not mark it sent");
+                  }}
+                  className="text-caption text-accent underline underline-offset-2"
+                >
+                  I sent it — start the follow-up clock
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              <span className="text-caption text-muted">
+                {sent.gmailError
+                  ? "Gmail was unavailable, so this is a mail-app link. Logged as sent."
+                  : "Logged. Open it in your mail app:"}
+              </span>
+              <a href={sent.href} className="text-body-sm text-accent underline underline-offset-2">
+                Compose the email
+              </a>
+              {sent.to && (
+                <span className="text-caption text-muted">
+                  or write to{" "}
+                  <span className="font-mono text-data-sm text-secondary">{sent.to}</span>
+                </span>
+              )}
+              {sent.gmailError && (
+                <span className="text-caption text-faint">{sent.gmailError}</span>
+              )}
+            </>
           )}
           <button
             type="button"
             onClick={() => {
               setSent(null);
+              setMarked(false);
               router.refresh();
             }}
             className="text-caption text-secondary underline underline-offset-2 hover:text-primary"

@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, inArray, ne } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, isNotNull, ne } from "drizzle-orm";
 import { getDb } from "../db";
 import { outreach, prospects, suppressions } from "../db/schema";
 import { rootDomain } from "./normalize";
@@ -6,6 +6,8 @@ import { chooseChannel, type Channel } from "./contact";
 import { messageFor } from "./follow-up-message";
 import { MAX_STEP } from "../followups";
 import { keyOf, releasable, type Identifier } from "./undecline";
+import { createDraft, getAccessToken, readCredentials } from "../gmail/client";
+import { cleanEmail } from "../sources/email";
 
 /**
  * Recording that a prospect was contacted, and refusing when they asked not to
@@ -229,6 +231,27 @@ export async function undecline(
   return { ok: true, released: release, kept };
 }
 
+/**
+ * What a click means, once it is known whether Gmail took the message.
+ *
+ * Pulled out of `logContact` because it is the rule this whole change exists
+ * for and it was previously a conditional buried in an insert. A draft sitting
+ * in an account is not a sent message: the row must carry no `sentAt`, or the
+ * prospect drops out of the queue and comes due for a follow-up referring to
+ * something they never received. Everything else is sent at the moment of the
+ * click, because a person is about to press the button and nothing here will
+ * ever see that happen.
+ */
+export function contactOutcome(
+  channel: Channel,
+  draftedInGmail: boolean,
+): { mode: "gmail-draft" | "mailto" | "whatsapp"; countsAsSent: boolean } {
+  if (channel === "whatsapp") return { mode: "whatsapp", countsAsSent: true };
+  return draftedInGmail
+    ? { mode: "gmail-draft", countsAsSent: false }
+    : { mode: "mailto", countsAsSent: true };
+}
+
 export interface LogContactResult {
   ok: boolean;
   outreachId?: string;
@@ -237,6 +260,18 @@ export interface LogContactResult {
   reopened?: boolean;
   /** Set when the contact was refused, for showing rather than throwing. */
   blocked?: string;
+  /**
+   * How the email actually left, which decides what the row means.
+   *
+   * `gmail-draft` — a real draft exists in the account and nothing is sent, so
+   * `sentAt` stays null and the follow-up ladder does not start.
+   * `mailto` — the browser was handed a link and a person will send it by hand,
+   * which is the only moment this system can call a thing sent.
+   */
+  mode?: "gmail-draft" | "mailto" | "whatsapp";
+  gmailDraftId?: string;
+  /** Why the Gmail path was not used, said plainly rather than swallowed. */
+  gmailError?: string;
 }
 
 /**
@@ -349,15 +384,53 @@ export async function logContact(
     return { ok: true, outreachId: undefined, href: option.href, reopened: true };
   }
 
+  const subject =
+    channel === "whatsapp" ? `WhatsApp to ${place.name}` : `A quick idea for ${place.name}`;
+
+  /*
+   * Email goes through the Gmail API, and only falls back to a mailto: link.
+   *
+   * The button used to hand the browser a mailto: and record the row as sent in
+   * the same breath. Two things were wrong with that. The browser reports
+   * nothing when no mail client is registered, so the message could silently
+   * never be written at all; and `sentAt` was stamped on a click, so a prospect
+   * whose compose window was closed unsent still dropped out of the queue and
+   * came due for a follow-up referring to a message they never received.
+   *
+   * A draft in the account is a fact this system can check. Sending remains a
+   * person's act in Gmail — CLAUDE.md rule 2 — so `sentAt` stays null until
+   * `markProspectSent` records that it happened.
+   */
+  let gmail: { id?: string; error?: string } = {};
+  if (channel === "email" && place.email) {
+    try {
+      const token = await getAccessToken(readCredentials());
+      gmail.id = await createDraft(token, {
+        to: cleanEmail(place.email) ?? place.email,
+        subject,
+        body: plan.message,
+      });
+    } catch (err) {
+      // Expected roughly weekly: the consent screen is in Testing, so Google
+      // expires the refresh token every seven days. Falling back beats failing.
+      gmail.error = err instanceof Error ? err.message : String(err);
+    }
+  }
+
+  const outcome = contactOutcome(channel, Boolean(gmail.id));
+
   const [row] = await db
     .insert(outreach)
     .values({
       prospectId,
       channel,
       step,
-      subject: channel === "whatsapp" ? `WhatsApp to ${place.name}` : `A quick idea for ${place.name}`,
+      subject,
       body: plan.message,
-      sentAt: now(),
+      // A draft is not a send. Everything else still is, because a person is
+      // about to press the button themselves and nothing here will see it.
+      sentAt: outcome.countsAsSent ? now() : null,
+      gmailDraftId: gmail.id ?? null,
       angle: draft?.angle ?? (place.website ? "site-improvement" : "no-website"),
     })
     .returning({ id: outreach.id });
@@ -371,7 +444,47 @@ export async function logContact(
     .set({ status: "contacted", updatedAt: now() })
     .where(eq(prospects.id, prospectId));
 
-  return { ok: true, outreachId: row.id, href: option.href };
+  return {
+    ok: true,
+    outreachId: row.id,
+    href: option.href,
+    mode: outcome.mode,
+    gmailDraftId: gmail.id,
+    gmailError: gmail.error,
+  };
+}
+
+/**
+ * Records that a Gmail draft was actually sent.
+ *
+ * The one thing this system cannot observe. Gmail will not tell us without a
+ * read scope the app deliberately does not hold — `gmail.compose` creates
+ * drafts and can see nothing else — so a person says so, and the ladder starts
+ * from that moment rather than from the click that wrote the draft.
+ */
+export async function markProspectSent(
+  prospectId: string,
+  now: () => Date = () => new Date(),
+): Promise<{ ok: boolean; outreachId?: string; error?: string }> {
+  const db = getDb();
+
+  const [row] = await db
+    .select({ id: outreach.id })
+    .from(outreach)
+    .where(
+      and(
+        eq(outreach.prospectId, prospectId),
+        isNotNull(outreach.gmailDraftId),
+        isNull(outreach.sentAt),
+      ),
+    )
+    .orderBy(desc(outreach.createdAt))
+    .limit(1);
+
+  if (!row) return { ok: false, error: "no unsent Gmail draft for this prospect" };
+
+  await db.update(outreach).set({ sentAt: now() }).where(eq(outreach.id, row.id));
+  return { ok: true, outreachId: row.id };
 }
 
 /** Prospect ids already contacted, so the table can say so without a join per row. */

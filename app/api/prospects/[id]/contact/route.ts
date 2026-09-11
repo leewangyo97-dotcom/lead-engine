@@ -36,5 +36,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     ? decodeURIComponent(result.href.slice("mailto:".length).split("?")[0])
     : undefined;
 
-  return Response.json({ outreachId: result.outreachId, href: result.href, to });
+  return Response.json({
+    outreachId: result.outreachId,
+    href: result.href,
+    to,
+    // What actually happened, so the UI can say it rather than guess. A Gmail
+    // draft and a handed-over mailto: link mean different things about whether
+    // this prospect has been written to.
+    mode: result.mode,
+    gmailDraftId: result.gmailDraftId,
+    gmailError: result.gmailError,
+  });
 }

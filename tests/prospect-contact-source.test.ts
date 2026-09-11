@@ -85,6 +85,29 @@ describe("the prospect email path", () => {
   });
 
   it("refreshes only when the panel is dismissed", () => {
-    expect(SOURCE).toMatch(/setSent\(null\);\s*\n\s*router\.refresh\(\);/);
+    // Adjacency is not the property — the dismiss handler also resets the
+    // "marked sent" flag now. What matters is that clearing the panel and
+    // refreshing happen together, in that handler and nowhere earlier.
+    const dismiss = SOURCE.slice(SOURCE.indexOf("setSent(null);"));
+    expect(dismiss).toMatch(/setSent\(null\);[\s\S]{0,120}router\.refresh\(\);/);
+  });
+
+  it("offers the Gmail draft and the mailto fallback as different outcomes", () => {
+    // A draft in the account and a link handed to the browser mean different
+    // things about whether this prospect has been written to, so the panel has
+    // to say which happened rather than print one sentence for both.
+    expect(SOURCE).toMatch(/sent\.mode === "gmail-draft"/);
+    expect(SOURCE).toMatch(/Nothing has been sent/);
+  });
+
+  it("only offers to start the follow-up clock on the Gmail branch", () => {
+    // The mailto branch already recorded a send; asking again there would let
+    // one message be counted twice.
+    const gmail = SOURCE.slice(
+      SOURCE.indexOf('sent.mode === "gmail-draft"'),
+      SOURCE.indexOf("Logged. Open it in your mail app"),
+    );
+    expect(gmail).toContain("/sent`");
+    expect(SOURCE.slice(SOURCE.indexOf("Logged. Open it in your mail app"))).not.toContain("/sent`");
   });
 });
