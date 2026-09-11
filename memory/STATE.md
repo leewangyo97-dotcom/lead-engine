@@ -23,8 +23,8 @@ Manila**, so Monday morning is when to work them. Until 11 September a prospect
 follow-up would have re-sent the opening message word for word; `followUpMessage`
 writes steps 1 and 2 now.
 
-Two live chores: the Gmail token dies seven days after each `pnpm gmail:auth`
-while the consent screen is in Testing (publishing ends it); searches are manual.
+Chores: Gmail token dies 7 days after each `pnpm gmail:auth` while the consent
+screen is in Testing; searches are manual.
 
 **23,203 prospects after the first country-wide searches** (Australia schools
 13,134; Australia clinics/vet/dentists 6,786; a 12-category Cebu City search
@@ -33,9 +33,8 @@ cold. **~9,100 queued for enrichment against a nightly 200** — 46 nights, down
 from 364: hosts are fetched five at a time and the cap was raised. Queue ordered
 by score. Deleting the schools search is a reasonable call; see RUNBOOK.
 
-**Geo prospect discovery is live in production.** `/prospects` searches
-OpenStreetMap by place and category, enriches websites, scores, and opens a
-pre-filled WhatsApp or email message.
+**Geo prospect discovery is live in production.** `/prospects` searches OSM by
+place and category, enriches websites, scores, and opens a pre-filled message.
 
 Two markets that behave nothing alike: almost nobody in the Philippines has a
 website (4 in 151 Cebu rows) while 71 of 108 Austin rows did, so `chooseChannel`
@@ -50,9 +49,11 @@ anything). Nightly enriches 200 and re-scores; monthly refreshes map data.
 on demand and never nightly (200 sites would be 42 min against a 15-min budget).
 Only audits proven identical across two runs are stored; the score is not, and
 `message-verify` rejects any draft quoting one. Three signals: `page_weight` at
-3 MB, `contrast` at 10, `unsized_images` at 5. **All 11 drafted prospects with
-websites measured 11 Sept** — 0 crossed weight, 3 crossed contrast (Dresden 49,
-Alta Roofing 40, Fixorvo 16), 2 crossed unsized (Fixorvo 26, Chu 10).
+3 MB, `contrast` at 10, `unsized_images` at 5. `--limit=N` batches **enriched
+rows only** — 9,294 scored rows have a website and no measurement, but all bar
+~126 were still queued for enrichment. **All 128 enriched rows measured 11 Sept:
+63% carry at least one signal** (58 heavy, 29 contrast, 30 unsized), against 0 of
+11 on the drafted list. The drafted ones were the unrepresentative sample.
 
 Working copy `C:\dev\lead-engine`; `F:\lead-engine` is corrupt, awaiting chkdsk.
 
@@ -92,21 +93,20 @@ They now report `no checkable claim`, counted separately from `checked and true`
    cleared 75 on stack merit alone. `/rejected` still quantifies the cost —
    1 qualifies today, 6 would if full-time counted as acceptable terms.
 
-## Blocked
+## Access control: closed
 
-**Waiting on a decision: the deployment is public with no access control.**
-Checked 10 September — `/prospects` serves 25 businesses' phone numbers and email
-addresses to anyone, and every write endpoint (`contact`, `decline`, `outcome`,
-`searches`) is open. `robots.ts` and a noindex are in; they stop indexing, not
-access. Cheapest fix is Vercel Deployment Protection, which is a dashboard
-setting and no code. See RUNBOOK "The deployment is public".
+**11 September.** Vercel Authentication, Require Log In, All Deployments.
+Verified from outside: `/`, `/prospects`, `/api/health` and
+`POST /api/prospects/<id>/contact` all 302 to `vercel.com/sso-api`, so the write
+endpoints are behind it too. Nothing automated broke — the nightly runs scripts
+against Neon and never calls the deployment. `README.md:12` still publishes the
+URL, which is now a login wall rather than a directory.
 
 ## The lead funnel is supply-starved
 
 `pnpm leads:diagnose`: the average job lead scores 33 of 100 against a threshold
-of 75, and no single dimension fixes it — timezone projects to 56, stack to 49.
-Two boards surveyed on 10 September, neither built. Full figures and reasoning in
-DECISIONS.
+of 75, and no dimension fixes it — timezone projects to 56, stack to 49. Only
+**3 of 192** scored leads have ever cleared 75. Figures in DECISIONS.
 
 ## Open questions for Joshua
 

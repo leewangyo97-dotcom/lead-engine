@@ -1023,12 +1023,36 @@ backfill can be told to go faster or slower without editing the workflow.
 
 ## Measuring one prospect's site properly: `pnpm lh`
 
-    pnpm lh <prospectId>          measure and store
-    pnpm lh <prospectId> --dry    measure and print, store nothing
+    pnpm lh <prospectId>          one prospect
+    pnpm lh --limit=25            the best unmeasured enriched rows
+    pnpm lh <...> --dry           measure and print, store nothing
 
-Runs Lighthouse in a headless Chrome against that prospect's website and merges
-what it finds into `siteSignals` under a `lighthouse` key. On demand only. It is
-not in the nightly job and should not be added to it.
+Runs Lighthouse in a headless Chrome against a prospect's website and merges what
+it finds into `siteSignals` under a `lighthouse` key. On demand only. It is not
+in the nightly job and should not be added to it.
+
+**Batch mode takes enriched rows only, best score first.** 9,294 scored prospects
+have a website and no measurement, and all but 126 of them are still in the
+enrichment queue — their site has never been fetched at all. Enrichment is what
+establishes that a URL is a real page rather than a parked domain. Measuring
+ahead of it would be thirty-eight hours of headless Chrome spent partly on
+domains that are for sale, so the queue waits for enrichment to reach them.
+
+**It reads robots.txt**, which it did not at first. The enricher has always
+checked, and Lighthouse inherits nothing from it — it launches a browser and
+loads whatever URL it is handed. A site owner who wrote `Disallow: /` is a poor
+person to cold-email about building them a website.
+
+**"Already measured" is asked of the database, not of a prefetched window.** The
+first batch version took `limit * 4` rows ordered by score and filtered them in
+JS; it worked once and then quietly shrank, because the best rows get measured
+and then fill the window. `--limit=3` returned two. A later `--limit=25` would
+have returned none while a hundred rows waited. If a batch returns fewer rows
+than asked for, that is now a real answer rather than a bug.
+
+A row whose stored reading was taken on a different host is re-measured and goes
+first: that is worse than no reading, because the row looks measured and
+describes a server the business no longer uses.
 
 **Why not nightly.** Measured against five real prospect sites before any of it
 was written: 12.6 seconds each on the mobile preset, 13.8 on desktop. The cost

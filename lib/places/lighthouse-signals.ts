@@ -260,6 +260,20 @@ export function measuredOn(signals: Pick<LighthouseSignals, "url">, website: str
   return measured !== null && measured === current;
 }
 
+/**
+ * Whether a row is worth spending fifteen seconds and a browser on.
+ *
+ * Re-measures a row whose stored reading was taken on a different host: a site
+ * that moved has a reading describing a server the business no longer uses, and
+ * leaving it in place means the row is silently never offered a signal again.
+ */
+export function needsMeasuring(row: { website: string | null; siteSignals: unknown }): boolean {
+  if (!row.website) return false;
+  const stored = storedLighthouse(row.siteSignals);
+  if (!stored) return true;
+  return !measuredOn(stored, row.website);
+}
+
 /** Human-readable summary for the CLI. */
 export function describe(signals: LighthouseSignals): string[] {
   const lines = [`page weight: ${signals.totalBytesLabel}`];

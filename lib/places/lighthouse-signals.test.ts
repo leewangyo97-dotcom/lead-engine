@@ -3,6 +3,7 @@ import {
   describe as summarise,
   HEAVY_PAGE_BYTES,
   mainDocumentStatus,
+  needsMeasuring,
   measuredOn,
   readLighthouse,
   storedLighthouse,
@@ -253,5 +254,28 @@ suite("describe", () => {
     );
     if (!read.ok) throw new Error("expected a reading");
     expect(summarise(read.signals).join("\n")).not.toContain("worth mentioning");
+  });
+});
+
+suite("needsMeasuring", () => {
+  const read = readLighthouse(report());
+  if (!read.ok) throw new Error("fixture should read");
+  const signals = { noHttps: false, lighthouse: read.signals };
+
+  it("is true for a row nobody has measured", () => {
+    expect(needsMeasuring({ website: "https://theroofingguy.co/", siteSignals: null })).toBe(true);
+  });
+
+  it("is false for a row already measured on the same site", () => {
+    expect(needsMeasuring({ website: "https://theroofingguy.co/", siteSignals: signals })).toBe(false);
+  });
+
+  it("is true again when the site moved, so the reading is about a dead server", () => {
+    // Otherwise the row is skipped for ever and is never offered a signal again.
+    expect(needsMeasuring({ website: "https://theroofingguy.com/", siteSignals: signals })).toBe(true);
+  });
+
+  it("is false with no website, because there is nothing to open", () => {
+    expect(needsMeasuring({ website: null, siteSignals: null })).toBe(false);
   });
 });

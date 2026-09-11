@@ -693,3 +693,49 @@ only when the page, the content, the text or the images are the thing said to
 move. Dry run over all 33 drafts: 0 firings, and the signal is offered on two —
 Fixorvo AC Repair 26 and Lynnette Chu 10. Fixorvo is the only prospect carrying
 both this and contrast.
+
+## The drafted eleven were an unrepresentative sample (11 September)
+
+`pnpm lh --limit=103` finished the enriched set: **128 rows measured, 9 refused,
+0 disallowed by robots.txt.** Refusals were `CHROME_INTERSTITIAL_ERROR`,
+`ERRORED_DOCUMENT_REQUEST` and one `NO_FCP` — all pages that would not load, none
+stored, which is the guard working rather than failing.
+
+**63% carry at least one signal**, against 0 of 11 on the drafted list:
+
+    page_weight    >= 3 MB : 58
+    contrast       >= 10   : 29
+    unsized_images >= 5    : 30
+    at least one           : 80 of 126
+
+The conclusion drawn this morning — that the weight floor earns nothing and the
+outlier was the roofer at 10.5 MB — was drawn from eleven Austin trades and one
+Cebu dentist. The full set has five pages above 18 MB, topping out at **40,391
+KiB** for an early learning centre. Page weight is the most common signal of the
+three, not the rarest.
+
+Worth recording as a method note rather than a finding about websites: eleven
+rows all drafted in the same week from two cities is not a sample, and a floor
+should not be judged against one. The floors were left where they are, which the
+larger set supports.
+
+**Two rows came back stale** — measured, then enrichment moved the website — and
+`needsMeasuring` puts those first in the next batch rather than leaving a reading
+that describes a server the business no longer uses.
+
+## The deployment is no longer public (11 September)
+
+Vercel Authentication, Require Log In, scope **All Deployments**. Verified from
+outside the account: `/`, `/prospects`, `/api/health` and
+`POST /api/prospects/<id>/contact` all answer 302 to `vercel.com/sso-api`, so the
+mutating endpoints are behind it and not only the pages.
+
+Checked before recommending it that nothing automated would break: the nightly
+workflow runs scripts against Neon directly and never calls the deployment, so
+the only consumer of that URL is a browser. Zero code, no users table, which
+leaves CLAUDE.md's "no auth" rule intact — that rule is about not building an
+auth system, not about leaving write endpoints open to the internet. The two had
+been conflated since the first deploy.
+
+Open from 10 September, closed 11 September. `README.md:12` still publishes the
+URL; it now leads to a login wall rather than a contact directory.
