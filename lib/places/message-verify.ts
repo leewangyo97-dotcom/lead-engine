@@ -75,6 +75,22 @@ const RULES: Rule[] = [
       "and no Lighthouse measurement is on file for them — run `pnpm lh <id>` first",
   },
   {
+    /*
+     * Layout shift, and only as a claim about their page.
+     *
+     * The obvious pattern would be the word "jump", which is also how every
+     * other message offers a call — "happy to jump on a call" is in the drafts
+     * already. So the subject is required: it is the page, the content, the text
+     * or the images that must be said to move, not the word on its own.
+     */
+    pattern:
+      /\b(layout shift|cumulative layout shift|CLS|(?:page|content|text|images?|things?) (?:jumps?|moves?|shifts?|bounces?) (?:around|about|while|as|when|on)|images? (?:have no|with no|without|missing) (?:width|height|dimensions|sizes?))\b/i,
+    requires: ["unsized_images"],
+    reason:
+      "says their page moves or their images have no dimensions, and no such " +
+      "measurement is on file for them — run `pnpm lh <id>` first",
+  },
+  {
     // Contrast, readability and accessibility all describe the same measured
     // thing, and none of them is checkable without the measurement. Deliberately
     // narrow: it fires on the claim, not on the topic — offering to improve

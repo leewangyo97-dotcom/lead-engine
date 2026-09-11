@@ -668,3 +668,28 @@ of the 33 existing drafts.
 all eleven (94 KB to 773 KB). It is the theme's doing rather than a choice the
 owner made, and it is not something they can see on their own site — which makes
 it a true fact that opens no conversation. Stored, not offered.
+
+## Unsized images is the third signal, at five (11 September)
+
+Counts across the same eleven: 26, 10, 2, 1, 1 and six zeroes. The floor is five,
+above anything a header accounts for — Efficent AC's two are the same
+`logo-color.svg` twice, which is what the low counts generally are.
+
+**Steadier than contrast, and for a reason.** This audit asks whether the markup
+sets width and height, which no viewport changes. Three phone-width runs plus a
+desktop run: 26/26/26/26, 10/10/10/10, 2/2/2/2. Contrast needed its fact to name
+the rendering because it read 40 at phone width and 39 on desktop; this one does
+not, and the test asserts the word "phone" is absent from the fact.
+
+**The fact states the cause, not a measured shift.** Lighthouse's layout-shift
+metric is one of the volatile ones and is not stored. What is stored is the
+cause — no width or height — and the consequence follows from it: the browser
+reserves no space for an image whose size it does not know, so the content below
+moves when it loads.
+
+**The rule needs a subject.** "Jump" on its own is how every draft offers a
+conversation; "happy to jump on a call" is already in them. So the pattern fires
+only when the page, the content, the text or the images are the thing said to
+move. Dry run over all 33 drafts: 0 firings, and the signal is offered on two —
+Fixorvo AC Repair 26 and Lynnette Chu 10. Fixorvo is the only prospect carrying
+both this and contrast.

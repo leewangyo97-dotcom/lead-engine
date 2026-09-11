@@ -142,6 +142,20 @@ export const HEAVY_PAGE_BYTES = 3_000_000;
  */
 export const CONTRAST_FAILURE_FLOOR = 10;
 
+/**
+ * Enough images without dimensions to move the page rather than the logo.
+ *
+ * Across the same eleven: 26, 10, 2, 1, 1 and six zeroes. The gap is between two
+ * and ten, and the low counts say what they are — Efficent AC's two are the same
+ * `logo-color.svg` twice. Five is above anything a header can account for.
+ *
+ * Steadier than the contrast count, and for a reason: this asks whether the
+ * markup sets width and height, which no viewport changes. Three runs plus a
+ * desktop run gave 26/26/26/26, 10/10/10/10 and 2/2/2/2, so unlike `contrast`
+ * the fact built from it needs no rendering named.
+ */
+export const UNSIZED_IMAGE_FLOOR = 5;
+
 const count = (audit: AuditLike | undefined): number => audit?.details?.items?.length ?? 0;
 
 /** Bytes saveable, taken from `details` — never from `numericValue`, which is ms. */

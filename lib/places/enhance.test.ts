@@ -277,3 +277,49 @@ describe("contrast, when enough elements fail to be a palette", () => {
     expect(keys).not.toContain("page_weight");
   });
 });
+
+describe("unsized images, when there are more than a logo's worth", () => {
+  const lighthouse = {
+    url: "https://austinairconditioner.org/",
+    totalBytes: 1_017_856,
+    totalBytesLabel: "Total size was 994 KiB",
+    unsizedImages: 26,
+    contrastFailures: 16,
+    namelessLinks: 1,
+    unminifiedCssBytes: 0,
+    unusedJsBytes: 282_226,
+    measuredAt: "2026-09-11T08:00:00.000Z",
+  };
+  const fixorvo = { ...base, website: "https://austinairconditioner.org", siteSignals: { lighthouse } };
+
+  it("offers the count and the consequence, not a measured shift", () => {
+    const signal = buildSignals(fixorvo).find((s) => s.key === "unsized_images");
+    expect(signal).toBeDefined();
+    expect(signal!.fact).toContain("26 images");
+    expect(signal!.fact).toContain("no width or height");
+  });
+
+  it("names no rendering, because the answer is the same at every screen size", () => {
+    // Unlike contrast, which is 40 at phone width and 39 on desktop. This asks
+    // what the markup says: 26 on three phone-width runs and 26 on desktop.
+    const fact = buildSignals(fixorvo).find((s) => s.key === "unsized_images")!.fact;
+    expect(fact).not.toContain("phone");
+  });
+
+  it("says nothing about two, which is a logo twice over", () => {
+    // Efficent AC's two really are the same logo-color.svg in the header twice.
+    const logo = { ...fixorvo, siteSignals: { lighthouse: { ...lighthouse, unsizedImages: 2 } } };
+    expect(buildSignals(logo).map((s) => s.key)).not.toContain("unsized_images");
+  });
+
+  it("fires at the floor itself", () => {
+    const five = { ...fixorvo, siteSignals: { lighthouse: { ...lighthouse, unsizedImages: 5 } } };
+    expect(buildSignals(five).map((s) => s.key)).toContain("unsized_images");
+  });
+
+  it("drops it for a site the record no longer points at", () => {
+    expect(
+      buildSignals({ ...fixorvo, website: "https://fixorvo.com" }).map((s) => s.key),
+    ).not.toContain("unsized_images");
+  });
+});

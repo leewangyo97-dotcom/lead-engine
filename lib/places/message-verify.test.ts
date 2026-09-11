@@ -199,3 +199,35 @@ describe("claims about contrast and readability", () => {
     for (const message of innocent) expect(verifyMessage(message, ["website"])).toHaveLength(0);
   });
 });
+
+describe("claims about the page moving as it loads", () => {
+  const measured = ["website", "unsized_images"];
+
+  it("allows the claim when the images were counted", () => {
+    expect(
+      verifyMessage(
+        "Twenty-six images have no width or height set, so the content jumps around while the page loads.",
+        measured,
+      ),
+    ).toHaveLength(0);
+  });
+
+  it("refuses it when nothing was measured", () => {
+    const violations = verifyMessage("Your page jumps around as it loads.", ["website"]);
+    expect(violations).toHaveLength(1);
+    expect(violations[0].reason).toContain("pnpm lh");
+  });
+
+  it("does not fire on offering to jump on a call", () => {
+    // The word is already in the drafts. A rule keyed on it alone would block
+    // every message that offers a conversation, which is most of them.
+    expect(verifyMessage("Happy to jump on a call this week.", ["website"])).toHaveLength(0);
+    expect(verifyMessage("I can jump on it tomorrow if that helps.", ["website"])).toHaveLength(0);
+  });
+
+  it("does not fire on offering to help, which asserts nothing", () => {
+    expect(
+      verifyMessage("I could set explicit sizes on the images if that is useful.", ["website"]),
+    ).toHaveLength(0);
+  });
+});

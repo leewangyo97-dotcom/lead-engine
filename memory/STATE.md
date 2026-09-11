@@ -49,10 +49,10 @@ anything). Nightly enriches 200 and re-scores; monthly refreshes map data.
 **`pnpm lh <prospectId>` measures one site properly** — headless Chrome, 10-47s,
 on demand and never nightly (200 sites would be 42 min against a 15-min budget).
 Only audits proven identical across two runs are stored; the score is not, and
-`message-verify` rejects any draft quoting one. Two signals: `page_weight` at
-3 MB, `contrast` at 10 failing elements. **All 11 drafted prospects with websites
-measured 11 Sept** — 0 crossed the weight floor, 3 crossed contrast (Dresden
-Vision 49, Alta Roofing 40, Fixorvo 16). RUNBOOK has the rest.
+`message-verify` rejects any draft quoting one. Three signals: `page_weight` at
+3 MB, `contrast` at 10, `unsized_images` at 5. **All 11 drafted prospects with
+websites measured 11 Sept** — 0 crossed weight, 3 crossed contrast (Dresden 49,
+Alta Roofing 40, Fixorvo 16), 2 crossed unsized (Fixorvo 26, Chu 10).
 
 Working copy `C:\dev\lead-engine`; `F:\lead-engine` is corrupt, awaiting chkdsk.
 

@@ -4,6 +4,7 @@ import {
   HEAVY_PAGE_BYTES,
   measuredOn,
   storedLighthouse,
+  UNSIZED_IMAGE_FLOOR,
 } from "./lighthouse-signals";
 import { isWhatsAppCapable } from "./phone";
 import { ownDomainFromEmail } from "./own-domain";
@@ -117,6 +118,25 @@ export function buildSignals(place: EnhanceablePlace): Signal[] {
         fact:
           `${current.contrastFailures} elements on their homepage fail the contrast ` +
           `threshold at phone width (Lighthouse, ${current.measuredAt.slice(0, 10)})`,
+      });
+    }
+
+    // No rendering named here, unlike contrast: this asks whether the markup
+    // sets width and height, which is the same answer at every screen size.
+    // Measured that way — 26/26/26 across three phone-width runs and 26 again on
+    // desktop.
+    //
+    // The consequence is stated rather than a measured shift. Lighthouse's own
+    // layout-shift metric is one of the volatile ones and is not stored; what is
+    // stored is the cause, and the browser reserving no space for an image it
+    // has no dimensions for is why the content under it moves.
+    if (current && current.unsizedImages >= UNSIZED_IMAGE_FLOOR) {
+      signals.push({
+        key: "unsized_images",
+        fact:
+          `${current.unsizedImages} images on their homepage have no width or height ` +
+          `set, so content below them moves as the page loads ` +
+          `(Lighthouse, ${current.measuredAt.slice(0, 10)})`,
       });
     }
   }

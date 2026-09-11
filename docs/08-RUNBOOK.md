@@ -1083,6 +1083,21 @@ solid — three consecutive runs of three sites returned 49, 49, 49 / 40, 40, 40
 width and 39 on a desktop screen. So the fact names the rendering, and a draft
 should keep that wording.
 
+`unsized_images` at five or more. Counts across the eleven were 26, 10, 2, 1, 1
+and six zeroes, and the low ones say what they are — Efficent AC's two are the
+same `logo-color.svg` twice. Five is above anything a header accounts for.
+
+This one is steadier than contrast, because it asks what the markup says rather
+than what the render looks like: three phone-width runs and a desktop run gave
+26/26/26/26, 10/10/10/10 and 2/2/2/2. So its fact names no rendering. It states
+the cause and the consequence — no width or height set, so content below moves —
+and never a measured shift: Lighthouse's own layout-shift metric is one of the
+volatile ones and is not stored.
+
+Its rule requires a subject. "Jump" alone is how every draft offers a call —
+"happy to jump on a call" is already in them — so the pattern only fires when the
+page, the content, the text or the images are the thing said to move.
+
 A contrast measurement does **not** license a claim about how the site behaves on
 a phone. Forty unreadable elements do not establish that a site is hard to *use*
 there; that is the viewport rule's question, and `message-verify` still answers
@@ -1100,7 +1115,9 @@ make that sentence false without changing a line of code.
 
 **What it found on the drafted list.** All eleven measured 11 September: none
 crossed the weight floor (largest was Dresden Vision at 2,371 KiB), three crossed
-the contrast floor — Dresden Vision 49, Alta Roofing 40, Fixorvo AC Repair 16.
+the contrast floor — Dresden Vision 49, Alta Roofing 40, Fixorvo AC Repair 16 —
+and two crossed the unsized-images floor, Fixorvo at 26 and Lynnette Chu at 10.
+Fixorvo is the only one carrying both.
 Unused JavaScript ran 94 KB to 773 KB on every one of the eleven; it is stored
 and deliberately not offered, because it is the theme's doing rather than
 anything the owner chose, and it is not something they can see.
