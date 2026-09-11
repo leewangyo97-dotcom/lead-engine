@@ -739,3 +739,37 @@ been conflated since the first deploy.
 
 Open from 10 September, closed 11 September. `README.md:12` still publishes the
 URL; it now leads to a login wall rather than a contact directory.
+
+## The Australia schools search is deleted (11 September)
+
+13,134 rows, 57% of the prospects table. Exported first; 0 outreach rows were
+attached, so no written work was lost.
+
+**What forced the decision was a failure investigation, not tidiness.** The
+nightly of 11 September enriched 200 rows and 94 failed — 47%. The cause was not
+in `enrich.ts`: NSW and Victorian school sites refuse TCP connections from
+outside Australia. Not a 403, not a bot filter, the connection never establishes.
+
+    curl: (7)  Failed to connect to www.adelong-p.schools.nsw.edu.au port 443
+    curl: (28) Failed to connect to www.academy.vic.edu.au port 443 after 21043 ms
+
+DNS resolves — `pwsview.wip.det.nsw.edu.au`, 153.107.134.76, NSW Dept of
+Education — and connecting to that raw IP fails identically, from this machine
+and from GitHub's runners. `education.nsw.gov.au` answers 200, so the
+department's public site is reachable while the per-school hosts are not. Those
+rows were unreachable from anywhere this code will ever run.
+
+**106 of 155 all-time fetch failures were that one search.** The other funnels
+were always healthy: Australia clinics 3 failures in 6,786, Sydney 9 in 187. The
+47% was an artefact of a score-ordered queue grinding through schools, which also
+makes the "~80 nights" backlog estimate from that run wrong.
+
+    before  23,203 prospects · 8,870 pending · 155 fetch_failed
+    after   10,069 prospects · 2,159 pending ·  49 fetch_failed
+
+Schools were 6,711 of the 8,870 pending — 76% of the backlog. Enrichment is now
+a fortnight of nights rather than months.
+
+They were never in the target set either: government schools do not hire a
+freelance developer, the department runs their sites, and 2,914 harvested email
+addresses were school offices there is no reason to contact.

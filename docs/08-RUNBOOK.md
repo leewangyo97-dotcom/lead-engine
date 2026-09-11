@@ -410,14 +410,24 @@ options:
   cascades to its prospects.
 
 **A search you did not mean to run** is worth deleting rather than leaving in the
-queue — a whole country of schools is 13,134 rows, the largest single thing in
-this table, and it will otherwise compete for enrichment budget for months.
+queue. `Australia [schools]` was deleted on 11 September: 13,134 rows, 57% of the
+table, and **6,711 of the 8,870 rows then waiting for enrichment**. The backlog
+went to 2,159 — a fortnight of nights rather than months.
+
+It was also the source of 106 of 155 all-time fetch failures, which is what
+forced the decision. NSW and Victorian school sites refuse TCP connections from
+outside Australia: not a 403, the connection never establishes, and it fails the
+same way against the resolved IP from two different networks. Those rows were
+unreachable from anywhere this code runs. Export before deleting — the cascade is
+not reversible without re-running a country-wide Overpass query — and check that
+no outreach rows are attached, because those are cascaded away too.
 
 ## Retention covers leads, not prospects
 
 `pnpm retention` prunes leads in a dead status (`disqualified`, `parked`,
 `closed`) after 45 days. It does not touch `prospects` at all, so that table only
-grows — 23,203 rows and 12 MB as of 10 September, against a 512 MB database.
+grows, and deleting an unwanted search is the only thing that shrinks it —
+10,069 rows and 33 MB on 11 September, against a 512 MB database.
 
 That is deliberate for now rather than an oversight, and it is written down here
 so the monthly job's "storage stays flat" comment is not read as covering both.
@@ -471,8 +481,9 @@ category and city with a count on each:
 /prospects?city=Cebu+City&category=clinics
 ```
 
-The counts are the point. 5,162 schools sit above 1,206 clinics in this table,
-which is invisible until the chips say so. Clicking an active chip clears just
+The counts are the point: a category can dominate the table without that being
+visible until the chips say so. Schools did, at 5,162 against 1,206 clinics,
+until that search was deleted on 11 September. Clicking an active chip clears just
 that one; `Clear` drops both. An unknown category in a URL is ignored rather than
 matched, so a mistyped link shows the whole queue instead of an empty page.
 

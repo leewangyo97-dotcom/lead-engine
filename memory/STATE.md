@@ -26,12 +26,11 @@ writes steps 1 and 2 now.
 Chores: Gmail token dies 7 days after each `pnpm gmail:auth` while the consent
 screen is in Testing; searches are manual.
 
-**23,203 prospects after the first country-wide searches** (Australia schools
-13,134; Australia clinics/vet/dentists 6,786; a 12-category Cebu City search
-2,837). 7,643 reachable, 21 MB of 512 MB. Scored: 72 hot, 1,201 warm, 21,930
-cold. **~9,100 queued for enrichment against a nightly 200** — 46 nights, down
-from 364: hosts are fetched five at a time and the cap was raised. Queue ordered
-by score. Deleting the schools search is a reasonable call; see RUNBOOK.
+**10,069 prospects.** The `Australia [schools]` search was deleted 11 Sept —
+13,134 rows, 57% of the table, 0 outreach attached. 2,540 reachable, 33 MB of
+512. Scored: 20 hot, 250 warm, 9,799 cold. **2,159 queued for enrichment against
+a nightly 200**, down from 8,870: schools were 6,711 of that backlog. Weeks, not
+months. Queue ordered by score.
 
 **Geo prospect discovery is live in production.** `/prospects` searches OSM by
 place and category, enriches websites, scores, and opens a pre-filled message.
