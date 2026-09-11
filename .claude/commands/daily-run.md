@@ -33,6 +33,12 @@ Run the morning pipeline. Target: under 25,000 tokens, three model calls, ten mi
    Both go into the **same** copywriter call. A follow-up is a draft; splitting
    them doubles the prompt overhead to no benefit.
 
+   `pnpm followups` emits **leads only**, and says on stderr how many prospect
+   follow-ups it left out. That is not data loss: prospect follow-ups are written
+   by the app from the trade and the step when the button is clicked, so there is
+   nothing here for a model to do with them. Expect the payload count to be far
+   smaller than the number on `/followups`.
+
 5. Delegate to the `copywriter` subagent. One batched call. Persist with:
    ```bash
    cat drafts.json | pnpm apply:drafts
@@ -74,6 +80,13 @@ Run the morning pipeline. Target: under 25,000 tokens, three model calls, ten mi
    ```
    Take the numbers from this session. Without them `pnpm tokens` reports
    "(not measured)" and the 25,000 target cannot be checked.
+
+   Two things that have already gone wrong here. The counts attach to the **most
+   recent harvest run**, so record them before the next night's harvest or they
+   land on the wrong row. And the figures are refused if the run's own funnel
+   cannot support them — `--scored 18` against a night where two leads survived
+   the pre-filter is rejected, because a metrics table holding a number that
+   could not have happened is worse than one holding nothing.
 
 10. Update `memory/STATE.md` and append to `memory/OUTREACH-LOG.md`.
 

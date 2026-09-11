@@ -44,9 +44,9 @@ website (4 in 151 Cebu rows), so WhatsApp is the only channel that reaches anyon
 Abroad the opposite — 71 of 108 Austin rows had one. `chooseChannel` picks per
 prospect for that reason. Figures in DECISIONS.
 
-Commands: `search:run` · `enrich` · `prospects:score` · `prospects:refresh` ·
-`prospects:enhance` → Claude Code → `apply:enhance` → `drafts:verify`. Nightly
-enriches (25) and re-scores; monthly refreshes map data.
+The loop is `/prospect-run` (new 11 September — the prospect side had no command
+while the lead side had one, which was backwards given which funnel produces
+anything). Nightly enriches 25 and re-scores; monthly refreshes map data.
 
 
 
