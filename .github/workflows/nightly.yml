@@ -38,7 +38,7 @@ jobs:
     timeout-minutes: 15
     # The monthly cron exists only to trigger retention. On a weekday the 1st
     # fires both schedules, and the weekday one already covers the harvest.
-    if: github.event.schedule != '0 20 1 * *'
+    if: github.event.schedule != '17 20 1 * *'
 
     steps:
       - uses: actions/checkout@v5
@@ -133,7 +133,7 @@ jobs:
   # Monthly retention: prune dead rows so storage stays flat inside Neon's 0.5 GB.
   retention:
     runs-on: ubuntu-latest
-    if: github.event.schedule == '0 20 1 * *'
+    if: github.event.schedule == '17 20 1 * *'
     steps:
       - uses: actions/checkout@v5
       # No `version:` — action-setup reads the `packageManager` field in package.json.

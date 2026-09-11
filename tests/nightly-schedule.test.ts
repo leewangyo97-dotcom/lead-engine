@@ -24,6 +24,20 @@ function crons(): string[] {
   return [...text.matchAll(/-\s*cron:\s*['"]([^'"]+)['"]/g)].map((m) => m[1]);
 }
 
+/**
+ * Every cron string a job's `if:` compares against.
+ *
+ * The schedule is written down four times, not twice: the two `cron:` entries
+ * and the two gates that decide which job a fired schedule belongs to. This
+ * file only ever checked the first two.
+ */
+function gatedSchedules(): string[] {
+  const text = readFileSync(WORKFLOW, "utf8");
+  return [
+    ...text.matchAll(/if:\s*github\.event\.schedule\s*[!=]=\s*['"]([^'"]+)['"]/g),
+  ].map((m) => m[1]);
+}
+
 describe("the nightly schedule", () => {
   it("still has a weekday harvest and a monthly retention entry", () => {
     expect(crons()).toHaveLength(2);
@@ -44,5 +58,33 @@ describe("the nightly schedule", () => {
     expect(dom).toBe("*");
     expect(month).toBe("*");
     expect(dow).toBe("1-5");
+  });
+});
+
+/**
+ * The bug this pair of tests exists for.
+ *
+ * On 3 September both crons moved from the hour to :17, to dodge the most
+ * contended minute on GitHub's scheduler. The two `if:` gates still compared
+ * against `'0 20 1 * *'`, so from 1 October the monthly retention job would
+ * never have run again — its gate could not match any schedule the workflow
+ * declares — while harvest would have run twice on the 1st instead.
+ *
+ * Retention did run on 1 September, when the strings still agreed, which is how
+ * the breakage was confined to a future date rather than an obvious failure.
+ * Nothing failed. The workflow was valid YAML and every run was green.
+ */
+describe("the job gates and the schedule they gate on", () => {
+  it("compares against a cron the workflow actually declares", () => {
+    for (const gated of gatedSchedules()) {
+      expect(crons()).toContain(gated);
+    }
+  });
+
+  it("gates both jobs on the monthly entry, which is the one that disambiguates", () => {
+    // The weekday cron fires the harvest and nothing else; the monthly one is
+    // the only schedule a job has to be told apart by.
+    const [, monthly] = crons();
+    expect(gatedSchedules()).toEqual([monthly, monthly]);
   });
 });
