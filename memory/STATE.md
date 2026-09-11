@@ -110,14 +110,16 @@ of 75, and no dimension fixes it — timezone projects to 56, stack to 49. Only
 
 ## Open questions for Joshua
 
-- Public or private GitHub repo? Public gives unlimited Actions minutes and
-  doubles as a portfolio piece; no secrets are in the code either way.
 - Resume says "seeking full-time remote"; the tool is built for contract. Which?
+
+**Repo private** 11 Sept; anonymous fetch 404s. Actions fine — nightly 2.5 min,
+CI 0.9, ~120 of the 2,000 free private minutes. Settles the deployment URL in
+four old commits: no history rewrite needed.
 
 ## Recently done
 
-11 September, all in DECISIONS: prospect follow-up messages, `drafts:verify`,
-the two false-claim fixes behind it, and `pnpm lh` with its two signals.
+11 Sept, all in DECISIONS: follow-up messages, `drafts:verify`, two false-claim
+fixes, `pnpm lh` with three signals, access control, repo private.
 
 ## Reminders that bite
 
