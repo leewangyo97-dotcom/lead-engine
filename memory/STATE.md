@@ -75,12 +75,11 @@ same reason before it was written.
 **The rule is now a command:** `pnpm drafts:verify` opens the sites a draft talks
 about and exits non-zero on a false claim.
 
-Seventeen came back unverifiable — all on free email providers, no domain to
-probe — so the messages were changed instead. "You don't have a website" became
-"I couldn't find a website for you", in the template and in every draft: a fact
-about the search rather than a claim about them, which is the half this project
-can stand behind. They now report `no checkable claim`, which the tool counts
-separately from `checked and true`.
+All seventeen came back unverifiable — free email providers, no domain to probe —
+so the messages changed instead. "You don't have a website" became "I couldn't
+find a website for you", in the template and every draft: a fact about the search
+rather than a claim about them. They now report `no checkable claim`, which the
+tool counts separately from `checked and true`.
 
 ## Next three actions
 
