@@ -224,7 +224,9 @@ export async function refreshProspects(options: RefreshOptions = {}): Promise<Re
         .update(prospects)
         .set({ enrichmentStatus: "pending" })
         .where(inArray(prospects.id, ids));
-      await runEnrichment({ searchId: options.searchId, limit: ids.length });
+      // The ids, not just the count: without them this enriches whatever tops
+      // the global pending queue and leaves the rows it just marked untouched.
+      await runEnrichment({ ids, searchId: options.searchId, limit: ids.length });
       await reapplyOverrides(ids);
     }
   }

@@ -898,3 +898,28 @@ followups: 16 prospect follow-up(s) are due and not in this payload —
 
 Checked against Monday by asking with a future date: 18 due, payload of 2, and
 `checkStep` accepts a step-1 draft for both — `highestSent=0`, no unsent draft.
+
+## Refreshing specific rows did not enrich those rows
+
+`refreshProspects({ ids, enrich: true })` marked the requested rows `pending` and
+then called `runEnrichment` with **no id filter** — so it enriched whichever rows
+topped the global pending queue and left the requested ones sitting at pending.
+
+Harmless while that queue was unordered, because the wrong rows were at least
+arbitrary. Ordering the queue by score on 10 September turned it into a reliable
+way to re-read the same high-scoring sites over and over while the rows a person
+actually asked about were never touched.
+
+Found by re-checking six `no_contact_found` rows and watching four come back
+still `pending`. `runEnrichment` takes `ids` now, and `refreshProspects` passes
+them.
+
+Worth saying plainly: the row-level re-enrichments done on 10 September — the
+CDW Studios signals and two of the three viewport rows — were hitting this bug.
+They did produce corrected values, so those rows were reached, but that was luck
+rather than targeting. The one conclusion that did not depend on it is the Weebly
+site, which was checked against the live page by hand.
+
+**After the fix**, all four stuck rows enriched on request and came back
+`no_contact_found` for real: their sites expose no contact details a parser can
+find. That verdict was right; only the targeting was broken.

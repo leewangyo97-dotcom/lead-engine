@@ -1,4 +1,4 @@
-import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull, sql, type SQL } from "drizzle-orm";
 import { getDb } from "../db";
 import { prospects } from "../db/schema";
 import { OSM_USER_AGENT } from "./nominatim";
@@ -249,7 +249,7 @@ export interface EnrichProgress {
  * business's shared host from a tool whose pitch is that it respects them.
  */
 export async function runEnrichment(
-  options: { searchId?: string; limit?: number } & EnrichDeps = {},
+  options: { searchId?: string; ids?: string[]; limit?: number } & EnrichDeps = {},
 ): Promise<EnrichProgress> {
   const db = getDb();
   const limit = options.limit ?? 50;
@@ -258,11 +258,27 @@ export async function runEnrichment(
   // Rows with nothing to visit would otherwise sit at "pending" forever, which
   // reads as "not done yet" when the truth is "there is nothing to do". Saying
   // so makes the pending count mean what the UI implies it means.
+  /**
+   * Narrowing, in the order the caller meant it.
+   *
+   * `ids` exists because `refreshProspects({ ids, enrich: true })` used to mark
+   * those rows pending and then call this with no filter at all — so it enriched
+   * whichever rows topped the global pending queue instead. Harmless while that
+   * queue was unordered and arbitrary; once it was ordered by score it became a
+   * reliable way to re-read the wrong sites, and the requested rows were left
+   * sitting at "pending".
+   */
+  const only = (base: SQL | undefined) => {
+    if (options.ids?.length) return and(base, inArray(prospects.id, options.ids));
+    if (options.searchId) return and(base, eq(prospects.searchId, options.searchId));
+    return base;
+  };
+
   const noSite = and(eq(prospects.enrichmentStatus, "pending"), isNull(prospects.website));
   await db
     .update(prospects)
     .set({ enrichmentStatus: "no_website", updatedAt: now() })
-    .where(options.searchId ? and(noSite, eq(prospects.searchId, options.searchId)) : noSite);
+    .where(only(noSite));
 
   const pending = and(eq(prospects.enrichmentStatus, "pending"), isNotNull(prospects.website));
 
@@ -280,7 +296,7 @@ export async function runEnrichment(
       linkedinUrl: prospects.linkedinUrl,
     })
     .from(prospects)
-    .where(options.searchId ? and(pending, eq(prospects.searchId, options.searchId)) : pending)
+    .where(only(pending))
     // Best first. The nightly job enriches 25, and the queue reached 9,156 the
     // day a country-wide search landed — unordered, that is a year of spending
     // the budget on arbitrary rows while a reachable high scorer waits. Unscored
