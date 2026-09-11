@@ -635,3 +635,36 @@ the rest of the pipeline cannot take. At or above 3 MB — a judgement, not a
 measurement; the median page is around 2.5 MB — it becomes a `page_weight`
 signal, dated, and `message-verify` rejects any megabyte or slow-loading claim
 made without it.
+
+## Contrast is a signal; unused JavaScript is not (11 September)
+
+The eleven drafted prospects with websites were all measured. **None crossed the
+3 MB weight floor** — the largest was Dresden Vision at 2,371 KiB — so
+`page_weight` fired on zero of them. The Roofing Guy at 10.5 MB is an outlier and
+is not drafted. The floor was not lowered to make the feature look useful:
+telling someone their median-weight page is heavy is the same fabricated
+precision the score rule exists to stop.
+
+**Contrast is what that batch actually produced.** Counts: 49, 40, 16, 8, 7, 1, 1
+and four zeroes. The floor is ten, which sits in the gap and separates a palette
+built on colours that fail from a single muted caption. Three of eleven qualify.
+
+**Checked before building on it.** The allow-list had been justified by two runs
+agreeing on audit *scores*, and `color-contrast` scores 0 whether one element
+fails or fifty — so an equal score proved nothing about the number a message
+would quote. Three consecutive runs of three sites: 49, 49, 49 / 40, 40, 40 /
+16, 16, 16. Solid. But mobile against desktop gave Alta Roofing **40 and 39**, so
+the count is not quite viewport-independent and the fact names the rendering it
+came from.
+
+**A contrast measurement does not license a phone-usability claim.** The existing
+viewport rule blocks "hard to use on a phone" and still does, with contrast
+measured or not — forty unreadable elements do not establish that. "At phone
+width" is the wording the signal supplies and passes both rules; "on a phone"
+does not, and that conservatism is deliberate. Dry-run: the new rule fires on 0
+of the 33 existing drafts.
+
+**Unused JavaScript was rejected as a signal** despite being stable and large on
+all eleven (94 KB to 773 KB). It is the theme's doing rather than a choice the
+owner made, and it is not something they can see on their own site — which makes
+it a true fact that opens no conversation. Stored, not offered.

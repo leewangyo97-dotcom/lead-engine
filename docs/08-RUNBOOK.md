@@ -1066,18 +1066,44 @@ That was the stored record for a roofing company whose homepage pulls ten and a
 half megabytes. Page weight is the one measurement here the rest of the pipeline
 has no way to take.
 
-**Where it ends up.** A page at or above 3 MB becomes a `page_weight` signal in
-the message prompt, dated. Below that it is stored but not offered — the median
-page is around 2.5 MB, so a 2 MB site is not a thing to open a conversation
-with. `message-verify` will now reject a draft that mentions megabytes, page
-weight or slow loading without that signal present, and reject any mention of a
-Lighthouse or PageSpeed score whatever the record says.
+**Where it ends up.** Two signals, both dated and both gated in
+`message-verify`.
+
+`page_weight` at 3 MB or above. Below that it is stored but not offered — the
+median page is around 2.5 MB, so a 2 MB site is not a thing to open a
+conversation with. A draft mentioning megabytes, page weight or slow loading
+without that signal is rejected, and any mention of a Lighthouse or PageSpeed
+score is rejected whatever the record says.
+
+`contrast` at ten or more failing elements. Across the eleven drafted prospects
+with websites the counts were 49, 40, 16, 8, 7, 1, 1 and four zeroes; ten sits in
+the gap and separates a broken palette from one muted caption. The count is
+solid — three consecutive runs of three sites returned 49, 49, 49 / 40, 40, 40 /
+16, 16, 16 — but not quite viewport-independent: Alta Roofing is 40 at phone
+width and 39 on a desktop screen. So the fact names the rendering, and a draft
+should keep that wording.
+
+A contrast measurement does **not** license a claim about how the site behaves on
+a phone. Forty unreadable elements do not establish that a site is hard to *use*
+there; that is the viewport rule's question, and `message-verify` still answers
+it separately. Saying "at phone width" passes both rules, "on a phone" does not.
 
 **It survives re-enrichment.** `pnpm enrich` rewrites `siteSignals` wholesale
 and would otherwise delete the measurement on the next nightly run, so the block
 is carried across. It is kept, not trusted: the block stores the URL it was
 measured on, and a reading whose host no longer matches the record is ignored
 rather than repeated about a site that has moved.
+
+**If a desktop preset is ever added to the script**, store the viewport with the
+reading. Every `contrast` fact says "at phone width", and a desktop run would
+make that sentence false without changing a line of code.
+
+**What it found on the drafted list.** All eleven measured 11 September: none
+crossed the weight floor (largest was Dresden Vision at 2,371 KiB), three crossed
+the contrast floor — Dresden Vision 49, Alta Roofing 40, Fixorvo AC Repair 16.
+Unused JavaScript ran 94 KB to 773 KB on every one of the eleven; it is stored
+and deliberately not offered, because it is the theme's doing rather than
+anything the owner chose, and it is not something they can see.
 
 **A Windows wart.** `chrome-launcher` fails to delete its own temp profile
 directory and throws `EPERM` out of `kill()`. Chrome itself exits; the directory

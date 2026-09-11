@@ -154,3 +154,48 @@ describe("claims about weight and speed", () => {
     }
   });
 });
+
+describe("claims about contrast and readability", () => {
+  const measured = ["website", "contrast"];
+
+  it("allows the claim in the wording the signal itself supplies", () => {
+    // "at phone width" is how `buildSignals` states the fact, and the phrasing
+    // matters: it names the rendering the number came from without claiming
+    // anything about how the site behaves there.
+    expect(
+      verifyMessage(
+        "Forty elements on your homepage fail the contrast threshold at phone width.",
+        measured,
+      ),
+    ).toHaveLength(0);
+  });
+
+  it("still blocks a usability claim about phones, measured contrast or not", () => {
+    // Deliberate. Forty unreadable elements do not establish that a site is hard
+    // to *use* on a phone — that is the viewport rule's question, and a contrast
+    // measurement is not an answer to it.
+    expect(verifyMessage("Your site is hard to use on a phone.", measured).length).toBeGreaterThan(0);
+  });
+
+  it("refuses it when nothing was measured", () => {
+    const violations = verifyMessage("Some of your text is hard to read.", ["website"]);
+    expect(violations).toHaveLength(1);
+    expect(violations[0].reason).toContain("pnpm lh");
+  });
+
+  it("refuses an accessibility claim with nothing behind it", () => {
+    expect(verifyMessage("Your site fails accessibility checks.", ["website"]).length).toBeGreaterThan(0);
+    expect(verifyMessage("Screen readers cannot follow your menu.", ["website"]).length).toBeGreaterThan(0);
+  });
+
+  it("does not fire on offering to help, which asserts nothing", () => {
+    // The rule has to catch the claim, not the topic. A draft that offers a
+    // rebuild must not be blocked for naming what it would improve.
+    const innocent = [
+      "I build fast booking pages for trades and would be glad to show you one.",
+      "Happy to send a mockup of how the homepage could look.",
+      "I could put together a quick before-and-after if that is useful.",
+    ];
+    for (const message of innocent) expect(verifyMessage(message, ["website"])).toHaveLength(0);
+  });
+});

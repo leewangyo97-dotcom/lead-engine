@@ -1,5 +1,10 @@
 import { firstMessage, type ContactablePlace } from "./contact";
-import { HEAVY_PAGE_BYTES, measuredOn, storedLighthouse } from "./lighthouse-signals";
+import {
+  CONTRAST_FAILURE_FLOOR,
+  HEAVY_PAGE_BYTES,
+  measuredOn,
+  storedLighthouse,
+} from "./lighthouse-signals";
 import { isWhatsAppCapable } from "./phone";
 import { ownDomainFromEmail } from "./own-domain";
 
@@ -88,12 +93,30 @@ export function buildSignals(place: EnhanceablePlace): Signal[] {
     // to it as three clean booleans. The performance score is deliberately not
     // offered: it moved fifteen points on one site between two sessions.
     const lh = storedLighthouse(place.siteSignals);
-    if (lh && measuredOn(lh, place.website) && lh.totalBytes >= HEAVY_PAGE_BYTES) {
+    const current = lh && measuredOn(lh, place.website) ? lh : null;
+    if (current && current.totalBytes >= HEAVY_PAGE_BYTES) {
       signals.push({
         key: "page_weight",
         fact:
-          `Their homepage loads ${lh.totalBytesLabel.replace(/^Total size was /, "")} ` +
-          `(measured with Lighthouse on ${lh.measuredAt.slice(0, 10)})`,
+          `Their homepage loads ${current.totalBytesLabel.replace(/^Total size was /, "")} ` +
+          `(measured with Lighthouse on ${current.measuredAt.slice(0, 10)})`,
+      });
+    }
+
+    // Text their own customers cannot read. Unlike page weight this was the
+    // signal the drafted list actually produced — three of eleven cross the
+    // floor, none crossed the weight one.
+    //
+    // The rendering is named because the number depends on it slightly: Alta
+    // Roofing measures 40 at phone width and 39 on a desktop screen. An owner
+    // who checks and sees 39 should find the message already told them which
+    // screen it was talking about.
+    if (current && current.contrastFailures >= CONTRAST_FAILURE_FLOOR) {
+      signals.push({
+        key: "contrast",
+        fact:
+          `${current.contrastFailures} elements on their homepage fail the contrast ` +
+          `threshold at phone width (Lighthouse, ${current.measuredAt.slice(0, 10)})`,
       });
     }
   }

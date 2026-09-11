@@ -13,9 +13,8 @@ harvested in the last six days, 599 tests passing. Prospect counts are below —
 they moved by two orders of magnitude on 10 September.
 
 **Eighteen sends, no replies yet.** Two leads by email (This Dot Labs, Atria) and
-sixteen prospects by WhatsApp and email, all on Wednesday 9 September, one row
-per prospect — the reopen window is holding, no click storm this time. `/review`
-wants 20 before it will call a difference real, so it is close.
+sixteen prospects on Wednesday 9 September, one row each — the reopen window is
+holding. `/review` wants 20 before calling a difference real, so it is close.
 
 **The ladder is verified and now has messages of its own.** Asking
 `getDueFollowups` with a future date gives 18 due by 15 September — 16 prospects,
@@ -24,16 +23,15 @@ Manila**, so Monday morning is when to work them. Until 11 September a prospect
 follow-up would have re-sent the opening message word for word; `followUpMessage`
 writes steps 1 and 2 now.
 
-Two live chores: the Gmail token expires seven days after each `pnpm gmail:auth`
-while the consent screen is in Testing (publishing ends it), and searches are
-manual.
+Two live chores: the Gmail token dies seven days after each `pnpm gmail:auth`
+while the consent screen is in Testing (publishing ends it); searches are manual.
 
 **23,203 prospects after the first country-wide searches** (Australia schools
 13,134; Australia clinics/vet/dentists 6,786; a 12-category Cebu City search
 2,837). 7,643 reachable, 21 MB of 512 MB. Scored: 72 hot, 1,201 warm, 21,930
-cold. **~9,100 queued for enrichment against a nightly 200** — 46 nights, down from 364:
-hosts are fetched five at a time and the cap was raised. Queue ordered by score. Deleting the schools search is a reasonable call;
-see RUNBOOK "After a country-wide search".
+cold. **~9,100 queued for enrichment against a nightly 200** — 46 nights, down
+from 364: hosts are fetched five at a time and the cap was raised. Queue ordered
+by score. Deleting the schools search is a reasonable call; see RUNBOOK.
 
 **Geo prospect discovery is live in production.** `/prospects` searches
 OpenStreetMap by place and category, enriches websites, scores, and opens a
@@ -41,7 +39,8 @@ pre-filled WhatsApp or email message.
 
 Two markets that behave nothing alike: almost nobody in the Philippines has a
 website (4 in 151 Cebu rows) while 71 of 108 Austin rows did, so `chooseChannel`
-picks per prospect. Figures in DECISIONS.
+picks per prospect. Figures in DECISIONS. None of the 17 unsent drafts has a
+website — they are Cebu food and retail, reached by WhatsApp.
 
 The loop is `/prospect-run` (new 11 September — the prospect side had no command
 while the lead side had one, which was backwards given which funnel produces
@@ -49,10 +48,11 @@ anything). Nightly enriches 200 and re-scores; monthly refreshes map data.
 
 **`pnpm lh <prospectId>` measures one site properly** — headless Chrome, 10-47s,
 on demand and never nightly (200 sites would be 42 min against a 15-min budget).
-Only audits proven identical across two runs are stored; the performance score is
-not, and `message-verify` rejects any draft quoting one. A page at or above 3 MB
-becomes a `page_weight` signal — the one fact the HTML enricher cannot reach: a
-roofer pulling 10.5 MB was on file as three clean booleans. RUNBOOK has the rest.
+Only audits proven identical across two runs are stored; the score is not, and
+`message-verify` rejects any draft quoting one. Two signals: `page_weight` at
+3 MB, `contrast` at 10 failing elements. **All 11 drafted prospects with websites
+measured 11 Sept** — 0 crossed the weight floor, 3 crossed contrast (Dresden
+Vision 49, Alta Roofing 40, Fixorvo 16). RUNBOOK has the rest.
 
 Working copy `C:\dev\lead-engine`; `F:\lead-engine` is corrupt, awaiting chkdsk.
 
@@ -116,8 +116,8 @@ DECISIONS.
 
 ## Recently done
 
-Today's work is in DECISIONS — 11 September added the prospect follow-up
-messages, `drafts:verify`, and the two false-claim fixes behind them.
+11 September, all in DECISIONS: prospect follow-up messages, `drafts:verify`,
+the two false-claim fixes behind it, and `pnpm lh` with its two signals.
 
 ## Reminders that bite
 

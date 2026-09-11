@@ -75,6 +75,17 @@ const RULES: Rule[] = [
       "and no Lighthouse measurement is on file for them — run `pnpm lh <id>` first",
   },
   {
+    // Contrast, readability and accessibility all describe the same measured
+    // thing, and none of them is checkable without the measurement. Deliberately
+    // narrow: it fires on the claim, not on the topic — offering to improve
+    // something is not asserting that it is broken.
+    pattern: /\b(contrast|hard to read|difficult to read|illegible|faint text|wcag|screen ?readers?|fails? accessibility|accessibility (?:issues?|problems?|failures?))\b/i,
+    requires: ["contrast"],
+    reason:
+      "says their text is hard to read or their site fails accessibility, and no " +
+      "contrast measurement is on file for them — run `pnpm lh <id>` first",
+  },
+  {
     // The score, specifically. It is not offered as a signal and never will be:
     // the same dentist's site scored 63, then 48, 56 and 52. There is no state
     // of the record that makes this sentence safe, so it is a `never`.

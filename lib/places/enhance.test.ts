@@ -226,3 +226,54 @@ describe("page weight, when it has actually been measured", () => {
     expect(JSON.stringify(buildSignals(withScore))).not.toContain("61");
   });
 });
+
+describe("contrast, when enough elements fail to be a palette", () => {
+  const lighthouse = {
+    url: "https://www.altaroofingpros.com/",
+    totalBytes: 1_487_872,
+    totalBytesLabel: "Total size was 1,453 KiB",
+    unsizedImages: 0,
+    contrastFailures: 40,
+    namelessLinks: 0,
+    unminifiedCssBytes: 0,
+    unusedJsBytes: 469_563,
+    measuredAt: "2026-09-11T08:00:00.000Z",
+  };
+  const roofer = { ...base, website: "https://www.altaroofingpros.com", siteSignals: { lighthouse } };
+
+  it("offers the count and names the rendering it describes", () => {
+    const signal = buildSignals(roofer).find((s) => s.key === "contrast");
+    expect(signal).toBeDefined();
+    expect(signal!.fact).toContain("40 elements");
+    // Alta Roofing measures 40 at phone width and 39 on a desktop screen. An
+    // owner who checks and sees 39 should find the message already said which.
+    expect(signal!.fact).toContain("phone width");
+    expect(signal!.fact).toContain("2026-09-11");
+  });
+
+  it("says nothing about a single muted caption", () => {
+    const one = { ...roofer, siteSignals: { lighthouse: { ...lighthouse, contrastFailures: 1 } } };
+    expect(buildSignals(one).map((s) => s.key)).not.toContain("contrast");
+  });
+
+  it("says nothing at eight, which is under the floor", () => {
+    // The real distribution across the drafted eleven was 49, 40, 16, 8, 7, 1,
+    // 1 and four zeroes. The floor sits in the gap.
+    const eight = { ...roofer, siteSignals: { lighthouse: { ...lighthouse, contrastFailures: 8 } } };
+    expect(buildSignals(eight).map((s) => s.key)).not.toContain("contrast");
+  });
+
+  it("drops it for a site the record no longer points at", () => {
+    expect(
+      buildSignals({ ...roofer, website: "https://altaroofing.net" }).map((s) => s.key),
+    ).not.toContain("contrast");
+  });
+
+  it("is independent of the page weight signal", () => {
+    // Alta Roofing is 1.4 MB, well under the weight floor, and still has 40
+    // failing elements. The two signals answer different questions.
+    const keys = buildSignals(roofer).map((s) => s.key);
+    expect(keys).toContain("contrast");
+    expect(keys).not.toContain("page_weight");
+  });
+});

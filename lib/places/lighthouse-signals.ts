@@ -127,6 +127,21 @@ export type LighthouseRead =
  */
 export const HEAVY_PAGE_BYTES = 3_000_000;
 
+/**
+ * Enough failing elements to be a palette rather than a stray caption.
+ *
+ * Another judgement, and flagged as one. Across the eleven drafted prospects
+ * with websites the counts were 49, 40, 16, 8, 7, 1, 1 and four zeroes; the gap
+ * sits between eight and sixteen. Ten says a page is built on colours that do
+ * not meet the threshold, where one says somebody muted a single line of text.
+ *
+ * The count itself is solid — three consecutive runs of three sites returned 49,
+ * 49, 49 / 40, 40, 40 / 16, 16, 16. It is not quite viewport-independent though:
+ * Alta Roofing measures 40 at phone width and 39 on a desktop screen, which is
+ * why the fact built from it names the rendering it describes.
+ */
+export const CONTRAST_FAILURE_FLOOR = 10;
+
 const count = (audit: AuditLike | undefined): number => audit?.details?.items?.length ?? 0;
 
 /** Bytes saveable, taken from `details` — never from `numericValue`, which is ms. */
