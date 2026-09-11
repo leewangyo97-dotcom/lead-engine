@@ -773,3 +773,37 @@ a fortnight of nights rather than months.
 They were never in the target set either: government schools do not hire a
 freelance developer, the department runs their sites, and 2,914 harvested email
 addresses were school offices there is no reason to contact.
+
+## Rotated out of STATE on 2026-09-11 (evening)
+
+STATE was rewritten around what is left rather than what happened. Closed items
+removed from it, kept here.
+
+**The seventeen enhanced drafts.** Written 10 September, the first run of the
+enhance loop — every prospect message sent before it was `firstMessage()` with
+the name swapped. Per-business, built only from recorded facts. Two of nineteen
+were deleted as false, both caught by opening the site: CDW Studios (signals
+measured on a 52-byte 403, so `looksLikePage` now requires markup) and Leura
+Wellness (told they had no website; theirs is at leurawellness.com.au, so
+`ownDomainFromEmail` withholds `no_website` when the domain resembles the name).
+The remaining seventeen: zero verifier violations, OSM re-read confirming no
+website for any, sixteen on free providers. All came back `unverifiable` — free
+email providers, no domain to probe — so the wording changed instead: "you don't
+have a website" became "I couldn't find a website for you", a fact about the
+search rather than a claim about them. `pnpm drafts:verify` is the standing rule.
+
+**The follow-up ladder gained messages of its own** on 11 September. Until then a
+prospect reaching day four would have received their opening message again, word
+for word, from someone who had already ignored it once.
+
+**Closed 11 September and no longer tracked in STATE:** access control on the
+deployment; the repo visibility question (public, and why); the deployment URL in
+the README; `pnpm/action-setup` on a deprecated Node 20; the monthly retention
+job's dead gate; the flaky timestamp test; the Australia schools search; and the
+Philippines assumptions in `chooseChannel` and `SHOWS`. Each has its own entry
+above.
+
+**The count that matters did not move all day.** 20 sends, 0 replies, 0 logged
+outcomes — unchanged from the morning, across eleven commits. Worth stating
+plainly in the record: the day's work was all machine, and the machine was
+already built.

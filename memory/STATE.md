@@ -3,143 +3,116 @@
 **Cap: 150 lines.** When it exceeds that, roll closed items into `DECISIONS.md`
 and truncate. This file is read every session; every line costs tokens repeatedly.
 
-Last updated: 2026-09-11 · Phase: **all six complete, plus geo prospect discovery.**
+Last updated: 2026-09-11 · Phase: **all six built. No success criterion met yet.**
 
-## Right now
+## The honest position
 
-**The machine ran unattended for a week and nothing broke.** Nightly runs on 3,
-4, 7 and 8 September all green; weekends correctly skipped. 341 leads, 44
-harvested in the last six days, 599 tests passing. Prospect counts are below —
-they moved by two orders of magnitude on 10 September.
+**The machine is built and unproven.** Six phases shipped, both funnels live, 634
+tests, nightly green on 3, 4, 7, 8, 10 and 11 September. And: **20 sends, zero
+replies, zero logged outcomes.** Phase 6's exit test needs 20 *outcomes* before
+the learning loop can say anything, so `/review` is not broken — it is unfed.
+Everything below is ordered by that.
 
-**Eighteen sends, no replies yet.** Two leads by email (This Dot Labs, Atria) and
-sixteen prospects on Wednesday 9 September, one row each — the reopen window is
-holding. `/review` wants 20 before calling a difference real, so it is close.
+## What is left, in the order it matters
 
-**The ladder is verified and now has messages of its own.** Asking
-`getDueFollowups` with a future date gives 18 due by 15 September — 16 prospects,
-2 leads, all step 1 — the first becoming due **Sunday 13 September at 19:31
-Manila**, so Monday morning is when to work them. Until 11 September a prospect
-follow-up would have re-sent the opening message word for word; `followUpMessage`
-writes steps 1 and 2 now.
+### 1. Outcomes — this is the project
 
-Chores: Gmail token dies 7 days after each `pnpm gmail:auth` while the consent
-screen is in Testing; searches are manual.
+- **Monday 14 September: 18 follow-ups.** 16 prospects + 2 leads (Atria, This Dot
+  Labs), all step 1, first due Sunday 13th 19:31 Manila. The 16 were dry-run on
+  11 Sept: **0 verifier violations, 0 over length, correct channel**. The app
+  writes them on the click. `pnpm followups` emits the two leads only.
+- **Send the 17 unsent drafts.** Verified 10 Sept; sites change, so re-run
+  `pnpm drafts:verify` first.
+- **Check whether the WhatsApp sends delivered.** 6 of 12 went to *guessed*
+  numbers outside the Philippines, all Austin. Nothing here knows: the app builds
+  a `wa.me` link, a person clicks it, `sentAt` records the click. Only WhatsApp
+  has the ticks — one tick means it never arrived. If those six failed the real
+  sample is 14, not 20, and "no replies" means much less than it looks. Each has
+  a working email; re-sending by mail is the fix.
+- **Log every outcome** — `no_reply | reply | call | won`. Zero exist.
 
-**10,069 prospects.** The `Australia [schools]` search was deleted 11 Sept —
-13,134 rows, 57% of the table, 0 outreach attached. 2,540 reachable, 33 MB of
-512. Scored: 20 hot, 250 warm, 9,799 cold. **2,159 queued for enrichment against
-a nightly 200**, down from 8,870: schools were 6,711 of that backlog. Weeks, not
-months. Queue ordered by score.
+### 2. Decisions only Joshua can make
 
-**Geo prospect discovery is live in production.** `/prospects` searches OSM by
-place and category, enriches websites, scores, and opens a pre-filled message.
+- **Publish the Google OAuth consent screen.** In Testing the refresh token dies
+  every 7 days and `pnpm gmail:drafts` dies with it.
+- **Full-time or contract?** The resume says full-time remote; the rubric is built
+  for contract. `/rejected`: 1 lead qualifies today, 6 would if full-time counted.
+- **Is the geo funnel the right business?** Its 17 unsent drafts are Cebu cafes
+  and restaurants with no websites — a different trade from contract engineering,
+  and where all outreach volume currently goes.
+- **What to do about the lead funnel.** Only **3 of 192** scored leads have ever
+  cleared 75; the average is 33. Not a filter to tune — those boards do not carry
+  UTC+8 work in his stack. Change what qualifies, or stop spending nightly runs
+  on it. `pnpm leads:diagnose`; figures in DECISIONS.
 
-Two markets that behave nothing alike: almost nobody in the Philippines has a
-website (4 in 151 Cebu rows) while 71 of 108 Austin rows did, so `chooseChannel`
-picks per prospect. Figures in DECISIONS. None of the 17 unsent drafts has a
-website — they are Cebu food and retail, reached by WhatsApp.
+### 3. Code — real, and none of it changes the outcome
 
-The loop is `/prospect-run` (new 11 September — the prospect side had no command
-while the lead side had one, which was backwards given which funnel produces
-anything). Nightly enriches 200 and re-scores; monthly refreshes map data.
+- Enrichment backlog **2,159 rows** at 200/night: about a fortnight, unattended.
+- `pnpm lh --limit=N` on rows as enrichment reaches them. 128 measured so far.
+- The contract weight in the rubric, if the answer above is "contract".
 
-**`pnpm lh <prospectId>` measures one site properly** — headless Chrome, 10-47s,
-on demand and never nightly (200 sites would be 42 min against a 15-min budget).
-Only audits proven identical across two runs are stored; the score is not, and
-`message-verify` rejects any draft quoting one. Three signals: `page_weight` at
-3 MB, `contrast` at 10, `unsized_images` at 5. `--limit=N` batches **enriched
-rows only** — 9,294 scored rows have a website and no measurement, but all bar
-~126 were still queued for enrichment. **All 128 enriched rows measured 11 Sept:
-63% carry at least one signal** (58 heavy, 29 contrast, 30 unsized), against 0 of
-11 on the drafted list. The drafted ones were the unrepresentative sample.
+### Deliberately not doing — recorded so it is not re-proposed
+
+Unused JavaScript as a signal (stable, but the theme's doing and invisible to the
+owner). Lighthouse in the nightly (42 min against a 15-min budget). Wappalyzer
+(no licence on npm). Any send path — CLAUDE.md rule 2.
+
+## Live state
+
+**10,069 prospects** · 2,540 reachable · 33 MB of 512 · 20 hot, 250 warm, 9,799
+cold · 2,159 awaiting enrichment · 128 measured by `pnpm lh`. The
+`Australia [schools]` search was deleted 11 Sept: 13,134 rows, 57% of the table,
+0 outreach attached, and 6,711 of the then-8,870 backlog. Exported to
+`C:\dev\lead-engine-backups` first.
+
+**364 leads** · 192 scored · 172 disqualified · 188 parked · 2 sent.
+
+**The repo is public, deliberately.** It was made private on 11 Sept and CI broke
+that minute: GitHub billing on the account is failing, and a private repo draws
+Actions minutes from a billing-backed allowance while public gets unlimited.
+Fixing the billing is the prerequisite for ever going private; nothing else
+needs it.
+
+**Access control is closed.** Vercel Authentication, All Deployments — pages
+*and* write endpoints 302 to the SSO wall, verified from outside. The nightly
+never calls the deployment, so nothing automated depends on it.
+
+**Geo discovery is live.** `/prospects` searches OSM by place and category,
+enriches, scores, and opens a pre-filled message. `/prospect-run` is the loop.
+Nightly enriches 200 and re-scores; monthly refreshes map data.
 
 Working copy `C:\dev\lead-engine`; `F:\lead-engine` is corrupt, awaiting chkdsk.
 
-## Seventeen enhanced drafts are waiting, all verified
-
-Written 10 September, the first time the enhance loop had ever run — every one of
-the sixteen prospect messages sent before it was `firstMessage()` with the name
-swapped. Per-business, built only from recorded facts, stored unsent. Open
-`✦ Enhance` on a row to compare before sending.
-
-**Two of nineteen were deleted for being false, and both were caught by opening
-the site** — CDW Studios (signals measured on a 52-byte `403`; `looksLikePage`
-now requires markup) and Leura Wellness (told they had no website; theirs is at
-leurawellness.com.au, so `ownDomainFromEmail` now withholds `no_website`, making
-the claim unshippable rather than discouraged). Both write-ups in RUNBOOK.
-
-The remaining seventeen: zero verifier violations, OSM re-read confirming no
-website for any, sixteen on free providers.
-
-**The rule is now a command:** `pnpm drafts:verify` opens the sites a draft talks
-about and exits non-zero on a false claim.
-
-All seventeen came back unverifiable — free email providers, no domain to probe —
-so the messages changed instead: "you don't have a website" became "I couldn't
-find a website for you", a fact about the search rather than a claim about them.
-They now report `no checkable claim`, counted separately from `checked and true`.
-
-## Next three actions
-
-1. **Publish the Google OAuth consent screen.** While it is in Testing the
-   refresh token dies every seven days and `pnpm gmail:drafts` stops with it.
-2. **Work the follow-ups on Monday 14 September.** 18 come due — 16 prospects, 2
-   leads (Atria, This Dot Labs). Prospect follow-ups are written by the app on
-   the click. `pnpm followups` emits the two leads only and says so; both pass
-   `checkStep` at step 1, and each item must carry its `"step"`.
-3. The contract weight is still open, but less urgently: a full-time posting just
-   cleared 75 on stack merit alone. `/rejected` still quantifies the cost —
-   1 qualifies today, 6 would if full-time counted as acceptable terms.
-
-**Access control closed 11 Sept.** Vercel Authentication, All Deployments; pages
-and write endpoints both 302 to the SSO wall, verified from outside. Nothing
-automated broke — the nightly never calls the deployment. RUNBOOK has the rest.
-
-## The lead funnel is supply-starved
-
-`pnpm leads:diagnose`: the average job lead scores 33 of 100 against a threshold
-of 75, and no dimension fixes it — timezone projects to 56, stack to 49. Only
-**3 of 192** scored leads have ever cleared 75. Figures in DECISIONS.
-
-## Open questions for Joshua
-
-- Resume says "seeking full-time remote"; the tool is built for contract. Which?
-
-**Repo private** 11 Sept; anonymous fetch 404s. Actions fine — nightly 2.5 min,
-CI 0.9, ~120 of the 2,000 free private minutes. Settles the deployment URL in
-four old commits: no history rewrite needed.
-
-## Recently done
-
-11 Sept, all in DECISIONS: follow-up messages, `drafts:verify`, two false-claim
-fixes, `pnpm lh` with three signals, access control, repo private.
-
 ## Reminders that bite
 
-- `refreshProspects({ ids, enrich: true })` now passes those ids to
-  `runEnrichment`; without it, it enriched the global top of the pending queue
-  and left the requested rows at `pending`
+- **A projection is half of every fix.** `chooseChannel` learned to prefer email
+  in the US and did nothing, because `prospect-queries.ts` did not select
+  `countryCode`. Correct logic, green tests, zero effect. Check the call sites.
+- The schedule is written down **four** times — two `cron:` lines and two `if:`
+  gates. Its test checked two, and the monthly retention job was silently
+  scheduled never to fire again. Now asserted.
+- A test that stringifies an object containing a timestamp will fail on the
+  millisecond it runs. CI caught one; the local gate never would.
+- `refreshProspects({ ids, enrich: true })` must pass those ids to
+  `runEnrichment`, or it enriches the global top of the queue instead
 - OSM values are normalised at the write path, never stored raw: emails via
-  `firstUsableEmail`, social accounts via `normaliseSocial` (a handle is not a
-  link, and `/p/` means a page on Facebook but a post on Instagram)
-- HTML is parsed with `cheerio`, not regexes — two regexes had produced real
-  false claims. `.text()` fuses adjacent elements, so `stripTags` joins text
-  nodes with a space
-- WhatsApp capability needs `libphonenumber-js/max` — the default metadata
-  returns `undefined` type for every PH number and calls landlines mobile
-- Never suppress a platform domain (`weebly.com`, `wixsite.com`, …): one "no"
-  would block every business using that site builder
-- `enrichment_status` is the enrichment queue; a row found without a website is
-  `no_website` and must be reopened when one appears, or its site is never read
+  `firstUsableEmail`, social via `normaliseSocial` (`/p/` is a page on Facebook
+  and a post on Instagram)
+- HTML is parsed with `cheerio`, not regexes — two regexes produced real false
+  claims. `.text()` fuses adjacent elements, so `stripTags` joins with a space
+- WhatsApp capability needs `libphonenumber-js/max`; and a "likely" number is a
+  good guess in the Philippines and a coin toss in the US
+- Never suppress a platform domain (`weebly.com`, `wixsite.com`, …)
+- `enrichment_status` is the enrichment queue; a `no_website` row must be
+  reopened when one appears, or its site is never read
 - Overpass 504s several times a day. It is load, not a bug — retry
 - Vercel Hobby cron is **once per day, ±59 min** — the scheduler is GitHub Actions
 - Vercel Hobby is **non-commercial only**
-- Neon autosuspends at 5 min idle and cannot be told not to; use the HTTP driver
+- Neon autosuspends at 5 min idle; use the HTTP driver
 - Phases 1–3 contain **zero** model calls. Keep it that way.
 - `contentHash` stability is the single biggest cost lever — its test is not optional
-- The preview pane sometimes stops applying streamed updates and every page sits
-  on `loading.tsx` for ever. Check with curl before believing it — see RUNBOOK
+- The preview pane sometimes stops applying streamed updates. Check with curl
+  before believing it — see RUNBOOK
 - `tokens:record` writes to the **most recent** run and its figures come from a
   person — never paste numbers out of a usage line
 - Tailwind's spacing scale is **replaced**, keys 0-12 only. `py-0.5`, `h-14`,
