@@ -987,3 +987,36 @@ different site entirely. Afterwards every stored facebook value is a real
 
 Run a backfill dry first and read what it would discard. Both mistakes above
 looked like tidying until the list was printed.
+
+## Enrichment: 364 nights became 46
+
+The backlog was never a fetching-speed problem. Enrichment was a sequential loop
+doing 25 rows a night with a second between requests, so 9,100 pending rows were
+364 nights away. Parsing a page costs about 100ms; the loop was the constraint.
+
+Two changes, both measured on real sites rather than assumed:
+
+- **Hosts are fetched five at a time** (`p-map`), and rows on the same host still
+  run in order. The pause is owed to the host, not to the queue — but two rows
+  can share one website, as Easy Solutions Plumbing Sydney and North Shore do,
+  and hitting it twice at once is the thing the pause exists to prevent. So the
+  queue is grouped by hostname and groups run in parallel.
+
+  ```
+  concurrency=1   53730ms for 10 rows (5.4s each)  enriched=4 failed=4
+  concurrency=5   10867ms for 10 rows (1.1s each)  enriched=4 failed=4
+  ```
+
+  4.9x, same outcomes.
+
+- **The nightly cap is 200, not 25**, with `timeout-minutes: 6` on the step. A
+  real run of 20 rows took 24 seconds, so 200 is about four minutes inside a
+  fifteen-minute job. The step already had `continue-on-error`, so a slow night
+  stops enrichment rather than the run, and the minute bound means the steps
+  after it — scoring, keepalive, the report — cannot be starved by it.
+
+9,100 ÷ 200 is roughly 46 nights. Raising it further is a politeness question
+before it is a technical one: every one of these is a small business's website.
+
+`concurrency` is an option on `runEnrichment`, defaulting to 5, so a one-off
+backfill can be told to go faster or slower without editing the workflow.

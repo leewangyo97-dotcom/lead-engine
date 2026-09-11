@@ -7,7 +7,7 @@ import { parseArgs } from "../lib/places/cli-args";
  *
  *   pnpm enrich                    # up to 50 pending prospects with a website
  *   pnpm enrich <searchId> [limit] # just one search
- *   pnpm enrich --limit=25         # bounded, for the nightly job
+ *   pnpm enrich --limit=200        # bounded, for the nightly job
  *
  * Runs serially with a one-second gap per host, so 50 prospects take a minute or
  * two. That is the point: this reads other people's servers.

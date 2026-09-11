@@ -31,8 +31,8 @@ manual.
 **23,203 prospects after the first country-wide searches** (Australia schools
 13,134; Australia clinics/vet/dentists 6,786; a 12-category Cebu City search
 2,837). 7,643 reachable, 21 MB of 512 MB. Scored: 72 hot, 1,201 warm, 21,930
-cold. **9,156 queued for enrichment against a nightly 25** — a year of nights, so
-the queue is ordered by score. Deleting the schools search is a reasonable call;
+cold. **~9,100 queued for enrichment against a nightly 200** — 46 nights, down from 364:
+hosts are fetched five at a time and the cap was raised. Queue ordered by score. Deleting the schools search is a reasonable call;
 see RUNBOOK "After a country-wide search".
 
 **Geo prospect discovery is live in production.** `/prospects` searches

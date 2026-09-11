@@ -2,6 +2,8 @@ import { and, eq, inArray, isNotNull, isNull, sql, type SQL } from "drizzle-orm"
 import { getDb } from "../db";
 import { prospects } from "../db/schema";
 import { OSM_USER_AGENT } from "./nominatim";
+import pMap from "p-map";
+import { groupByHost } from "./host-groups";
 import { getRobots, isAllowed } from "./robots";
 import { normaliseSocial } from "./social";
 import {
@@ -29,6 +31,16 @@ const MAX_BYTES = 1_500_000;
 const PAGE_TIMEOUT_MS = 12_000;
 /** One page per second per host, unless robots.txt asks for longer. */
 const DEFAULT_HOST_DELAY_MS = 1000;
+
+/**
+ * Hosts fetched at once.
+ *
+ * Five rather than more: every one of these is a small business's website, the
+ * politeness that matters is already per-host, and the point is to turn a
+ * year-long backlog into an evening rather than to extract the last request per
+ * second from someone else's server.
+ */
+const DEFAULT_CONCURRENCY = 5;
 /** Homepage plus at most this many contact-ish pages. */
 const MAX_EXTRA_PAGES = 2;
 
@@ -253,7 +265,13 @@ export interface EnrichProgress {
  * business's shared host from a tool whose pitch is that it respects them.
  */
 export async function runEnrichment(
-  options: { searchId?: string; ids?: string[]; limit?: number } & EnrichDeps = {},
+  options: {
+    searchId?: string;
+    ids?: string[];
+    limit?: number;
+    /** Hosts fetched at once. Rows on one host stay in order regardless. */
+    concurrency?: number;
+  } & EnrichDeps = {},
 ): Promise<EnrichProgress> {
   const db = getDb();
   const limit = options.limit ?? 50;
@@ -308,6 +326,8 @@ export async function runEnrichment(
     .orderBy(sql`${prospects.score} desc nulls last`, prospects.name)
     .limit(limit);
 
+  const concurrency = Math.max(1, options.concurrency ?? DEFAULT_CONCURRENCY);
+
   const progress: EnrichProgress = {
     considered: queue.length,
     enriched: 0,
@@ -317,7 +337,15 @@ export async function runEnrichment(
     failed: 0,
   };
 
-  for (const row of queue) {
+  /**
+   * Hosts in parallel, rows within a host in order.
+   *
+   * The loop this replaces did 25 rows a night, one at a time, with a second
+   * between each — 364 nights for the 9,100 pending. The pause is owed to the
+   * host rather than to the queue, so unrelated businesses can be fetched at
+   * once while two branches on one website still wait for each other.
+   */
+  const enrichOne = async (row: (typeof queue)[number]) => {
     let result: EnrichedFields;
     try {
       result = await withBudget(enrichSite(row.website, row.countryCode, options));
@@ -363,7 +391,17 @@ export async function runEnrichment(
         linkedinUrl: row.linkedinUrl ?? result.linkedinUrl ?? null,
       })
       .where(eq(prospects.id, row.id));
-  }
+  };
+
+  await pMap(
+    groupByHost(queue),
+    async (group) => {
+      // In order within a host: the second of two branches on one website waits
+      // for the first, which is what the per-host pause is for.
+      for (const row of group) await enrichOne(row);
+    },
+    { concurrency },
+  );
 
   return progress;
 }

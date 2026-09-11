@@ -71,9 +71,18 @@ jobs:
       # servers at a second per host, and an unbounded loop in a nightly job is
       # how a polite crawler becomes an impolite one. Never fails the run — a
       # site being down is not a pipeline fault.
+      # 200, not 25. Enrichment fetches hosts five at a time now — rows on one
+      # website still wait for each other — which measured 4.9x faster on real
+      # sites: 53.7s to 10.9s for the same ten rows, same outcomes. At 25 a night
+      # the 9,100 pending rows were 364 nights away.
+      #
+      # Bounded by minutes as well as by rows, because the job has fifteen and
+      # the steps after this one matter more: a timeout here stops enrichment,
+      # not the run.
       - name: Enrich prospect websites
         continue-on-error: true
-        run: pnpm enrich --limit=25
+        timeout-minutes: 6
+        run: pnpm enrich --limit=200
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
