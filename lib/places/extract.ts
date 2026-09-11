@@ -1,3 +1,4 @@
+import * as cheerio from "cheerio";
 import { toE164 } from "./phone";
 
 /**
@@ -182,8 +183,14 @@ export function looksLikePage(html: string): boolean {
 
 export function extractSiteSignals(html: string, url: string): SiteSignals {
   const lower = html.toLowerCase();
+  const $ = cheerio.load(html);
+
   return {
-    noViewport: !/<meta[^>]+name=["']viewport["']/i.test(html),
+    // Asked of the parsed document, because the regex this replaced required
+    // quotes around the attribute value: `<meta name=viewport ...>` is valid
+    // HTML and read as "no viewport tag", which is the false claim that reached
+    // a draft about a real company's website.
+    noViewport: $('meta[name="viewport"]').length === 0,
     noHttps: url.startsWith("http://"),
     hasBookingForm: /\b(book|appointment|schedule|reserve|booking)\b/i.test(stripTags(html)),
     platform: lower.includes("wp-content")
@@ -200,13 +207,31 @@ export function extractSiteSignals(html: string, url: string): SiteSignals {
 
 /** Removes scripts, styles and tags so text extraction sees what a reader sees. */
 export function stripTags(html: string): string {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/\s+/g, " ");
+  // Parsed rather than pattern-matched. The regex version handled the common
+  // shapes and lost the rest: `info&#64;clinic.com.au` survived it as literal
+  // entity text, so a business publishing its address that way — a standard
+  // dodge against scrapers — read as having no email at all. A parser decodes
+  // it, and drops script and style content by removing the nodes rather than by
+  // hoping the closing tag matches.
+  const $ = cheerio.load(html);
+  $("script, style, noscript, template").remove();
+
+  // Text nodes joined with a space, not `.text()`.
+  //
+  // `.text()` concatenates adjacent elements with nothing between them, so a
+  // footer rendering "info@cdwstudios.com" beside a "Home" link produced
+  // `info@cdwstudios.comhomebachelor` — structurally a valid address, which
+  // `isUsableEmail` would have waved through into the table. Found by running
+  // this against the real 388KB page rather than a fixture.
+  const parts: string[] = [];
+  $.root()
+    .find("*")
+    .contents()
+    .each((_, node) => {
+      if (node.type === "text") parts.push(node.data ?? "");
+    });
+
+  return parts.join(" ").replace(/\s+/g, " ").trim();
 }
 
 /**

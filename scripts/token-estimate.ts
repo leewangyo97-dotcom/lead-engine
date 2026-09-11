@@ -89,8 +89,10 @@ function main() {
 
   console.log(`\n${verdict.message}`);
   console.log(
-    "Input only, and an estimate at four characters per token — not a substitute " +
-      "for `pnpm tokens:record` after a real run.",
+    "Input only, counted with a byte-pair tokeniser. Closer than the old four-" +
+      "characters-per-token rule, which read 18% under on JSON — but still an " +
+      "estimate: that tokeniser is OpenAI's and the model reading these is Claude. " +
+      "Not a substitute for `pnpm tokens:record` after a real run.",
   );
 
   if (verdict.state === "over-ceiling") process.exit(1);

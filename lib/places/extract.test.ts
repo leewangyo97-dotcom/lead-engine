@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { firstUsableEmail, isUsableEmail, looksLikePage } from "./extract";
+import {
+  extractEmails,
+  extractSiteSignals,
+  firstUsableEmail,
+  isUsableEmail,
+  looksLikePage,
+  stripTags,
+} from "./extract";
 
 describe("isUsableEmail", () => {
   it("accepts an ordinary address", () => {
@@ -74,5 +81,50 @@ describe("looksLikePage", () => {
 
   it("accepts a page that opens with body rather than html", () => {
     expect(looksLikePage(`<body>${"x".repeat(300)}</body>`)).toBe(true);
+  });
+});
+
+describe("parsing rather than pattern-matching", () => {
+  it("finds a viewport tag whose attribute is unquoted", () => {
+    // Valid HTML, and the regex this replaced required quotes — so it reported
+    // "no viewport tag", which is the false claim that reached a draft about a
+    // real company's website.
+    const html = `<html><head><meta name=viewport content="width=device-width"></head><body>x</body></html>`;
+    expect(extractSiteSignals(html, "https://x/").noViewport).toBe(false);
+  });
+
+  it("still reports a page that genuinely has none", () => {
+    // A real Weebly site in the table has no viewport tag at all, and a message
+    // may honestly say so.
+    const html = `<html><head><title>x</title></head><body>y</body></html>`;
+    expect(extractSiteSignals(html, "https://x/").noViewport).toBe(true);
+  });
+
+  it("recovers an email written as an HTML entity", () => {
+    // A standard dodge against scrapers. The regex read it as literal text and
+    // found nothing, so the business looked unreachable by email.
+    const html = `<html><body><p>Write to info&#64;clinic.com.au anytime</p></body></html>`;
+    expect(extractEmails(html).map((e) => e.email)).toContain("info@clinic.com.au");
+  });
+
+  it("does not read script or style content as page text", () => {
+    const html = `<html><body><script>var a="book an appointment"</script><p>hello</p></body></html>`;
+    expect(stripTags(html)).toBe("hello");
+  });
+});
+
+describe("text extraction keeps words apart", () => {
+  it("does not fuse adjacent elements into an invented address", () => {
+    // cheerio's .text() concatenates with nothing between, which turned a footer
+    // address beside a "Home" link into info@cdwstudios.comhomebachelor — a
+    // structurally valid address that isUsableEmail would have accepted into the
+    // table. Found against the real page, not a fixture.
+    const html = `<html><body><a href="/x">info@clinic.com.au</a><a href="/y">Home</a></body></html>`;
+    expect(extractEmails(html).map((e) => e.email)).toEqual(["info@clinic.com.au"]);
+  });
+
+  it("separates block text", () => {
+    const html = `<html><body><p>one</p><p>two</p></body></html>`;
+    expect(stripTags(html)).toBe("one two");
   });
 });

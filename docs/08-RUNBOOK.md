@@ -923,3 +923,40 @@ site, which was checked against the live page by hand.
 **After the fix**, all four stuck rows enriched on request and came back
 `no_contact_found` for real: their sites expose no contact details a parser can
 find. That verdict was right; only the targeting was broken.
+
+## Two dependencies, and why only two
+
+Eleven libraries were surveyed on 11 September. Two were installed, because this
+project's rule is that deterministic code does the bulk work and every dependency
+is a thing that can rot.
+
+**`cheerio`** replaced two regular expressions in `lib/places/extract.ts`. Both
+had produced real errors:
+
+- `<meta name=viewport content="…">` — valid HTML with an unquoted attribute. The
+  regex required quotes, so it answered "no viewport tag", which is the false
+  claim that reached a draft about a real company's site.
+- `info&#64;clinic.com.au` — a standard dodge against scrapers. The regex read it
+  as literal text and found no address, so the business looked unreachable.
+
+**`gpt-tokenizer`** replaced dividing by four in `pnpm tokens:estimate`. The
+character rule was close on prose and ran **18% under on JSON**, which is what
+this budget guards — optimistic in exactly the direction that hides a regression.
+Measured on the real emitters: 282 against 342, and 1,736 against 1,792.
+
+It is still an estimate and still says so. That tokeniser is OpenAI's BPE and the
+model reading these payloads is Claude, whose tokeniser is not the same.
+
+**Swapping the parser introduced a bug within the hour.** cheerio's `.text()`
+concatenates adjacent elements with nothing between them, so a footer address
+beside a "Home" link became `info@cdwstudios.comhomebachelor` — structurally
+valid, and `isUsableEmail` would have let it into the table. `stripTags` joins
+text nodes with a space now. It was caught by running the change against the real
+388KB page rather than the fixtures, which all passed.
+
+Parsing costs about 100ms for three extractors on that page — roughly 15 minutes
+across 9,100 pending rows, against a nightly budget of 25.
+
+The nine not installed — `rss-parser`, `robots-parser`, `p-throttle`,
+`bottleneck`, `nock`, `msw`, `undici`, `linkedom`, `node-html-parser` — are
+conveniences for problems this project does not have yet.

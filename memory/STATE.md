@@ -125,6 +125,9 @@ messages, `drafts:verify`, and the two false-claim fixes behind them.
 - `refreshProspects({ ids, enrich: true })` now passes those ids to
   `runEnrichment`; without it, it enriched the global top of the pending queue
   and left the requested rows at `pending`
+- HTML is parsed with `cheerio`, not regexes — two regexes had produced real
+  false claims. `.text()` fuses adjacent elements, so `stripTags` joins text
+  nodes with a space
 - WhatsApp capability needs `libphonenumber-js/max` — the default metadata
   returns `undefined` type for every PH number and calls landlines mobile
 - Never suppress a platform domain (`weebly.com`, `wixsite.com`, …): one "no"

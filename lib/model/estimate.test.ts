@@ -1,23 +1,29 @@
 import { describe, expect, it } from "vitest";
-import { CHARS_PER_TOKEN, estimateTokens, judgeBudget, sizeOf } from "./estimate";
+import { estimateTokens, judgeBudget, sizeOf } from "./estimate";
 
 describe("estimateTokens", () => {
   it("is empty for empty input rather than one token", () => {
     expect(estimateTokens("")).toBe(0);
   });
 
-  it("rounds up, so a short string never estimates as free", () => {
-    expect(estimateTokens("a")).toBe(1);
-    expect(estimateTokens("a".repeat(CHARS_PER_TOKEN))).toBe(1);
-    expect(estimateTokens("a".repeat(CHARS_PER_TOKEN + 1))).toBe(2);
+  it("never reports a non-empty string as free", () => {
+    expect(estimateTokens("a")).toBeGreaterThan(0);
+  });
+
+  it("counts real tokens rather than dividing by four", () => {
+    // JSON is where the character ratio was worst, and where this budget lives:
+    // it read 282 against the tokeniser's 342 on the scoring emitter. Punctuation
+    // costs tokens that a length-based guess spreads away.
+    const json = JSON.stringify({ count: 3, leads: [{ company: "Reef", title: "Senior Python" }] });
+    expect(estimateTokens(json)).toBeGreaterThan(Math.ceil(json.length / 4));
   });
 
   it("scales with length, which is the property the check relies on", () => {
     // The failure this guards against is a payload several times its usual
     // size, so proportionality matters and precision does not.
-    const small = estimateTokens("x".repeat(1_000));
-    const large = estimateTokens("x".repeat(10_000));
-    expect(large).toBe(small * 10);
+    const small = estimateTokens("word ".repeat(100));
+    const large = estimateTokens("word ".repeat(1_000));
+    expect(large).toBeGreaterThan(small * 8);
   });
 });
 
@@ -27,7 +33,7 @@ describe("sizeOf", () => {
     expect(size.name).toBe("drafting");
     expect(size.rows).toBe(7);
     expect(size.chars).toBe(12);
-    expect(size.estimatedTokens).toBe(3);
+    expect(size.estimatedTokens).toBeGreaterThan(0);
   });
 });
 
