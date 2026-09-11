@@ -807,3 +807,34 @@ above.
 outcomes — unchanged from the morning, across eleven commits. Worth stating
 plainly in the record: the day's work was all machine, and the machine was
 already built.
+
+## A draft is not a send (11 September)
+
+Prospect email now goes through the Gmail API rather than a `mailto:` link, and
+the reason is not convenience.
+
+The old button handed the browser a `mailto:` and stamped `sentAt` in the same
+breath. The browser reports nothing when no mail client is registered, so the
+message could silently never be written. And `sentAt` on a click meant a prospect
+whose compose window was closed unsent still dropped out of the queue, still
+counted toward "20 sends, no replies", and would have come due on the ladder for
+a follow-up referring to a message they never received.
+
+The row now carries `gmailDraftId` and no `sentAt`. The ladder starts when a
+person says the draft went out — `POST /api/prospects/<id>/sent`, offered as "I
+sent it — start the follow-up clock". The app cannot observe this itself: the
+scope is `gmail.compose`, which creates drafts and cannot read the mailbox, and
+widening it to find out would be a worse trade than asking.
+
+`mailto:` stays as the fallback, because the consent screen is in Testing and the
+refresh token dies weekly. It keeps the old meaning deliberately: there is no
+draft to track and nothing here will ever see the send, so recording it is the
+only honest option. The panel says which of the two happened.
+
+`contactOutcome(channel, draftedInGmail)` is extracted and tested because it is
+the whole rule and was previously a conditional buried inside an insert.
+
+One existing test failed on the edit and was worth reading rather than deleting:
+it pinned that `router.refresh()` runs only on dismissal, because an earlier bug
+refreshed too early and unmounted the row before the fallback address could be
+read. The property still held; the regex was adjacency-strict.

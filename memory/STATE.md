@@ -7,11 +7,21 @@ Last updated: 2026-09-11 · Phase: **all six built. No success criterion met yet
 
 ## The honest position
 
-**The machine is built and unproven.** Six phases shipped, both funnels live, 634
+**The machine is built and unproven.** Six phases shipped, both funnels live, 640
 tests, nightly green on 3, 4, 7, 8, 10 and 11 September. And: **20 sends, zero
 replies, zero logged outcomes.** Phase 6's exit test needs 20 *outcomes* before
 the learning loop can say anything, so `/review` is not broken — it is unfed.
 Everything below is ordered by that.
+
+**Prospect email goes through the Gmail API** as of 11 Sept, and **a draft is not
+a send**: the row carries `gmailDraftId` with `sentAt` null, so the follow-up
+ladder does not start until a person clicks "I sent it" (`POST
+/api/prospects/<id>/sent`). The app holds `gmail.compose` — it can create a draft
+and cannot read the mailbox to learn what became of it. `mailto:` remains the
+fallback for when the token dies, and keeps the old "counts as sent" meaning
+because nothing here will ever observe that send. Before this, closing a compose
+window unsent still marked the prospect contacted and queued a follow-up
+referring to a message they never received.
 
 ## What is left, in the order it matters
 
