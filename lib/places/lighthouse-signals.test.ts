@@ -48,10 +48,23 @@ suite("the allow-list is the guarantee", () => {
       "largest-contentful-paint": { score: 0.06, numericValue: 6000, displayValue: "6.0 s" },
       "total-blocking-time": { score: 0.7, numericValue: 350, displayValue: "350 ms" },
     });
-    const read = readLighthouse(withTiming);
+    const read = readLighthouse(withTiming, new Date("2026-09-11T04:00:00.000Z"));
     expect(read.ok).toBe(true);
     if (!read.ok) return;
-    expect(JSON.stringify(read.signals)).not.toMatch(/6000|350|paint|blocking/i);
+
+    /*
+     * `measuredAt` is excluded, and the clock is pinned.
+     *
+     * The first version stringified the whole object against the same pattern
+     * and passed locally every time. CI failed it once: the run happened at
+     * 07:17:03.350Z, so the timestamp contained "350" and matched the digits
+     * meant to catch a leaked total-blocking-time. A test that fails on the
+     * millisecond it runs is worse than no test, because the next real failure
+     * gets read as the flake.
+     */
+    const { measuredAt, ...audited } = read.signals;
+    expect(measuredAt).toBe("2026-09-11T04:00:00.000Z");
+    expect(JSON.stringify(audited)).not.toMatch(/6000|350|paint|blocking/i);
   });
 });
 
