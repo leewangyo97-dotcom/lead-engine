@@ -44,12 +44,16 @@ referring to a message they never received.
 ### 2. Decisions only Joshua can make
 
 - **Publish the Google OAuth consent screen.** In Testing the refresh token dies
-  every 7 days and `pnpm gmail:drafts` dies with it.
-- **Full-time or contract?** The resume says full-time remote; the rubric is built
-  for contract. `/rejected`: 1 lead qualifies today, 6 would if full-time counted.
-- **Is the geo funnel the right business?** Its 17 unsent drafts are Cebu cafes
-  and restaurants with no websites — a different trade from contract engineering,
-  and where all outreach volume currently goes.
+  every 7 days, and now it takes more with it: prospect email falls back to
+  `mailto:` when the token is dead, so a weekly expiry silently changes how every
+  email prospect is contacted. Console → APIs & Services → OAuth consent screen →
+  Publish app.
+- **Add the three `GOOGLE_*` variables to Vercel** and redeploy. The deployed app
+  has `DATABASE_URL` only, so every email click there uses the fallback.
+- **Answered 12 Sept: both, and yes.** Full-time counts now — rubric 1.2.0,
+  full-time-only 5 → 15, and 75+ leads went 3 → 6 across the corpus, average 32 →
+  39. The geo funnel stays: Cebu food and retail are the target, alongside the
+  Austin trades. Neither question is open.
 - **What to do about the lead funnel.** Only **3 of 192** scored leads have ever
   cleared 75; the average is 33. Not a filter to tune — those boards do not carry
   UTC+8 work in his stack. Change what qualifies, or stop spending nightly runs

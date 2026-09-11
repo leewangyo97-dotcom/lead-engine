@@ -10,7 +10,7 @@ Stage 2 (model) adjusts within ±15 and writes the reason.
 | Dimension | Max | How |
 |---|---|---|
 | **Timezone eligibility** | 30 | worldwide/global 30 · APAC or Asia-HQ 30 · EMEA 22 · "remote" unqualified 15 · US-only 6 · onsite 0 |
-| **Contract terms** | 20 | explicit contract/freelance/1099/B2B 20 · "open to contract" 12 · full-time only 5 |
+| **Contract terms** | 20 | explicit contract/freelance/1099/B2B 20 · "open to contract" 18 · full-time only 15 |
 | **Stack match** | 25 | see table below |
 | **Direct contact** | 10 | personal inbox 10 · role inbox 6 · ATS form 2 |
 | **Pay signal** | 10 | ≥$60/hr equiv 10 · $45–59 7 · stated but lower 3 · unstated 4 |
@@ -91,6 +91,7 @@ Append every change here with evidence. Never tune on a hunch.
 | Date | Change | Why | Version |
 |---|---|---|---|
 | 2026-09-01 | Initial | Derived from resume + first manual lead pass | 1.0.0 |
+| 2026-09-12 | Full-time only 5 → 15, "open to contract" 12 → 18 | Joshua takes both. Full-time-only was a fifteen-point hole against a threshold of 75, so a full-time posting had to be near-perfect everywhere else to qualify at all — and `/rejected` measured the cost: 1 lead qualifying against 6 that would if full-time counted. The ordering is kept because an explicit contract posting is still the better fit; the gap is now a preference rather than a disqualification by arithmetic. This does not fix the funnel — the average lead scores 32 and the ceiling is stack and timezone, not terms. | 1.2.0 |
 | 2026-09-01 | Added `kind='funding'` weights | The source survey found free job boards carry almost no contract work with a named contact — 30 of the 100 points above describe what those feeds structurally lack. Founder leads are a different shape and needed their own dimensions. **These weights are initial and unvalidated**, in the same sense 1.0.0 was: no outcome data exists for founder outreach yet. The Phase 6 loop should be the thing that corrects them. | 1.1.0 |
 
 > Phase 6 note: once 30+ outcomes are logged, the weekly review proposes changes

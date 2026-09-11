@@ -6,7 +6,7 @@ import type { Lead } from "../db/schema";
  * prompt. See memory/RUBRIC.md; bump RUBRIC_VERSION with every weight change so
  * old scores stay interpretable.
  */
-export const RUBRIC_VERSION = "1.1.0";
+export const RUBRIC_VERSION = "1.2.0";
 
 export const NEEDS_DRAFT_THRESHOLD = 75;
 
@@ -118,12 +118,24 @@ function timezonePoints(input: PrescoreInput): number {
   }
 }
 
-/** Max 20. */
+/**
+ * Max 20.
+ *
+ * Joshua takes both, decided 12 September. Until then full-time-only scored 5,
+ * a fifteen-point hole against a threshold of 75, so a full-time posting had to
+ * be near-perfect on every other dimension to qualify at all — and the evidence
+ * was that this was costing real leads rather than filtering them: `/rejected`
+ * showed 1 lead qualifying against 6 that would if full-time counted.
+ *
+ * The ordering is kept because it still means something — an explicit contract
+ * posting is a better fit for how he wants to work — but the gap is now a
+ * preference rather than a disqualification by arithmetic.
+ */
 function contractPoints(input: PrescoreInput): number {
   const text = `${input.title} ${input.summary ?? ""} ${input.region ?? ""}`.toLowerCase();
   if (/\b(1099|b2b|freelance|contractor|contract-to-hire|c2h)\b/.test(text)) return 20;
-  if (input.isContract) return /open to contract|contract possible|or contract/.test(text) ? 12 : 20;
-  return 5;
+  if (input.isContract) return /open to contract|contract possible|or contract/.test(text) ? 18 : 20;
+  return 15;
 }
 
 /**

@@ -330,3 +330,41 @@ describe("founder leads (kind = funding)", () => {
     ).toBe("stale_posting");
   });
 });
+
+describe("both kinds of work count, decided 12 September", () => {
+  const fullTime: PrescoreInput = {
+    ...lead,
+    title: "Senior Android Engineer",
+    summary: "Full-time permanent role. Kotlin and Jetpack Compose.",
+    isContract: false,
+  };
+
+  it("does not put a full-time posting in a fifteen-point hole", () => {
+    // It scored 5 of 20 until the answer to "full-time or contract" was "both".
+    // Against a threshold of 75 that meant a full-time role had to be near
+    // perfect on every other dimension merely to be considered.
+    expect(prescore(fullTime, NOW).parts.contract).toBe(15);
+  });
+
+  it("still prefers an explicit contract posting", () => {
+    // A preference, not a disqualification by arithmetic. The ordering says
+    // something true about how he wants to work.
+    const contract = { ...fullTime, summary: "Kotlin contractor, 1099." };
+    expect(prescore(contract, NOW).parts.contract).toBe(20);
+  });
+
+  it("keeps the middle rung above full-time and below explicit", () => {
+    const openTo = { ...fullTime, summary: "Kotlin role, open to contract.", isContract: true };
+    const points = prescore(openTo, NOW).parts.contract;
+    expect(points).toBe(18);
+    expect(points).toBeGreaterThan(15);
+    expect(points).toBeLessThan(20);
+  });
+
+  it("leaves funding leads alone, where terms are structurally absent", () => {
+    // A Launch HN post states no terms at all; scoring it as full-time would be
+    // inventing a fact about the company.
+    const funding = prescore({ ...lead, kind: "funding" }, NOW);
+    expect(funding.parts.contract).toBe(0);
+  });
+});

@@ -838,3 +838,36 @@ One existing test failed on the edit and was worth reading rather than deleting:
 it pinned that `router.refresh()` runs only on dismissal, because an earlier bug
 refreshed too early and unmounted the row before the fallback address could be
 read. The property still held; the regex was adjacency-strict.
+
+## Three answers, 12 September
+
+**Full-time or contract: both.** `contractPoints` gave a full-time-only posting 5
+of 20 — a fifteen-point hole against a threshold of 75, so such a role had to be
+near-perfect on every other dimension merely to be considered. Now 15, with
+"open to contract" 12 → 18 and explicit contract unchanged at 20. The ordering
+survives because it still says something true about how he wants to work; what
+is gone is the disqualification by arithmetic. Rubric 1.2.0.
+
+Measured over the whole corpus, not asserted:
+
+    before  196 scored ·  3 at 75+ ·  5 at 70+ ·  8 at 60+ · average 32
+    after   194 scored ·  6 at 75+ ·  9 at 70+ · 19 at 60+ · average 39, best 89
+
+Exactly what `/rejected` had predicted — 1 qualifying against 6 that would if
+full-time counted. `pnpm refilter` refused at first because four job outreach
+rows exist and re-judging can disqualify a lead after an email went out; forcing
+it was safe here for a specific reason rather than a general one: the change only
+raises the contract dimension and `disqualify.ts` was untouched, so nothing could
+be newly disqualified. Verified after — the four leads carrying outreach are
+still `drafted`, `sent`, `drafted`, `sent`.
+
+**This does not fix the lead funnel.** The average moved 32 to 39 against a
+threshold of 75, and the ceiling was never terms — it is stack and timezone.
+Sixteen leads now queue for model scoring where there were fewer; that is the
+whole of it.
+
+**Is the geo funnel the right business: yes.** Cebu cafés and restaurants stay
+the target. No code follows from this, but the question is closed and should not
+be reopened as an implicit assumption — the Austin trades and the Cebu food
+trade are both in scope, and `chooseChannel` and `SHOWS` already treat them as
+different markets rather than one.
