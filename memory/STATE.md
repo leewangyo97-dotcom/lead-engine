@@ -93,14 +93,9 @@ They now report `no checkable claim`, counted separately from `checked and true`
    cleared 75 on stack merit alone. `/rejected` still quantifies the cost —
    1 qualifies today, 6 would if full-time counted as acceptable terms.
 
-## Access control: closed
-
-**11 September.** Vercel Authentication, Require Log In, All Deployments.
-Verified from outside: `/`, `/prospects`, `/api/health` and
-`POST /api/prospects/<id>/contact` all 302 to `vercel.com/sso-api`, so the write
-endpoints are behind it too. Nothing automated broke — the nightly runs scripts
-against Neon and never calls the deployment. `README.md:12` still publishes the
-URL, which is now a login wall rather than a directory.
+**Access control closed 11 Sept.** Vercel Authentication, All Deployments; pages
+and write endpoints both 302 to the SSO wall, verified from outside. Nothing
+automated broke — the nightly never calls the deployment. RUNBOOK has the rest.
 
 ## The lead funnel is supply-starved
 
