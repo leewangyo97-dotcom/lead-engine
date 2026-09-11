@@ -567,3 +567,26 @@ worth building", not "is this definitely worthless".
 
 ## Rotated out of STATE on 2026-09-10 (final pass)
 
+
+## Rotated out of STATE on 2026-09-11
+
+## The lead funnel is supply-starved, and now says so
+
+`pnpm leads:diagnose` (new). Over 345 leads: the average job lead scores **33 of
+100** against a threshold of 75. 162 of 322 score **zero** on timezone
+eligibility and 147 score zero on stack. Not a broken filter — the sources carry
+work that is not open to UTC+8, in stacks that are not his.
+
+Surveyed two boards on 10 September and built neither (see DECISIONS): Remotive
+sits behind a Cloudflare bot challenge so its robots.txt cannot be read;
+Himalayas carries 0 of 43 jobs that are both UTC+8-eligible and in his stack.
+With WeWorkRemotely killed earlier on the same test, the reading is that general
+remote boards do not carry this work — not that a third board is needed.
+
+**No single fix clears it.** Projected to full marks: timezone 56, stack 49,
+contract 47. The 21 leads already scoring full timezone average 57, with stack
+8.0/25. So a new source has to carry APAC-friendly roles *in his stack*, not just
+APAC-friendly roles — corrected from my first reading, which named timezone alone.
+119 of 322 postings are also over 30 days old. All 23 funding leads score 15/15
+on `pay`, which ranks nothing.
+
