@@ -3,11 +3,11 @@
 **Cap: 150 lines.** When it exceeds that, roll closed items into `DECISIONS.md`
 and truncate. This file is read every session; every line costs tokens repeatedly.
 
-Last updated: 2026-09-11 · Phase: **all six built. No success criterion met yet.**
+Last updated: 2026-09-12 · Phase: **all six built. No success criterion met yet.**
 
 ## The honest position
 
-**The machine is built and unproven.** Six phases shipped, both funnels live, 640
+**The machine is built and unproven.** Six phases shipped, both funnels live, 648
 tests, nightly green on 3, 4, 7, 8, 10 and 11 September. And: **20 sends, zero
 replies, zero logged outcomes.** Phase 6's exit test needs 20 *outcomes* before
 the learning loop can say anything, so `/review` is not broken — it is unfed.
@@ -17,11 +17,12 @@ Everything below is ordered by that.
 a send**: the row carries `gmailDraftId` with `sentAt` null, so the follow-up
 ladder does not start until a person clicks "I sent it" (`POST
 /api/prospects/<id>/sent`). The app holds `gmail.compose` — it can create a draft
-and cannot read the mailbox to learn what became of it. `mailto:` remains the
-fallback for when the token dies, and keeps the old "counts as sent" meaning
-because nothing here will ever observe that send. Before this, closing a compose
-window unsent still marked the prospect contacted and queued a follow-up
-referring to a message they never received.
+and cannot read the mailbox to learn what became of it. `mailto:` is the fallback
+when the token dies and **it asks too** — neither email path records a send on a
+click, because the token expires weekly and a fallback that auto-recorded was a
+back door to the same bug. WhatsApp is unchanged: wa.me opens a page that is
+unambiguously the message. Before this, closing a compose window unsent still
+marked the prospect contacted and queued a follow-up for a message never sent.
 
 ## What is left, in the order it matters
 
@@ -54,16 +55,16 @@ referring to a message they never received.
   full-time-only 5 → 15, and 75+ leads went 3 → 6 across the corpus, average 32 →
   39. The geo funnel stays: Cebu food and retail are the target, alongside the
   Austin trades. Neither question is open.
-- **What to do about the lead funnel.** Only **3 of 192** scored leads have ever
-  cleared 75; the average is 33. Not a filter to tune — those boards do not carry
-  UTC+8 work in his stack. Change what qualifies, or stop spending nightly runs
-  on it. `pnpm leads:diagnose`; figures in DECISIONS.
+- **What to do about the lead funnel.** Counting full-time doubled the top of it
+  — **6 of 194** clear 75, average 39 — and that is still a funnel where the
+  ceiling is stack and timezone, not terms. Those boards do not carry UTC+8 work
+  in his stack. Either accept the rate, or stop spending nightly runs on it.
 
 ### 3. Code — real, and none of it changes the outcome
 
 - Enrichment backlog **2,159 rows** at 200/night: about a fortnight, unattended.
 - `pnpm lh --limit=N` on rows as enrichment reaches them. 128 measured so far.
-- The contract weight in the rubric, if the answer above is "contract".
+- 16 leads now queue for model scoring under rubric 1.2.0 — `pnpm leads:scoring`.
 
 ### Deliberately not doing — recorded so it is not re-proposed
 
@@ -79,7 +80,8 @@ cold · 2,159 awaiting enrichment · 128 measured by `pnpm lh`. The
 0 outreach attached, and 6,711 of the then-8,870 backlog. Exported to
 `C:\dev\lead-engine-backups` first.
 
-**364 leads** · 192 scored · 172 disqualified · 188 parked · 2 sent.
+**365 leads** · 194 scored · 174 disqualified · 175 parked · 2 sent · 16 awaiting
+model scoring. Rubric **1.2.0**: full-time counts.
 
 **The repo is public, deliberately.** It was made private on 11 Sept and CI broke
 that minute: GitHub billing on the account is failing, and a private repo draws
