@@ -87,7 +87,13 @@ export function followUpMessage({
 
   if (step === 1) {
     return (
-      `Hi ${business} — following up on my message a few days ago. ` +
+      // No claim about when. "A few days ago" was written for a rung that fires
+      // on day four and was true only if the follow-up went out the day it came
+      // due. The eighteen that came due on 14 September were still waiting on
+      // the 20th, ten days after the first message, and would have opened with a
+      // false statement about the sender's own behaviour — the cheapest kind of
+      // thing to be caught in. "Earlier" is true at four days and at forty.
+      `Hi ${business} — following up on my earlier message. ` +
       `To be concrete about it: ${offer}. ` +
       `I'd build it first and you'd only decide after seeing it. ` +
       `Worth a look, or shall I leave it?`

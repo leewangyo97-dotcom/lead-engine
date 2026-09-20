@@ -55,5 +55,15 @@ async function main() {
 
 main().catch((err) => {
   console.error(err instanceof Error ? err.message : err);
-  process.exit(1);
+  /*
+   * `exitCode`, not `exit()`.
+   *
+   * The token expired on 20 September and this printed its advice and then
+   * crashed: "Assertion failed: !(handle->flags & UV_HANDLE_CLOSING)", exit code
+   * 3221226505 rather than 1. `process.exit()` tears the process down while
+   * fetch's socket is still closing, and on Windows libuv asserts on that. The
+   * useful message survived, but an expected weekly failure should not look like
+   * a segfault — and the exit code a caller sees should be the one meant.
+   */
+  process.exitCode = 1;
 });

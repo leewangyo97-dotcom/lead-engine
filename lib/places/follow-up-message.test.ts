@@ -17,7 +17,10 @@ describe("followUpMessage", () => {
   });
 
   it("refers to the earlier message rather than opening cold", () => {
-    expect(followUpMessage({ ...vet, step: 1 })).toMatch(/following up on my message/i);
+    // Matches the reference, not the adjective: the wording lost "a few days
+    // ago" when a slipped rung made that false, and this test is about the
+    // message pointing back at the first one, not about how it is phrased.
+    expect(followUpMessage({ ...vet, step: 1 })).toMatch(/following up on my .*message/i);
   });
 
   it("adds something the first message did not say", () => {
@@ -175,5 +178,19 @@ describe("the categories the Austin and Sydney searches produce", () => {
   it("still names WhatsApp for a Cebu restaurant, where it is the right door", () => {
     const message = followUpMessage({ name: "Abaseria Deli & Cafe", step: 1, category: "restaurants" });
     expect(message).toMatch(/whatsapp/i);
+  });
+});
+
+describe("the follow-up makes no claim about when the first message went", () => {
+  it("does not say 'a few days ago', which is false the moment a rung slips", () => {
+    // The eighteen due on 14 September were still unsent on the 20th — ten days
+    // after the first message. The ladder cannot assume it is worked on time.
+    const message = followUpMessage({ name: "Cover Mile", step: 1 });
+    expect(message).not.toMatch(/few days ago|last week|yesterday/i);
+    expect(message).toContain("earlier message");
+  });
+
+  it("still references the first message, so it is not a cold open twice", () => {
+    expect(followUpMessage({ name: "Cover Mile", step: 1 })).toMatch(/following up/i);
   });
 });
