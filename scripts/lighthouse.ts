@@ -88,6 +88,23 @@ const CHROME_FLAGS = ["--headless=new", "--no-sandbox", "--disable-gpu"];
 const BROWSER_GONE = /target closed|protocol error|browser.*disconnect|session closed/i;
 
 /** How far back to look for a reading whose site has since moved. */
+/**
+ * How long a site that refused to load is left alone.
+ *
+ * Nothing was written when a site refused, which is right about the *reading* —
+ * a report about an error page is not a report about their site. But the row
+ * kept `lighthouse` null, so it came back at the top of the very next queue.
+ * Forty-four of the first 150-row batch were refusals, and every one of them
+ * would have been retried in the next batch, and the one after that, each
+ * costing up to the full 20-second wait. As measurable rows get consumed that
+ * share only grows.
+ *
+ * A month, not forever: a site down today is not down in October, and a
+ * permanent blacklist would quietly shrink the corpus on the strength of one
+ * bad afternoon.
+ */
+const REFUSAL_COOLDOWN_DAYS = 30;
+
 const STALE_SCAN = 500;
 
 interface Row {
@@ -112,6 +129,34 @@ function usage(): never {
   console.error("usage: pnpm lh <prospectId> [--dry]");
   console.error("       pnpm lh --limit=25 [--dry]");
   process.exit(1);
+}
+
+/**
+ * Records that a site would not load, without recording anything about the site.
+ *
+ * The key is `lighthouseRefused`, not `lighthouse`, and that separation is the
+ * whole point: `storedLighthouse` reads only the latter, so nothing downstream
+ * — the score, the `/prospects` findings, a draft — can mistake a note about a
+ * 404 for a measurement of a page.
+ */
+async function noteRefusal(
+  row: { id: string; signals: unknown },
+  reason: string,
+): Promise<void> {
+  const db = getDb();
+  // Merged, like the success path: `siteSignals` also holds what the HTML
+  // enricher measured, and this knows nothing about those.
+  const existing = (row.signals ?? {}) as Record<string, unknown>;
+  await db
+    .update(prospects)
+    .set({
+      siteSignals: {
+        ...existing,
+        lighthouseRefused: { at: new Date().toISOString(), reason },
+      },
+      updatedAt: new Date(),
+    })
+    .where(eq(prospects.id, row.id));
 }
 
 /**
@@ -229,7 +274,20 @@ async function main() {
     const unmeasured = await db
       .select(COLUMNS)
       .from(prospects)
-      .where(and(eligible, sql`${prospects.siteSignals} -> 'lighthouse' is null`))
+      .where(
+        and(
+          eligible,
+          sql`${prospects.siteSignals} -> 'lighthouse' is null`,
+          // Skip what refused recently. Without this the record would be
+          // written and ignored, and the same dead sites would fill the front
+          // of every batch exactly as before.
+          sql`(
+            ${prospects.siteSignals} -> 'lighthouseRefused' ->> 'at' is null
+            or (${prospects.siteSignals} -> 'lighthouseRefused' ->> 'at')::timestamptz
+               < now() - ${`${REFUSAL_COOLDOWN_DAYS} days`}::interval
+          )`,
+        ),
+      )
       // Best first, same as the enrichment queue: the budget is small and a
       // reachable high scorer should not wait behind an arbitrary row.
       .orderBy(desc(prospects.score), prospects.name)
@@ -307,7 +365,14 @@ async function main() {
             /* already gone, which is the case we are handling */
           }
           chrome = await chromeLauncher.launch({ chromeFlags: CHROME_FLAGS });
+          // Deliberately not recorded as a refusal. This row did nothing wrong
+          // — our browser died under it — and putting a month's cooldown on a
+          // working site because Chrome fell over would thin the corpus for a
+          // fault at this end. It goes back in the queue untouched.
+          continue;
         }
+
+        if (!dry) await noteRefusal(row, message.slice(0, 200));
         continue;
       }
 
@@ -316,9 +381,12 @@ async function main() {
 
       if (!read.ok) {
         refused++;
-        // Nothing is written. A report about an error page is not a report about
-        // their site, and storing one is how a false claim reaches a draft.
+        // No *reading* is written. A report about an error page is not a report
+        // about their site, and storing one is how a false claim reaches a
+        // draft. The refusal itself is recorded, under a different key, so the
+        // row stops returning to the front of every queue — see below.
         console.log(`${label}\n  ${website}\n  refused after ${seconds}s: ${read.reason}\n`);
+        if (!dry) await noteRefusal(row, read.reason);
         continue;
       }
 
