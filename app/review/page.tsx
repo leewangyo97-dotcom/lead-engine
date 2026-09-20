@@ -104,9 +104,36 @@ export default async function Review() {
           <p className="text-body text-primary">{rollup.suggestion}</p>
         </div>
       ) : (
+        /*
+         * Say which condition is actually unmet.
+         *
+         * This used to print one sentence whatever the reason, and the moment
+         * sends passed the threshold it started blaming the wrong thing: "it
+         * needs 20 logged sends — currently 23" reads as a counting problem
+         * that has already been solved. With 23 sends and no replies at all,
+         * nothing is being withheld for want of data volume; there is simply no
+         * difference between groups until something comes back.
+         */
         <p className="mt-7 max-w-prose rounded-md border border-rule bg-surface p-6 text-body text-muted">
-          No suggestion yet. It needs {MIN_TOTAL_FOR_SUGGESTION} logged sends and a gap wide enough
-          to be a finding rather than two small samples disagreeing — currently {rollup.totalSends}.
+          {rollup.totalSends < MIN_TOTAL_FOR_SUGGESTION ? (
+            <>
+              No suggestion yet. It needs {MIN_TOTAL_FOR_SUGGESTION} logged sends and a gap wide
+              enough to be a finding rather than two small samples disagreeing — currently{" "}
+              {rollup.totalSends}.
+            </>
+          ) : rollup.totalReplies === 0 ? (
+            <>
+              No suggestion yet, and it is not for want of sends — there are {rollup.totalSends}.
+              Nothing has replied, so every cut below reads zero and there is no difference between
+              them to report. The first reply is what unblocks this.
+            </>
+          ) : (
+            <>
+              No suggestion yet. There are {rollup.totalSends} sends and {rollup.totalReplies}{" "}
+              replies, but no gap wide enough to be a finding rather than two small samples
+              disagreeing.
+            </>
+          )}
         </p>
       )}
 
