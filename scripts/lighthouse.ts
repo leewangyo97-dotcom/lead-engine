@@ -45,6 +45,21 @@ const CATEGORIES = ["performance", "accessibility"];
 const DEFAULT_LIMIT = 25;
 
 /**
+ * How many rows one process will take, whatever `--limit` asks for.
+ *
+ * Lighthouse does not give its memory back. A run of 200 got through 188 —
+ * 150 stored, 38 refused — and then died on "Ineffective mark-compacts near
+ * heap limit: JavaScript heap out of memory". Nothing was lost, because each
+ * row is written as it is measured, but the last twelve went unmeasured and the
+ * exit code was an abort rather than a summary.
+ *
+ * The npm script raises the ceiling to 4 GB, and this caps the work below the
+ * point failure was actually observed. Asking for more says so and takes 150;
+ * run it again for the next 150, which is a second command rather than a crash.
+ */
+const MAX_PER_PROCESS = 150;
+
+/**
  * How long to wait for a page to paint before giving up on it.
  *
  * Lighthouse defaults to 45 seconds, and a batch over the Cebu and Australia
@@ -167,10 +182,17 @@ async function main() {
   const parsedLimit = limitFlag === undefined ? undefined : Number(limitFlag);
   // A misspelt flag must not silently mean "no limit" — this one opens a browser
   // against somebody's website per row.
-  const limit =
+  const asked =
     parsedLimit !== undefined && Number.isFinite(parsedLimit) && parsedLimit > 0
       ? Math.floor(parsedLimit)
       : DEFAULT_LIMIT;
+  const limit = Math.min(asked, MAX_PER_PROCESS);
+  if (asked > MAX_PER_PROCESS) {
+    console.log(
+      `lh: taking ${MAX_PER_PROCESS} of the ${asked} asked for — Lighthouse does not give its ` +
+        "memory back, and a run of 200 died of heap exhaustion after 188. Run it again for more.",
+    );
+  }
 
   if (!id && limitFlag === undefined && !args.length) usage();
 

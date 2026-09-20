@@ -366,3 +366,19 @@ suite("siteFindings", () => {
     expect(siteFindings(ordinary, "https://theroofingguy.co/")).toEqual([]);
   });
 });
+
+suite("one process takes a bounded number of rows", () => {
+  const SOURCE = readFileSync("scripts/lighthouse.ts", "utf8");
+
+  it("caps below the point heap exhaustion was actually observed", () => {
+    // A run of 200 got through 188 — 150 stored, 38 refused — then died on
+    // "Ineffective mark-compacts near heap limit". Lighthouse does not give its
+    // memory back, so the cap is evidence, not a guess.
+    expect(SOURCE).toMatch(/MAX_PER_PROCESS = 150/);
+    expect(SOURCE).toMatch(/Math\.min\(asked, MAX_PER_PROCESS\)/);
+  });
+
+  it("says so rather than silently doing less than asked", () => {
+    expect(SOURCE).toMatch(/taking \$\{MAX_PER_PROCESS\} of the \$\{asked\} asked for/);
+  });
+});

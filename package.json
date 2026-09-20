@@ -43,7 +43,7 @@
     "places:probe": "tsx scripts/places-probe.ts",
     "search:run": "tsx scripts/search-run.ts",
     "enrich": "tsx scripts/enrich.ts",
-    "lh": "tsx scripts/lighthouse.ts",
+    "lh": "node --max-old-space-size=4096 --import tsx scripts/lighthouse.ts",
     "prospects:enhance": "tsx scripts/prospects-for-enhance.ts",
     "apply:enhance": "tsx scripts/apply-enhance.ts",
     "drafts:verify": "tsx scripts/verify-drafts.ts",
