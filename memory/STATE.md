@@ -16,15 +16,13 @@ rather than blaming the send count it has already passed. Everything below is
 ordered by that.
 
 **Prospect email goes through the Gmail API** as of 11 Sept, and **a draft is not
-a send**: the row carries `gmailDraftId` with `sentAt` null, so the follow-up
-ladder does not start until a person clicks "I sent it" (`POST
-/api/prospects/<id>/sent`). The app holds `gmail.compose` — it can create a draft
-and cannot read the mailbox to learn what became of it. `mailto:` is the fallback
-when the token dies and **it asks too** — neither email path records a send on a
-click, because the token expires weekly and a fallback that auto-recorded was a
-back door to the same bug. WhatsApp is unchanged: wa.me opens a page that is
-unambiguously the message. Before this, closing a compose window unsent still
-marked the prospect contacted and queued a follow-up for a message never sent.
+a send**: the row carries `gmailDraftId` with `sentAt` null, so the ladder does
+not start until a person clicks "I sent it" (`POST /api/prospects/<id>/sent`).
+The app holds `gmail.compose` — it cannot read the mailbox to learn what became
+of a draft. `mailto:` is the fallback when the token dies and **it asks too**:
+neither email path records a send on a click, because a fallback that
+auto-recorded was a back door to the same bug. WhatsApp is unchanged — wa.me
+opens a page that is unambiguously the message.
 
 ## What is left, in the order it matters
 
