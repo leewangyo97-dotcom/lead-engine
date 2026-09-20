@@ -305,3 +305,34 @@ suite("the batch script caps how long it waits for a page", () => {
     expect(SOURCE).toMatch(/MAX_LOAD_MS = 20_000/);
   });
 });
+
+suite("a dead browser does not end the batch", () => {
+  const SOURCE = readFileSync("scripts/lighthouse.ts", "utf8");
+
+  it("relaunches Chrome rather than failing every remaining row against a corpse", () => {
+    // A run of 150 stopped after two: Chrome's target closed and every later row
+    // would have failed identically against a browser that no longer existed.
+    expect(SOURCE).toMatch(/BROWSER_GONE\.test\(message\)/);
+    expect(SOURCE).toMatch(/chrome = await chromeLauncher\.launch/);
+  });
+
+  it("catches the rejection Lighthouse throws from an unawaited session", () => {
+    // The per-row try/catch never saw it: the rejection comes from a promise
+    // nobody awaits, so Node ended the process instead.
+    expect(SOURCE).toMatch(/unhandledRejection/);
+  });
+
+  it("only swallows dead-browser errors, never anything else", () => {
+    // A worker that hides its own bugs is worse than one that halts. The guard
+    // rethrows whatever it does not recognise.
+    const handler = SOURCE.slice(SOURCE.indexOf('process.on("unhandledRejection"'));
+    expect(handler).toMatch(/throw reason/);
+    expect(BROWSER_GONE_SHAPES.every((s) => /target closed|protocol error/i.test(s))).toBe(true);
+  });
+});
+
+/** The two real messages seen in the failing run. */
+const BROWSER_GONE_SHAPES = [
+  "Protocol error (Page.navigate): Target closed",
+  "Protocol error (Page.navigate): Protocol error (Page.navigate): Target closed",
+];

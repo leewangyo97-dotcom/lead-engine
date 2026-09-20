@@ -61,6 +61,17 @@ const DEFAULT_LIMIT = 25;
  */
 const MAX_LOAD_MS = 20_000;
 
+const CHROME_FLAGS = ["--headless=new", "--no-sandbox", "--disable-gpu"];
+
+/**
+ * Errors that mean the browser is gone rather than the page being bad.
+ *
+ * Narrow on purpose. A site that refuses, hangs or 404s is a fact about that
+ * site and the next row is unaffected; these say the thing doing the measuring
+ * has died, and every remaining row will fail identically until it is replaced.
+ */
+const BROWSER_GONE = /target closed|protocol error|browser.*disconnect|session closed/i;
+
 /** How far back to look for a reading whose site has since moved. */
 const STALE_SCAN = 500;
 
@@ -123,6 +134,28 @@ async function measure(
   if (!result) throw new Error("lighthouse returned nothing");
   return result.lhr as unknown as ReportLike;
 }
+
+/**
+ * A protocol error that escapes the loop must not end the run.
+ *
+ * The try/catch around each row was not enough, and the stack said why: when
+ * Chrome's target closes, Lighthouse rejects from a session promise nobody is
+ * awaiting, so the rejection never reaches the catch and Node ends the process.
+ * A batch of 150 stopped after two rows that way.
+ *
+ * Narrow, in the same spirit as the undici guard in `enrich.ts`: only errors
+ * that name a dead browser are swallowed, and the loop's own handler replaces it
+ * on the next row. Anything else still stops the run, because a worker that
+ * hides its own bugs is worse than one that halts.
+ */
+process.on("unhandledRejection", (reason) => {
+  const message = reason instanceof Error ? reason.message : String(reason);
+  if (BROWSER_GONE.test(message)) {
+    console.error(`  (ignored a dead-browser rejection: ${message.slice(0, 70)})`);
+    return;
+  }
+  throw reason;
+});
 
 async function main() {
   loadLocalEnv();
@@ -209,9 +242,7 @@ async function main() {
   }
 
   const lighthouse = (await import("lighthouse")).default;
-  const chrome = await chromeLauncher.launch({
-    chromeFlags: ["--headless=new", "--no-sandbox", "--disable-gpu"],
-  });
+  let chrome = await chromeLauncher.launch({ chromeFlags: CHROME_FLAGS });
 
   let measured = 0;
   let refused = 0;
@@ -234,7 +265,27 @@ async function main() {
         report = await measure(lighthouse, chrome.port, website);
       } catch (err) {
         refused++;
-        console.log(`${label}\n  ${website}\n  failed: ${(err as Error).message.slice(0, 100)}\n`);
+        const message = (err as Error).message ?? String(err);
+        console.log(`${label}\n  ${website}\n  failed: ${message.slice(0, 100)}\n`);
+
+        /*
+         * A dead browser is not a dead batch.
+         *
+         * A run of 150 stopped after two rows: Chrome's target closed and
+         * Lighthouse threw `Protocol error (Page.navigate): Target closed`. Every
+         * later row would have failed the same way against a browser that no
+         * longer exists, so the batch is worth nothing until it is replaced —
+         * and 148 sites had been queued behind it.
+         */
+        if (BROWSER_GONE.test(message)) {
+          console.log("  the browser died; starting another and carrying on\n");
+          try {
+            await chrome.kill();
+          } catch {
+            /* already gone, which is the case we are handling */
+          }
+          chrome = await chromeLauncher.launch({ chromeFlags: CHROME_FLAGS });
+        }
         continue;
       }
 
