@@ -39,11 +39,9 @@ marked the prospect contacted and queued a follow-up for a message never sent.
 - **Send the 12 unsent drafts.** Twelve `step = -1` rows, none in Gmail yet.
   Verified 10 Sept; sites change, so re-run `pnpm drafts:verify` first.
 - **Check whether the WhatsApp sends delivered.** 6 of 12 went to *guessed*
-  numbers outside the Philippines, all Austin. Nothing here knows: the app builds
-  a `wa.me` link, a person clicks it, `sentAt` records the click. Only WhatsApp
-  has the ticks — one tick means it never arrived. If those six failed the real
-  sample is 14, not 20, and "no replies" means much less than it looks. Each has
-  a working email; re-sending by mail is the fix.
+  numbers, all Austin. Nothing here knows — `sentAt` records the click, only
+  WhatsApp has the ticks, and one tick means it never arrived. If those six
+  failed the real sample is 14, not 20. Each has a working email.
 - **Log every outcome** — `no_reply | reply | call | won`. Zero exist.
 
 ### 2. Decisions only Joshua can make
@@ -60,10 +58,10 @@ marked the prospect contacted and queued a follow-up for a message never sent.
   has `DATABASE_URL` only, so every email click there uses the fallback.
 - **Closed 12 Sept, in DECISIONS:** full-time counts (rubric 1.2.0), and the geo
   funnel stays. Do not reopen either as an implicit assumption.
-- **What to do about the lead funnel.** Counting full-time doubled the top of it
-  — **6 of 194** clear 75, average 39 — and that is still a funnel where the
-  ceiling is stack and timezone, not terms. Those boards do not carry UTC+8 work
-  in his stack. Either accept the rate, or stop spending nightly runs on it.
+- **What to do about the lead funnel.** Full-time doubled its top — **6 of 194**
+  clear 75, average 39 — but the ceiling is stack and timezone, not terms: those
+  boards do not carry UTC+8 work in his stack. Accept the rate, or stop spending
+  nightly runs on it.
 
 ### 3. Code — real, and none of it changes the outcome
 
@@ -76,9 +74,9 @@ marked the prospect contacted and queued a follow-up for a message never sent.
 
 ### Deliberately not doing — recorded so it is not re-proposed
 
-Unused JavaScript as a signal (stable, but the theme's doing and invisible to the
-owner). Lighthouse in the nightly (42 min against a 15-min budget). Wappalyzer
-(no licence on npm). Any send path — CLAUDE.md rule 2.
+Unused JavaScript as a signal (stable, but the theme's doing and invisible to
+the owner). Lighthouse in the nightly (42 min against 15). Wappalyzer (no
+licence). Any send path — CLAUDE.md rule 2.
 
 ## Live state
 
