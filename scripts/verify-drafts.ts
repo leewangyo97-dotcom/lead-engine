@@ -2,8 +2,9 @@ import { eq } from "drizzle-orm";
 import { getDb } from "../lib/db";
 import { loadLocalEnv } from "../lib/env";
 import { outreach, prospects } from "../lib/db/schema";
-import { claimsOf, needsFetch, type Claim } from "../lib/places/draft-claims";
+import { claimsOf, measuredClaims, needsFetch, type Claim } from "../lib/places/draft-claims";
 import { signalKeys } from "../lib/places/enhance";
+import { storedLighthouse } from "../lib/places/lighthouse-signals";
 import { extractEmails, extractPhones, extractSiteSignals, looksLikePage } from "../lib/places/extract";
 import { verifyMessage } from "../lib/places/message-verify";
 import { ownDomainFromEmail } from "../lib/places/own-domain";
@@ -170,6 +171,20 @@ async function main() {
       if (r === "false") verdict = "false";
       else if (r === "unverifiable" && verdict === "ok") verdict = "unverifiable";
       await sleep(PAUSE_MS);
+    }
+
+    // Claims only a new Lighthouse run can settle. Without this they reach the
+    // bottom of the loop as `ok` and are counted as confirmed — a draft quoting
+    // a three-week-old byte count would be reported as checked and true, having
+    // been checked by nothing.
+    const measured = measuredClaims(claims);
+    if (measured.length) {
+      const lh = storedLighthouse(row.siteSignals);
+      const when = lh ? ` (last measured ${lh.measuredAt.slice(0, 10)})` : " (never measured)";
+      for (const c of measured) {
+        notes.push(`cites "${c.quote}"${when} — re-run \`pnpm lh ${row.id}\` to settle it`);
+      }
+      if (verdict === "ok") verdict = "unverifiable";
     }
 
     if (!claims.length) {

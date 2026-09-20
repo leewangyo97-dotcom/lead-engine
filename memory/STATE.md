@@ -3,15 +3,17 @@
 **Cap: 150 lines.** When it exceeds that, roll closed items into `DECISIONS.md`
 and truncate. This file is read every session; every line costs tokens repeatedly.
 
-Last updated: 2026-09-12 · Phase: **all six built. No success criterion met yet.**
+Last updated: 2026-09-20 · Phase: **all six built. No success criterion met yet.**
 
 ## The honest position
 
-**The machine is built and unproven.** Six phases shipped, both funnels live, 648
-tests, nightly green on 3, 4, 7, 8, 10 and 11 September. And: **20 sends, zero
-replies, zero logged outcomes.** Phase 6's exit test needs 20 *outcomes* before
-the learning loop can say anything, so `/review` is not broken — it is unfed.
-Everything below is ordered by that.
+**The machine is built and unproven.** Six phases shipped, both funnels live, 662
+tests, nightly green through September. And: **23 sends, zero replies, zero
+logged outcomes** — counted in the database on 20 Sept, not remembered. Phase 6's
+exit test needs 20 *outcomes* before the learning loop can say anything, so
+`/review` is not broken — it is unfed, and it now says which condition is unmet
+rather than blaming the send count it has already passed. Everything below is
+ordered by that.
 
 **Prospect email goes through the Gmail API** as of 11 Sept, and **a draft is not
 a send**: the row carries `gmailDraftId` with `sentAt` null, so the follow-up
@@ -28,12 +30,14 @@ marked the prospect contacted and queued a follow-up for a message never sent.
 
 ### 1. Outcomes — this is the project
 
-- **Monday 14 September: 18 follow-ups.** 16 prospects + 2 leads (Atria, This Dot
-  Labs), all step 1, first due Sunday 13th 19:31 Manila. The 16 were dry-run on
-  11 Sept: **0 verifier violations, 0 over length, correct channel**. The app
-  writes them on the click. `pnpm followups` emits the two leads only.
-- **Send the 17 unsent drafts.** Verified 10 Sept; sites change, so re-run
-  `pnpm drafts:verify` first.
+- **The follow-ups are six days overdue.** Due Sunday 13 Sept 19:31 Manila; on
+  20 Sept `select step … from outreach` still returns **no row above step 0**, so
+  not one has been written. All 23 sends are past rung one and the older ones are
+  past rung two. They were dry-run on 11 Sept — **0 verifier violations, 0 over
+  length, correct channel** — so nothing is blocking but the clicking. The app
+  writes them on the click; `pnpm followups` emits the two leads only.
+- **Send the 12 unsent drafts.** Twelve `step = -1` rows, none in Gmail yet.
+  Verified 10 Sept; sites change, so re-run `pnpm drafts:verify` first.
 - **Check whether the WhatsApp sends delivered.** 6 of 12 went to *guessed*
   numbers outside the Philippines, all Austin. Nothing here knows: the app builds
   a `wa.me` link, a person clicks it, `sentAt` records the click. Only WhatsApp
@@ -47,14 +51,15 @@ marked the prospect contacted and queued a follow-up for a message never sent.
 - **Publish the Google OAuth consent screen.** In Testing the refresh token dies
   every 7 days, and now it takes more with it: prospect email falls back to
   `mailto:` when the token is dead, so a weekly expiry silently changes how every
-  email prospect is contacted. Console → APIs & Services → OAuth consent screen →
-  Publish app.
+  email prospect is contacted. **The token died again on 20 Sept**
+  (`invalid_grant`). Started 12 Sept and stuck: Branding is filled and saved, but
+  Audience still reports the configuration incomplete and Publish is unavailable.
+  Next thing to check is whether **Data Access** lists `gmail.compose` — an app
+  with no scope recorded has nothing to publish.
 - **Add the three `GOOGLE_*` variables to Vercel** and redeploy. The deployed app
   has `DATABASE_URL` only, so every email click there uses the fallback.
-- **Answered 12 Sept: both, and yes.** Full-time counts now — rubric 1.2.0,
-  full-time-only 5 → 15, and 75+ leads went 3 → 6 across the corpus, average 32 →
-  39. The geo funnel stays: Cebu food and retail are the target, alongside the
-  Austin trades. Neither question is open.
+- **Closed 12 Sept, in DECISIONS:** full-time counts (rubric 1.2.0), and the geo
+  funnel stays. Do not reopen either as an implicit assumption.
 - **What to do about the lead funnel.** Counting full-time doubled the top of it
   — **6 of 194** clear 75, average 39 — and that is still a funnel where the
   ceiling is stack and timezone, not terms. Those boards do not carry UTC+8 work
@@ -62,9 +67,10 @@ marked the prospect contacted and queued a follow-up for a message never sent.
 
 ### 3. Code — real, and none of it changes the outcome
 
-- Enrichment backlog **2,159 rows** at 200/night: about a fortnight, unattended.
-- `pnpm lh --limit=N` on rows as enrichment reaches them. 128 measured so far.
-- 16 leads now queue for model scoring under rubric 1.2.0 — `pnpm leads:scoring`.
+- Enrichment backlog **959 rows** at 200/night: about a week, unattended.
+- `pnpm lh --limit=N` on rows as enrichment reaches them. **283 measured, 793
+  still to go.** The cap is 150 per process and not negotiable — see below.
+- 17 leads now queue for model scoring under rubric 1.2.0 — `pnpm leads:scoring`.
 
 ### Deliberately not doing — recorded so it is not re-proposed
 
@@ -74,13 +80,14 @@ owner). Lighthouse in the nightly (42 min against a 15-min budget). Wappalyzer
 
 ## Live state
 
-**10,069 prospects** · 2,540 reachable · 33 MB of 512 · 20 hot, 250 warm, 9,799
-cold · 2,159 awaiting enrichment · 128 measured by `pnpm lh`. The
+**10,069 prospects** · 2,540 reachable · 33 MB of 512 · 20 hot · 959 awaiting
+enrichment · 283 measured by `pnpm lh`. Page weight, low contrast and unsized
+images now print under the site link in the `/prospects` SITE column. The
 `Australia [schools]` search was deleted 11 Sept: 13,134 rows, 57% of the table,
 0 outreach attached, and 6,711 of the then-8,870 backlog. Exported to
 `C:\dev\lead-engine-backups` first.
 
-**365 leads** · 194 scored · 174 disqualified · 175 parked · 2 sent · 16 awaiting
+**404 leads** · 178 disqualified · 206 parked · 2 sent · 1 drafted · 17 awaiting
 model scoring. Rubric **1.2.0**: full-time counts.
 
 **The repo is public, deliberately.** It was made private on 11 Sept and CI broke
@@ -101,6 +108,12 @@ Working copy `C:\dev\lead-engine`; `F:\lead-engine` is corrupt, awaiting chkdsk.
 
 ## Reminders that bite
 
+- **`pnpm lh` dies after ~188 rows in one process** — `Ineffective mark-compacts
+  near heap limit`, with the heap already at 4 GB. Lighthouse does not give its
+  memory back. Hence `MAX_PER_PROCESS = 150`; asking for more prints why and
+  takes 150. A backlog costs repeated commands, not a bigger number.
+- **`--dry` still measures.** It only skips the write. Never run it to check a
+  log line — that is 150 third-party servers hit to read a `console.log`.
 - **A projection is half of every fix.** `chooseChannel` learned to prefer email
   in the US and did nothing, because `prospect-queries.ts` did not select
   `countryCode`. Correct logic, green tests, zero effect. Check the call sites.
