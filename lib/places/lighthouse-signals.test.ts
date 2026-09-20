@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe as suite, expect, it } from "vitest";
 import {
   describe as summarise,
@@ -290,5 +291,17 @@ suite("needsMeasuring", () => {
 
   it("is false with no website, because there is nothing to open", () => {
     expect(needsMeasuring({ website: null, siteSignals: null })).toBe(false);
+  });
+});
+
+suite("the batch script caps how long it waits for a page", () => {
+  const SOURCE = readFileSync("scripts/lighthouse.ts", "utf8");
+
+  it("passes maxWaitForLoad, or a dead page costs 48 seconds instead of 23", () => {
+    // Measured both ways on the same queue: successes take 8.7-22.2s either way,
+    // but a page that never paints costs the full default 45s wait. Removing
+    // this is a silent halving of batch throughput, which is why it is pinned.
+    expect(SOURCE).toMatch(/maxWaitForLoad: MAX_LOAD_MS/);
+    expect(SOURCE).toMatch(/MAX_LOAD_MS = 20_000/);
   });
 });

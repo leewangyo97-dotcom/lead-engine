@@ -44,6 +44,23 @@ import { getRobots, isAllowed } from "../lib/places/robots";
 const CATEGORIES = ["performance", "accessibility"];
 const DEFAULT_LIMIT = 25;
 
+/**
+ * How long to wait for a page to paint before giving up on it.
+ *
+ * Lighthouse defaults to 45 seconds, and a batch over the Cebu and Australia
+ * clinics showed where the time actually goes: the eight sites that measured
+ * took 8.7 to 22.2 seconds each, while two that never painted took **48.0 and
+ * 47.6** — the full default wait, spent to learn nothing. At the refusal rate
+ * that batch was running, the 961 enriched rows waiting to be measured would
+ * have spent roughly three hours on dead pages alone.
+ *
+ * Twenty seconds is above every success observed, so it costs no measurement
+ * that would otherwise have been taken, and it reaches the same refusal on a
+ * dead page 28 seconds sooner. A page that has not painted in twenty seconds is
+ * not one this can report on either way.
+ */
+const MAX_LOAD_MS = 20_000;
+
 /** How far back to look for a reading whose site has since moved. */
 const STALE_SCAN = 500;
 
@@ -101,6 +118,7 @@ async function measure(
     output: "json",
     onlyCategories: CATEGORIES,
     port,
+    maxWaitForLoad: MAX_LOAD_MS,
   });
   if (!result) throw new Error("lighthouse returned nothing");
   return result.lhr as unknown as ReportLike;
