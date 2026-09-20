@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LADDER_DAYS, MAX_STEP, dueAtFor, isDue, ladderRungs } from "./followups";
+import { LADDER_DAYS, MAX_STEP, dueAtFor, gapForStep, isDue, ladderRungs } from "./followups";
 
 describe("ladderRungs", () => {
   it("labels the rungs from the ladder rather than hardcoding them", () => {
@@ -57,5 +57,39 @@ describe("isDue", () => {
 
   it("stops at the end of the ladder", () => {
     expect(isDue({ ...at("2026-09-30T00:00:00Z"), nextStep: MAX_STEP + 1 })).toBe(false);
+  });
+});
+
+describe("the ladder's own arithmetic", () => {
+  // The bug this pins: `LADDER_DAYS` counts from first contact, due-ness counts
+  // from the last touch, and for four months the second rung used the total as
+  // though it were a gap. An on-time sequence ran to day 15 while the list
+  // labelled the rung "Day 11".
+  it("spaces the rungs so an on-time sequence matches its own labels", () => {
+    expect(gapForStep(1)).toBe(4);
+    expect(gapForStep(2)).toBe(LADDER_DAYS[1] - LADDER_DAYS[0]);
+
+    const first = new Date("2026-09-01T00:00:00Z");
+    const rung1 = dueAtFor(first, 1);
+    const rung2 = dueAtFor(rung1, 2);
+    const daysBetween = (a: Date, b: Date) => (b.getTime() - a.getTime()) / 86_400_000;
+
+    expect(daysBetween(first, rung1)).toBe(LADDER_DAYS[0]);
+    expect(daysBetween(first, rung2)).toBe(LADDER_DAYS[1]);
+  });
+
+  it("still does not bunch the second rung behind a late first one", () => {
+    // The reason due-ness is measured from the last touch at all. A day-4 note
+    // sent six days late must not be followed the next morning.
+    const late = new Date("2026-09-11T00:00:00Z");
+    const due = (iso: string) =>
+      isDue({ lastSentAt: late, nextStep: 2, hasReplied: false, now: new Date(iso) });
+    expect(due("2026-09-12T00:00:00Z")).toBe(false);
+    expect(due("2026-09-17T23:00:00Z")).toBe(false);
+    expect(due("2026-09-18T00:00:00Z")).toBe(true);
+  });
+
+  it("refuses a step the ladder has no rung for", () => {
+    expect(() => gapForStep(MAX_STEP + 1)).toThrow(/no ladder rung/);
   });
 });

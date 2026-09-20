@@ -9,6 +9,25 @@
 export const LADDER_DAYS = [4, 11] as const;
 export const MAX_STEP = LADDER_DAYS.length; // step 0 is the first touch
 
+/**
+ * How long after the *previous* touch a rung is owed.
+ *
+ * `LADDER_DAYS` counts from first contact — that is what the "Day 4" and
+ * "Day 11" labels on the follow-up list promise — but due-ness is measured from
+ * the last touch, so the two are not the same number and rung 2 is the
+ * difference, not the total.
+ *
+ * They were the same number until 20 September, and the ladder quietly ran four
+ * days long: rung 2 waited eleven days after the day-4 note, landing on day 15
+ * under a label reading "Day 11". Nothing caught it because `dueAtFor` read the
+ * figures as totals, `isDue` read them as gaps, and only `isDue` runs.
+ */
+export function gapForStep(step: number): number {
+  const total = LADDER_DAYS[step - 1];
+  if (total == null) throw new Error(`no ladder rung for step ${step}`);
+  return total - (LADDER_DAYS[step - 2] ?? 0);
+}
+
 /** Outcomes that cancel the ladder. Any human response ends the sequence. */
 export const REPLIED_TYPES = ["reply", "call", "won", "lost"] as const;
 
@@ -40,10 +59,9 @@ export function ladderRungs(nextStep: number): Rung[] {
   }));
 }
 
-export function dueAtFor(sentAt: Date, step: number): Date {
-  const days = LADDER_DAYS[step - 1];
-  if (days == null) throw new Error(`no ladder rung for step ${step}`);
-  return new Date(sentAt.getTime() + days * 86_400_000);
+/** When a rung falls due, counted from the touch before it. */
+export function dueAtFor(lastSentAt: Date, step: number): Date {
+  return new Date(lastSentAt.getTime() + gapForStep(step) * 86_400_000);
 }
 
 /**
@@ -67,6 +85,5 @@ export function isDue({
   if (!lastSentAt) return false; // nothing was sent, so nothing is owed
   if (nextStep > MAX_STEP) return false;
 
-  const gap = LADDER_DAYS[nextStep - 1];
-  return now.getTime() - lastSentAt.getTime() >= gap * 86_400_000;
+  return now.getTime() - lastSentAt.getTime() >= gapForStep(nextStep) * 86_400_000;
 }

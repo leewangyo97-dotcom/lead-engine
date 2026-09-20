@@ -73,7 +73,8 @@ export default async function Followups() {
         {due.length} due today
       </p>
       <p className="mt-2 max-w-prose text-body text-secondary">
-        Day {LADDER_DAYS[0]} and day {LADDER_DAYS[1]} after the last touch, for anything unanswered.
+        Day {LADDER_DAYS[0]} and day {LADDER_DAYS[1]} after the first message, for anything
+        unanswered. A late rung pushes the one after it back rather than stacking on top of it.
         A logged reply removes a lead from this list by itself.
       </p>
 
