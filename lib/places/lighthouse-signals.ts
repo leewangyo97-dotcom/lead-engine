@@ -285,9 +285,31 @@ export function needsMeasuring(row: { website: string | null; siteSignals: unkno
  * worse than showing nothing, which is why the thresholds are shared rather
  * than re-picked here.
  */
+/**
+ * A site `pnpm lh` could not load, if that is what happened last.
+ *
+ * Read from `lighthouseRefused`, which is deliberately not where readings live,
+ * so nothing here can be mistaken for a measurement of the page.
+ */
+export function storedRefusal(signals: unknown): { at: string; reason: string } | null {
+  if (!signals || typeof signals !== "object") return null;
+  const raw = (signals as Record<string, unknown>).lighthouseRefused;
+  if (!raw || typeof raw !== "object") return null;
+  const { at, reason } = raw as Record<string, unknown>;
+  if (typeof at !== "string" || typeof reason !== "string") return null;
+  return { at, reason };
+}
+
 export function siteFindings(signals: unknown, website: string | null | undefined): string[] {
   const lh = storedLighthouse(signals);
-  if (!lh || !measuredOn(lh, website)) return [];
+  if (!lh || !measuredOn(lh, website)) {
+    // Not the same as nothing known. A site that would not load is the one fact
+    // here a person must see before writing: the whole site-improvement angle
+    // is about a page, and there was no page. Without this the row is
+    // indistinguishable from one nobody has measured yet.
+    const refused = storedRefusal(signals);
+    return refused ? [`site did not load (${refused.at.slice(0, 10)})`] : [];
+  }
 
   const out: string[] = [];
   if (lh.totalBytes >= HEAVY_PAGE_BYTES) {

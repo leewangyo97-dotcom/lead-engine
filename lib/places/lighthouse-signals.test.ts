@@ -8,6 +8,7 @@ import {
   measuredOn,
   readLighthouse,
   storedLighthouse,
+  storedRefusal,
   siteFindings,
   STABLE_AUDITS,
   VOLATILE_AUDITS,
@@ -380,5 +381,44 @@ suite("one process takes a bounded number of rows", () => {
 
   it("says so rather than silently doing less than asked", () => {
     expect(SOURCE).toMatch(/taking \$\{MAX_PER_PROCESS\} of the \$\{asked\} asked for/);
+  });
+});
+
+suite("a site that would not load", () => {
+  const refused = {
+    lighthouseRefused: { at: "2026-09-20T10:00:00.000Z", reason: "lighthouse could not load the page: PAGE_HUNG" },
+  };
+
+  it("says so, rather than looking like a row nobody measured", () => {
+    // The distinction a person needs before writing: the site-improvement angle
+    // is entirely about a page, and here there was no page.
+    expect(siteFindings(refused, "https://centrepsychology.com.au/")).toEqual([
+      "site did not load (2026-09-20)",
+    ]);
+  });
+
+  it("is never read as a measurement", () => {
+    // The key is not `lighthouse`, and this is what keeps a note about a 404
+    // out of the score, the findings and every draft.
+    expect(storedLighthouse(refused)).toBeNull();
+    expect(storedRefusal({ lighthouse: { totalBytes: 1 } })).toBeNull();
+  });
+
+  it("ignores a malformed record rather than printing half of one", () => {
+    expect(storedRefusal({ lighthouseRefused: { at: 20260920, reason: "x" } })).toBeNull();
+    expect(storedRefusal({ lighthouseRefused: "PAGE_HUNG" })).toBeNull();
+    expect(storedRefusal(null)).toBeNull();
+    expect(siteFindings({ lighthouseRefused: { at: 1 } }, "https://x.co/")).toEqual([]);
+  });
+
+  it("prefers a real reading over an old refusal", () => {
+    // Both keys can coexist only in odd orders of events, but when they do, a
+    // measurement that actually happened outranks a note that one did not.
+    const read = readLighthouse(report());
+    if (!read.ok) throw new Error("fixture should read");
+    const both = { ...refused, lighthouse: { ...read.signals, contrastFailures: 40 } };
+    const out = siteFindings(both, "https://theroofingguy.co/");
+    expect(out).toContain("40 low contrast");
+    expect(out).not.toContain("site did not load (2026-09-20)");
   });
 });
