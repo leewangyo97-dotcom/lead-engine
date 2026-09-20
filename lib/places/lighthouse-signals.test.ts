@@ -8,6 +8,7 @@ import {
   measuredOn,
   readLighthouse,
   storedLighthouse,
+  siteFindings,
   STABLE_AUDITS,
   VOLATILE_AUDITS,
   type ReportLike,
@@ -336,3 +337,32 @@ const BROWSER_GONE_SHAPES = [
   "Protocol error (Page.navigate): Target closed",
   "Protocol error (Page.navigate): Protocol error (Page.navigate): Target closed",
 ];
+
+suite("siteFindings", () => {
+  const read = readLighthouse(report());
+  if (!read.ok) throw new Error("fixture should read");
+  const heavy = { lighthouse: { ...read.signals, contrastFailures: 40, unsizedImages: 26 } };
+
+  it("shows the same facts the message signals are allowed to state", () => {
+    const out = siteFindings(heavy, "https://theroofingguy.co/");
+    expect(out).toEqual(["10 MB page", "40 low contrast", "26 unsized images"]);
+  });
+
+  it("shows nothing for a site nobody has measured", () => {
+    expect(siteFindings({ noHttps: false }, "https://x.com/")).toEqual([]);
+    expect(siteFindings(null, "https://x.com/")).toEqual([]);
+  });
+
+  it("shows nothing once the site has moved", () => {
+    // Same guard as the message path: a reading about a server the business no
+    // longer uses must not appear beside their name.
+    expect(siteFindings(heavy, "https://theroofingguy.com/")).toEqual([]);
+  });
+
+  it("stays quiet below the floors, so an ordinary site adds no noise", () => {
+    const ordinary = {
+      lighthouse: { ...read.signals, totalBytes: 900_000, contrastFailures: 1, unsizedImages: 2 },
+    };
+    expect(siteFindings(ordinary, "https://theroofingguy.co/")).toEqual([]);
+  });
+});

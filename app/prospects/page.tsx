@@ -457,6 +457,21 @@ export default async function Prospects({
                           ) : (
                             <span className="text-faint">none</span>
                           )}
+                          {/*
+                            * What `pnpm lh` measured, for the rows that have
+                            * been. Same thresholds the message signals use, so
+                            * the table never shows a fact the draft is not
+                            * allowed to state.
+                            */}
+                          {p.findings.length > 0 && (
+                            <div className="mt-1 flex flex-col gap-[2px]">
+                              {p.findings.map((f) => (
+                                <span key={f} className="text-caption text-muted">
+                                  {f}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </td>
                         <td className="px-4 py-3">
                           <ProspectRowActions

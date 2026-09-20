@@ -5,6 +5,7 @@ import { chooseChannel, type ContactOption } from "./contact";
 import { dedupeByPhone } from "./dedupe-queue";
 import type { QueueFilter } from "./queue-filter";
 import { isScoreProvisional, scoreProspect } from "./score";
+import { siteFindings } from "./lighthouse-signals";
 import { contactedIds } from "./outreach-log";
 
 export interface ProspectRow {
@@ -33,6 +34,11 @@ export interface ProspectRow {
   scoreReasons: [string, number][];
   /** True when the site has never been read, so the score is contacts only. */
   provisional: boolean;
+  /**
+   * Short measured facts about the site, from `pnpm lh`. Empty for the many rows
+   * nobody has measured, and for a reading taken before the site moved.
+   */
+  findings: string[];
   /**
    * Whether WhatsApp can be used at all — the same answer the button gives,
    * taken from the contact plan rather than worked out a second time.
@@ -211,6 +217,9 @@ async function queryProspects(
 
   return rows.map(({ manualOverrides, siteSignals, scoreReasons, ...r }) => {
     const plan = chooseChannel(r);
+    // What `pnpm lh` measured, reduced to labels here rather than shipping the
+    // whole jsonb blob to the browser for it to re-derive.
+    const findings = siteFindings(siteSignals, r.website);
     // Scored here as well as by the script so a freshly found prospect is not
     // shown blank until someone remembers to run `pnpm prospects:score`.
     const live = scoreProspect({ ...r, siteSignals });
@@ -220,6 +229,7 @@ async function queryProspects(
       tier: live.tier,
       scoreReasons: Object.entries(scoreReasons ?? live.reasons).sort((a, b) => b[1] - a[1]),
       provisional: isScoreProvisional({ ...r, siteSignals }),
+      findings,
       // Taken from the plan, not computed again. The second copy of this rule
       // disagreed with the first the moment published numbers began to outrank
       // the classifier: Dresden Vision's row showed a confirmed WhatsApp button

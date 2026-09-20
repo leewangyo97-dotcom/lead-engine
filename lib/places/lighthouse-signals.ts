@@ -274,6 +274,30 @@ export function needsMeasuring(row: { website: string | null; siteSignals: unkno
   return !measuredOn(stored, row.website);
 }
 
+/**
+ * The measured facts worth showing beside a prospect in the queue.
+ *
+ * Short labels, and deliberately the *same* floors the message signals use. A
+ * hundred sites had been measured and none of it reached the screen — the only
+ * reader was the enhance prompt — so a person deciding who to write to could not
+ * see that one homepage was ten megabytes and another had forty unreadable
+ * elements. Showing a finding the message is not allowed to state would be
+ * worse than showing nothing, which is why the thresholds are shared rather
+ * than re-picked here.
+ */
+export function siteFindings(signals: unknown, website: string | null | undefined): string[] {
+  const lh = storedLighthouse(signals);
+  if (!lh || !measuredOn(lh, website)) return [];
+
+  const out: string[] = [];
+  if (lh.totalBytes >= HEAVY_PAGE_BYTES) {
+    out.push(`${Math.round(lh.totalBytes / 1_048_576)} MB page`);
+  }
+  if (lh.contrastFailures >= CONTRAST_FAILURE_FLOOR) out.push(`${lh.contrastFailures} low contrast`);
+  if (lh.unsizedImages >= UNSIZED_IMAGE_FLOOR) out.push(`${lh.unsizedImages} unsized images`);
+  return out;
+}
+
 /** Human-readable summary for the CLI. */
 export function describe(signals: LighthouseSignals): string[] {
   const lines = [`page weight: ${signals.totalBytesLabel}`];
