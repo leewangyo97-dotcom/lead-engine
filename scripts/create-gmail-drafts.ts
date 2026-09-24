@@ -102,5 +102,9 @@ async function main() {
 
 main().catch((err) => {
   console.error(err);
-  process.exit(1);
+  // `exitCode`, not `exit()` — see gmail-smoke.ts. With the token dead this
+  // printed its advice and then crashed on "Assertion failed: !(handle->flags &
+  // UV_HANDLE_CLOSING)", exit 3221226505: `exit()` tore down the rejected
+  // token request's socket mid-close. The code a caller sees should be 1.
+  process.exitCode = 1;
 });
