@@ -7,7 +7,7 @@ Last updated: 2026-09-24 · Phase: **all six built. No success criterion met yet
 
 ## The honest position
 
-**The machine is built and unproven.** Six phases shipped, both funnels live, 698
+**The machine is built and unproven.** Six phases shipped, both funnels live, 702
 tests, nightly green through 23 Sept. And: **23 sends, zero replies, zero logged
 outcomes** — counted in the database on 24 Sept, not remembered. Phase 6's exit
 test needs 20 *outcomes* before the learning loop can say anything, so `/review`
@@ -58,7 +58,7 @@ opens a page that is unambiguously the message.
 - **What to do about the lead funnel.** Full-time doubled its top — **6 of 194**
   clear 75, average 39 — but the ceiling is stack and timezone, not terms: those
   boards do not carry UTC+8 work in his stack. Accept the rate, or stop spending
-  nightly runs on it.
+  nightly runs on it. Scoring full-time as contract would add 1 lead (24 Sept).
 
 ### 3. Code — real, and none of it changes the outcome
 
