@@ -7,7 +7,7 @@ Last updated: 2026-09-24 · Phase: **all six built. No success criterion met yet
 
 ## The honest position
 
-**The machine is built and unproven.** Six phases shipped, both funnels live, 694
+**The machine is built and unproven.** Six phases shipped, both funnels live, 698
 tests, nightly green through 23 Sept. And: **23 sends, zero replies, zero logged
 outcomes** — counted in the database on 24 Sept, not remembered. Phase 6's exit
 test needs 20 *outcomes* before the learning loop can say anything, so `/review`
@@ -32,7 +32,8 @@ opens a page that is unambiguously the message.
   11 Sept: **0 verifier violations, 0 over length, correct channel** — nothing
   blocks but the clicking. Rung 2 falls 7 days after rung 1 is actually sent (the
   ladder ran 4 days long until 20 Sept), so starting late does not stack them.
-  The app writes them on the click; `pnpm followups` emits the two leads only.
+  The app writes prospect ones on the click; the two lead ones (Atria, This Dot
+  Labs) were drafted and verified 24 Sept and wait only on the Gmail token.
 - **Send the 12 unsent drafts.** All `no_website` Cebu rows, so Lighthouse has
   nothing to add to them. Re-verified 20 Sept: 0 false.
 - **Check whether the WhatsApp sends delivered.** 6 of 12 went to *guessed*
@@ -46,15 +47,14 @@ opens a page that is unambiguously the message.
 - **Publish the Google OAuth consent screen.** In Testing the refresh token dies
   every 7 days, and now it takes more with it: prospect email falls back to
   `mailto:` when the token is dead, so a weekly expiry silently changes how every
-  email prospect is contacted. **The token died again on 20 Sept**
-  (`invalid_grant`). Started 12 Sept and stuck: Branding is filled and saved, but
+  email prospect is contacted. **The token is dead** (`invalid_grant`,
+  20 Sept, still dead 24 Sept). Stuck since 12 Sept: Branding is filled and saved, but
   Audience still reports the configuration incomplete and Publish is unavailable.
   Next thing to check is whether **Data Access** lists `gmail.compose` — an app
   with no scope recorded has nothing to publish.
 - **Add the three `GOOGLE_*` variables to Vercel** and redeploy. The deployed app
   has `DATABASE_URL` only, so every email click there uses the fallback.
-- **Closed 12 Sept, in DECISIONS:** full-time counts (rubric 1.2.0), and the geo
-  funnel stays. Do not reopen either as an implicit assumption.
+- **Closed 12 Sept (DECISIONS):** full-time counts; geo funnel stays. Don't reopen.
 - **What to do about the lead funnel.** Full-time doubled its top — **6 of 194**
   clear 75, average 39 — but the ceiling is stack and timezone, not terms: those
   boards do not carry UTC+8 work in his stack. Accept the rate, or stop spending
@@ -63,11 +63,12 @@ opens a page that is unambiguously the message.
 ### 3. Code — real, and none of it changes the outcome
 
 - Enrichment backlog **359 rows** at 200/night: two nights, unattended.
-- `pnpm lh --limit=N` on rows as enrichment reaches them. **~430 measured.** The
+- `pnpm lh --limit=N` as enrichment reaches rows. **~500 measured, 58 refused.** The
   cap is 150 per process and not negotiable — see below. A refusal is now
   recorded under `lighthouseRefused` and skipped for 30 days, so dead sites stop
   filling the front of every batch; `/prospects` shows "site did not load".
-- Lead scoring is clear: 17 scored 24 Sept, 1 promoted (CyberAtlas, 75), 16 parked.
+- Lead scoring is clear: 17 scored 24 Sept, 16 parked, CyberAtlas (75) drafted and
+  verified on the second try — `pnpm gmail:drafts` sends all three to Gmail.
 - `pnpm test:integration` passed 24 Sept on a scratch branch, created and deleted
   per its header. The Neon CLI here is signed in to the account holding the project.
 
@@ -80,7 +81,7 @@ licence). Any send path — CLAUDE.md rule 2.
 ## Live state
 
 **10,069 prospects** · 2,540 reachable · 33 MB of 512 · 20 hot · 359 awaiting
-enrichment · ~430 measured by `pnpm lh`. Page weight, low contrast and unsized
+enrichment · ~500 measured by `pnpm lh`. Page weight, low contrast and unsized
 images now print under the site link in the `/prospects` SITE column. The
 `Australia [schools]` search was deleted 11 Sept: 13,134 rows, 57% of the table,
 0 outreach attached, and 6,711 of the then-8,870 backlog. Exported to
@@ -97,8 +98,7 @@ billing is the prerequisite for ever going private.
 automated calls the deployment.
 
 **Geo discovery is live.** `/prospects` searches OSM, enriches, scores, opens a
-pre-filled message; `/prospect-run` is the loop. Nightly enriches 200 and
-re-scores; monthly refreshes map data.
+pre-filled message; `/prospect-run` is the loop. Nightly enriches; monthly refreshes.
 
 Working copy `C:\dev\lead-engine`; `F:\lead-engine` is corrupt, awaiting chkdsk.
 
