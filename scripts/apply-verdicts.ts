@@ -1,4 +1,4 @@
-import { desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNull } from "drizzle-orm";
 import { getDb } from "../lib/db";
 import { loadLocalEnv } from "../lib/env";
 import { events, outreach } from "../lib/db/schema";
@@ -20,20 +20,45 @@ async function main() {
 
   let passed = 0;
   let failed = 0;
+  let skipped = 0;
 
   for (const verdict of verdicts) {
-    // The most recent unverified draft for this lead — a retry writes a second
-    // outreach row, and the verdict applies to the newer one.
+    // The most recent *unsent* draft for this lead — a retry writes a second
+    // outreach row, and the verdict applies to the newer one. The comment here
+    // always said "unverified", and `isNull` was imported for it, but the query
+    // filtered on nothing: a verdict could land on an email already sent.
     const [row] = await db
-      .select({ id: outreach.id })
+      .select({ id: outreach.id, createdAt: outreach.createdAt })
       .from(outreach)
-      .where(eq(outreach.leadId, verdict.leadId))
+      .where(and(eq(outreach.leadId, verdict.leadId), isNull(outreach.sentAt)))
       .orderBy(desc(outreach.createdAt))
       .limit(1);
 
     if (!row) {
       console.error(`no draft found for lead ${verdict.leadId}`);
       process.exit(1);
+    }
+
+    // One verdict per draft. Re-running the same payload — which happened on
+    // 24 Sept, after a `tail` hid the first run's success line — wrote every
+    // verify event twice and re-stamped `verifiedAt`. A verdict newer than the
+    // draft means this draft has been judged; a revision is a new row, newer
+    // than that verdict, so it is still judged in its turn.
+    const [judged] = await db
+      .select({ id: events.id })
+      .from(events)
+      .where(
+        and(
+          eq(events.leadId, verdict.leadId),
+          inArray(events.type, ["verify_passed", "verify_failed"]),
+          gt(events.createdAt, row.createdAt),
+        ),
+      )
+      .limit(1);
+    if (judged) {
+      console.log(`  ${verdict.leadId}: this draft already has a verdict — skipped`);
+      skipped += 1;
+      continue;
     }
 
     if (verdict.ok) {
@@ -50,7 +75,7 @@ async function main() {
     });
   }
 
-  console.log(`apply-verdicts: passed=${passed} failed=${failed}`);
+  console.log(`apply-verdicts: passed=${passed} failed=${failed} skipped=${skipped}`);
 
   if (failed) {
     for (const v of verdicts.filter((x) => !x.ok)) {

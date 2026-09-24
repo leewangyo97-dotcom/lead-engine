@@ -142,6 +142,17 @@ async function main() {
     events.map((e) => e.type).join(", "),
   );
 
+  // The same payload again. On 24 Sept a rerun wrote every verify event twice
+  // and re-stamped verified_at; a draft gets one verdict, and a repeat is a no-op.
+  const again = await run(
+    "scripts/apply-verdicts.ts",
+    JSON.stringify({ verdicts: [{ leadId: "L1", ok: true, violations: [] }] }),
+  );
+  const [{ n }] = (await sql`select count(*)::int as n from events where type = 'verify_passed'`) as {
+    n: number;
+  }[];
+  check("a repeated verdict is skipped, not recorded twice", again.code === 0 && n === 1, `verify_passed=${n}`);
+
   console.log(failures === 0 ? "\nintegration: all checks passed" : `\nintegration: ${failures} FAILED`);
   process.exit(failures === 0 ? 0 : 1);
 }
