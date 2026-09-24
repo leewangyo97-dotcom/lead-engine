@@ -3,7 +3,7 @@ import { getDb } from "../lib/db";
 import { loadLocalEnv } from "../lib/env";
 import { events, leads, scores } from "../lib/db/schema";
 import { ScoreBatch, readValidatedStdin } from "../lib/model/schemas";
-import { NEEDS_DRAFT_THRESHOLD, RUBRIC_VERSION } from "../lib/scoring/prescore";
+import { NEEDS_DRAFT_THRESHOLD, RUBRIC_VERSION, fromLead, prescore } from "../lib/scoring/prescore";
 import { addRunCounts } from "../lib/leads/run-metrics";
 
 /**
@@ -20,11 +20,9 @@ async function main() {
 
   // Only leads actually awaiting scoring may be written. Without this, a stale
   // or hallucinated id would silently overwrite a lead already drafted or sent.
-  const pending = await db
-    .select({ id: leads.id })
-    .from(leads)
-    .where(eq(leads.status, "needs_scoring"));
+  const pending = await db.select().from(leads).where(eq(leads.status, "needs_scoring"));
   const allowed = new Set(pending.map((r) => r.id));
+  const byId = new Map(pending.map((r) => [r.id, r]));
 
   const unknown = items.filter((i) => !allowed.has(i.id));
   if (unknown.length) {
@@ -41,6 +39,12 @@ async function main() {
         modelScore: item.score,
         tier: item.tier,
         reason: item.reason,
+        // Recomputed here, not left from the prefilter. This row is stamped
+        // with today's rubric and today's date, and a `preScore` from days ago
+        // under an older rubric would be relabelled as though it were computed
+        // now — the lead page then explains a gap with a reason that is false.
+        // Every field in the row now describes one moment and one rubric.
+        preScore: prescore(fromLead(byId.get(item.id)!)).score,
         rubricVer: RUBRIC_VERSION,
         scoredAt: new Date(),
       })

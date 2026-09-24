@@ -1,6 +1,6 @@
 # RUBRIC — scoring weights
 
-**Version: 1.1.0** — bump on every change; `scores.rubricVersion` records it.
+**Version: 1.2.0** — bump on every change; `scores.rubricVersion` records it.
 
 Score is 0–100. Stage 1 (deterministic TypeScript) computes everything it can.
 Stage 2 (model) adjusts within ±15 and writes the reason.

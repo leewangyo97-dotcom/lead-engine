@@ -9,6 +9,7 @@ import {
   prescore,
   type PrescoreResult,
 } from "@/lib/scoring/prescore";
+import { scoreDivergence } from "@/lib/scoring/divergence";
 import { Pill, ScoreMeter } from "@/app/components/pills";
 import { OutcomeButtons } from "@/app/components/outcome-buttons";
 import { Shell } from "@/app/components/shell";
@@ -47,6 +48,8 @@ export default async function LeadDetail({ params }: { params: Promise<{ id: str
   // Recomputed rather than read back: the breakdown is deterministic, and
   // storing six more columns to avoid one function call would be worse.
   const computed = prescore(fromLead(lead));
+  // Why a stored score disagrees, established rather than assumed — see divergence.ts.
+  const divergence = stored ? scoreDivergence(fromLead(lead), stored) : "none";
   const rows = lead.kind === "funding" ? FUNDING_ROWS : JOB_ROWS;
 
   return (
@@ -137,10 +140,15 @@ export default async function LeadDetail({ params }: { params: Promise<{ id: str
             </tr>
           </tbody>
         </table>
-        {stored && stored.preScore !== computed.score && (
+        {stored && divergence !== "none" && (
           <p className="mt-3 max-w-prose text-caption text-hold">
-            Stored score is {stored.preScore} under rubric {stored.rubricVer}; the figures above use
-            the current rubric. They diverge because the weights changed after this lead was scored.
+            Stored score is {stored.preScore} under rubric {stored.rubricVer}; the figures above are
+            today&apos;s.{" "}
+            {divergence === "rubric"
+              ? "They diverge because the weights changed after this lead was scored."
+              : divergence === "age"
+                ? "Same rubric — the difference is the posting's age. Trigger freshness counts down as it gets older, and it was worth more on the day this was scored."
+                : "Same rubric, and not the posting's age: the lead's own details changed after it was scored."}
           </p>
         )}
       </section>
