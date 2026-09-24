@@ -8,7 +8,7 @@ Last updated: 2026-09-24 · Phase: **all six built. No success criterion met yet
 ## The honest position
 
 **The machine is built and unproven.** Six phases shipped, both funnels live, 702
-tests, nightly green through 23 Sept. And: **23 sends, zero replies, zero logged
+tests, nightly green through 23 Sept. And: **24 sends, zero replies, zero logged
 outcomes** — counted in the database on 24 Sept, not remembered. Phase 6's exit
 test needs 20 *outcomes* before the learning loop can say anything, so `/review`
 is not broken — it is unfed, and it says which condition is unmet rather than
@@ -39,7 +39,7 @@ opens a page that is unambiguously the message.
 - **Check whether the WhatsApp sends delivered.** 6 of 12 went to *guessed*
   numbers, all Austin. Nothing here knows — `sentAt` records the click, only
   WhatsApp has the ticks, and one tick means it never arrived. If those six
-  failed the real sample is 17, not 23. Each has a working email.
+  failed the real sample is 18, not 24. Each has a working email.
 - **Log every outcome** — `no_reply | reply | call | won`. Zero exist.
 
 ### 2. Decisions only Joshua can make
