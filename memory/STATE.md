@@ -7,7 +7,7 @@ Last updated: 2026-09-24 · Phase: **all six built. No success criterion met yet
 
 ## The honest position
 
-**The machine is built and unproven.** Six phases shipped, both funnels live, 702
+**The machine is built and unproven.** Six phases shipped, both funnels live, 706
 tests, nightly green through 23 Sept. And: **24 sends, zero replies, zero logged
 outcomes** — counted in the database on 24 Sept, not remembered. Phase 6's exit
 test needs 20 *outcomes* before the learning loop can say anything, so `/review`
@@ -33,7 +33,7 @@ opens a page that is unambiguously the message.
   blocks but the clicking. Rung 2 falls 7 days after rung 1 is actually sent (the
   ladder ran 4 days long until 20 Sept), so starting late does not stack them.
   The app writes prospect ones on the click; the two lead ones (Atria, This Dot
-  Labs) were drafted and verified 24 Sept and wait only on the Gmail token.
+  Labs) are Gmail drafts since 24 Sept, unsent.
 - **Send the 12 unsent drafts.** All `no_website` Cebu rows, so Lighthouse has
   nothing to add to them. Re-verified 20 Sept: 0 false.
 - **Check whether the WhatsApp sends delivered.** 6 of 12 went to *guessed*
@@ -47,8 +47,8 @@ opens a page that is unambiguously the message.
 - **Publish the Google OAuth consent screen.** In Testing the refresh token dies
   every 7 days, and now it takes more with it: prospect email falls back to
   `mailto:` when the token is dead, so a weekly expiry silently changes how every
-  email prospect is contacted. **The token is dead** (`invalid_grant`,
-  20 Sept, still dead 24 Sept). Stuck since 12 Sept: Branding is filled and saved, but
+  email prospect is contacted. **Re-authed 24 Sept; it dies again ~1 Oct**
+  unless published. Stuck since 12 Sept: Branding is filled and saved, but
   Audience still reports the configuration incomplete and Publish is unavailable.
   Next thing to check is whether **Data Access** lists `gmail.compose` — an app
   with no scope recorded has nothing to publish.
@@ -68,7 +68,7 @@ opens a page that is unambiguously the message.
   recorded under `lighthouseRefused` and skipped for 30 days, so dead sites stop
   filling the front of every batch; `/prospects` shows "site did not load".
 - Lead scoring is clear: 17 scored 24 Sept, 16 parked, CyberAtlas (75) drafted and
-  verified on the second try — `pnpm gmail:drafts` sends all three to Gmail.
+  verified on the second try, now a Gmail draft. Jawa.gg (2 Sept) has no address.
 - `pnpm test:integration` passed 24 Sept on a scratch branch, created and deleted
   per its header. The Neon CLI here is signed in to the account holding the project.
 

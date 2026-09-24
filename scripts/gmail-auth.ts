@@ -4,8 +4,8 @@ import { loadLocalEnv } from "../lib/env";
 import { setLocalEnv } from "../lib/env-write";
 
 /**
- * One-time OAuth to obtain a refresh token. Run it, approve in the browser, then
- * put the printed value in .env.local.
+ * One-time OAuth to obtain a refresh token. Run it, approve in the browser, and
+ * it writes the token to .env.local itself — it is never printed.
  *
  * The loopback redirect is used rather than pasting a code by hand: the code is
  * single-use and short-lived, and a code pasted through a terminal tends to end
@@ -43,10 +43,6 @@ async function main() {
       prompt: "consent",
     });
 
-  console.log("Open this URL and approve:\n");
-  console.log(authUrl);
-  console.log(`\nWaiting on ${REDIRECT} ...`);
-
   const code = await new Promise<string>((resolve, reject) => {
     const server = createServer((req, res) => {
       const url = new URL(req.url ?? "/", `http://localhost:${PORT}`);
@@ -64,7 +60,26 @@ async function main() {
       if (received) resolve(received);
       else reject(new Error(error ?? "no code returned"));
     });
-    server.listen(PORT);
+    // The URL and "waiting" are printed only once the port is really open. On
+    // 24 Sept Google redirected to a callback nothing was listening on — the
+    // browser said "localhost refused to connect" while the terminal still read
+    // "Waiting on …", because that line went out before the listener existed and
+    // stayed on screen after the process was gone. A code sent to a dead port is
+    // wasted: it is single-use and expires in minutes.
+    server.on("error", (err: NodeJS.ErrnoException) =>
+      reject(
+        new Error(
+          err.code === "EADDRINUSE"
+            ? `port ${PORT} is already in use — close the other gmail:auth and run this again`
+            : `could not listen on ${REDIRECT}: ${err.message}`,
+        ),
+      ),
+    );
+    server.listen(PORT, () => {
+      console.log("Open this URL and approve:\n");
+      console.log(authUrl);
+      console.log(`\nListening on ${REDIRECT} — keep this running until the browser says "Authorised".`);
+    });
   });
 
   const res = await fetch("https://oauth2.googleapis.com/token", {
@@ -104,5 +119,7 @@ async function main() {
 
 main().catch((err) => {
   console.error(err);
-  process.exit(1);
+  // `exitCode`, not `exit()` — see gmail-smoke.ts: after a network call, exit()
+  // on Windows can crash natively instead of returning 1.
+  process.exitCode = 1;
 });

@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest";
  * socket mid-close. `gmail:smoke` was fixed on 20 Sept and `gmail:drafts` still
  * crashed on 24 Sept, because nothing pinned the pattern. This does.
  */
-describe.each(["scripts/gmail-smoke.ts", "scripts/create-gmail-drafts.ts"])("%s", (path) => {
+describe.each(["scripts/gmail-smoke.ts", "scripts/create-gmail-drafts.ts", "scripts/gmail-auth.ts"])("%s", (path) => {
   const source = readFileSync(path, "utf8");
 
   it("sets exitCode in its failure handler instead of calling exit()", () => {
