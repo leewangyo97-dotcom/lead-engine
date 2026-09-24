@@ -21,6 +21,27 @@ export interface GmailCredentials {
   refreshToken: string;
 }
 
+/**
+ * What to do about missing credentials, which depends on where this runs.
+ *
+ * It always said "run pnpm gmail:auth", and on 24 Sept that was wrong twice
+ * over. The deployed app has none of the three variables, and `gmail:auth`
+ * writes only .env.local on the machine it runs on. And it needs the client id
+ * and secret already set — it produces the refresh token and nothing else — so
+ * with all three missing it cannot run anywhere.
+ */
+export function credentialAdvice(missing: readonly string[], onVercel: boolean): string {
+  if (onVercel) {
+    return (
+      `add ${missing.join(", ")} to this deployment's environment variables in Vercel, ` +
+      "then redeploy — pnpm gmail:auth only writes .env.local on your own machine"
+    );
+  }
+  return missing.some((m) => m !== "GOOGLE_REFRESH_TOKEN")
+    ? "set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env.local, then run pnpm gmail:auth"
+    : "run pnpm gmail:auth";
+}
+
 export function readCredentials(): GmailCredentials {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -30,10 +51,12 @@ export function readCredentials(): GmailCredentials {
     !clientId && "GOOGLE_CLIENT_ID",
     !clientSecret && "GOOGLE_CLIENT_SECRET",
     !refreshToken && "GOOGLE_REFRESH_TOKEN",
-  ].filter(Boolean);
+  ].filter((m): m is string => Boolean(m));
 
   if (missing.length) {
-    throw new Error(`missing Gmail credentials: ${missing.join(", ")} — run pnpm gmail:auth`);
+    throw new Error(
+      `missing Gmail credentials: ${missing.join(", ")} — ${credentialAdvice(missing, Boolean(process.env.VERCEL))}`,
+    );
   }
   return { clientId: clientId!, clientSecret: clientSecret!, refreshToken: refreshToken! };
 }

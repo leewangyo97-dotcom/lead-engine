@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { explainTokenFailure } from "./client";
+import { credentialAdvice, explainTokenFailure } from "./client";
 
 describe("explainTokenFailure", () => {
   it("explains the expiry that will actually happen", () => {
@@ -31,5 +31,26 @@ describe("explainTokenFailure", () => {
     // but the message is printed into CI logs, so this is worth pinning.
     const message = explainTokenFailure(400, '{"error":"invalid_grant"}');
     expect(message).not.toMatch(/client_secret|refresh_token=/);
+  });
+});
+
+describe("credentialAdvice", () => {
+  const ALL = ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_REFRESH_TOKEN"];
+
+  // The deployed app on 24 Sept: all three absent, and the advice sent the
+  // reader to a command that writes a file the deployment never reads.
+  it("on Vercel, points at the deployment's variables, not a local command", () => {
+    const advice = credentialAdvice(ALL, true);
+    expect(advice).toMatch(/environment variables in Vercel/);
+    expect(advice).toMatch(/redeploy/);
+    expect(advice).toMatch(/only writes \.env\.local/);
+  });
+
+  it("locally, asks for the client id and secret before gmail:auth, which needs them", () => {
+    expect(credentialAdvice(ALL, false)).toMatch(/^set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET/);
+  });
+
+  it("locally, with only the token missing, gmail:auth alone is right", () => {
+    expect(credentialAdvice(["GOOGLE_REFRESH_TOKEN"], false)).toBe("run pnpm gmail:auth");
   });
 });
