@@ -52,3 +52,47 @@ describe("lh and sites that refuse", () => {
     }
   });
 });
+
+describe("lh when the browser or the database drops out", () => {
+  // Built from the script's own pattern, so this tests what actually runs.
+  const literal = SOURCE.match(/const BROWSER_GONE = \/(.+)\/i;/);
+  const browserGone = new RegExp(literal![1], "i");
+
+  it("reads every browser death as one, including 'Connection closed.'", () => {
+    // 24 Sept: the DevTools socket dropped mid-run and the site was blamed.
+    for (const m of [
+      "Connection closed.",
+      "Protocol error (Page.navigate): Target closed",
+      "Session closed. Most likely the page has been closed.",
+    ]) {
+      expect(browserGone.test(m)).toBe(true);
+    }
+  });
+
+  it("does not read a site's own failure as a browser death", () => {
+    for (const m of [
+      "lighthouse could not load the page: PAGE_HUNG",
+      "lighthouse could not load the page: ERRORED_DOCUMENT_REQUEST",
+    ]) {
+      expect(browserGone.test(m)).toBe(false);
+    }
+  });
+
+  it("routes every database write through the retrying writer", () => {
+    const updates = [...SOURCE.matchAll(/\.update\(prospects\)/g)];
+    expect(updates.length).toBeGreaterThan(0);
+    for (const u of updates) {
+      expect(SOURCE.slice(Math.max(0, u.index - 60), u.index)).toMatch(/write\(\(\) =>\s*db\s*$/);
+    }
+  });
+
+  it("stops cleanly with its summary when the database stays gone", () => {
+    expect(SOURCE).toMatch(/if \(!\(err instanceof DatabaseGone\)\) throw err;/);
+  });
+
+  it("does not count a browser death as a refusal", () => {
+    const from = SOURCE.indexOf("report = await measure(");
+    const to = SOURCE.indexOf("if (BROWSER_GONE.test(message))", from);
+    expect(SOURCE.slice(from, to)).not.toMatch(/refused\+\+/);
+  });
+});

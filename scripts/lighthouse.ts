@@ -84,8 +84,38 @@ const CHROME_FLAGS = ["--headless=new", "--no-sandbox", "--disable-gpu"];
  * Narrow on purpose. A site that refuses, hangs or 404s is a fact about that
  * site and the next row is unaffected; these say the thing doing the measuring
  * has died, and every remaining row will fail identically until it is replaced.
+ *
+ * "Connection closed." was missing until 24 Sept — the DevTools socket dropping
+ * under a run. It was read as the *site* refusing: a month's cooldown charged to
+ * a working practice, and no new browser, so every later row would have failed
+ * against the dead one and been blamed in turn.
  */
-const BROWSER_GONE = /target closed|protocol error|browser.*disconnect|session closed/i;
+const BROWSER_GONE = /target closed|protocol error|browser.*disconnect|session closed|connection closed/i;
+
+/** The database stayed unreachable through every retry; see `write`. */
+class DatabaseGone extends Error {}
+
+/**
+ * A database write that survives a blip.
+ *
+ * One `fetch failed` to Neon ended a 150-row batch fifty rows in on 24 Sept:
+ * the per-row guards only covered Lighthouse, so a thrown write took the whole
+ * process down. Three tries over about six seconds ride out a dropped
+ * connection. A database that stays gone raises `DatabaseGone`, which stops the
+ * batch cleanly with its summary — every later row would spend twenty seconds
+ * measuring a site and then fail to save it.
+ */
+async function write(run: () => Promise<unknown>): Promise<void> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await run();
+      return;
+    } catch (err) {
+      if (attempt >= 3) throw new DatabaseGone((err as Error).message ?? String(err));
+      await new Promise((resolve) => setTimeout(resolve, 2_000 * attempt));
+    }
+  }
+}
 
 /** How far back to look for a reading whose site has since moved. */
 /**
@@ -147,16 +177,18 @@ async function noteRefusal(
   // Merged, like the success path: `siteSignals` also holds what the HTML
   // enricher measured, and this knows nothing about those.
   const existing = (row.signals ?? {}) as Record<string, unknown>;
-  await db
-    .update(prospects)
-    .set({
-      siteSignals: {
-        ...existing,
-        lighthouseRefused: { at: new Date().toISOString(), reason },
-      },
-      updatedAt: new Date(),
-    })
-    .where(eq(prospects.id, row.id));
+  await write(() =>
+    db
+      .update(prospects)
+      .set({
+        siteSignals: {
+          ...existing,
+          lighthouseRefused: { at: new Date().toISOString(), reason },
+        },
+        updatedAt: new Date(),
+      })
+      .where(eq(prospects.id, row.id)),
+  );
 }
 
 /**
@@ -327,6 +359,7 @@ async function main() {
   let measured = 0;
   let refused = 0;
   let blocked = 0;
+  let restarted = 0;
 
   try {
     for (const row of queue) {
@@ -344,7 +377,6 @@ async function main() {
       try {
         report = await measure(lighthouse, chrome.port, website);
       } catch (err) {
-        refused++;
         const message = (err as Error).message ?? String(err);
         console.log(`${label}\n  ${website}\n  failed: ${message.slice(0, 100)}\n`);
 
@@ -368,10 +400,13 @@ async function main() {
           // Deliberately not recorded as a refusal. This row did nothing wrong
           // — our browser died under it — and putting a month's cooldown on a
           // working site because Chrome fell over would thin the corpus for a
-          // fault at this end. It goes back in the queue untouched.
+          // fault at this end. It goes back in the queue untouched — and it is
+          // not counted as refused, which the summary used to do.
+          restarted++;
           continue;
         }
 
+        refused++;
         if (!dry) await noteRefusal(row, message.slice(0, 200));
         continue;
       }
@@ -404,15 +439,23 @@ async function main() {
       // measured — noHttps, noViewport, hasBookingForm — and this knows nothing
       // about those.
       const existing = (row.signals ?? {}) as Record<string, unknown>;
-      await db
-        .update(prospects)
-        .set({
-          siteSignals: { ...existing, lighthouse: read.signals satisfies LighthouseSignals },
-          updatedAt: new Date(),
-        })
-        .where(eq(prospects.id, row.id));
+      await write(() =>
+        db
+          .update(prospects)
+          .set({
+            siteSignals: { ...existing, lighthouse: read.signals satisfies LighthouseSignals },
+            updatedAt: new Date(),
+          })
+          .where(eq(prospects.id, row.id)),
+      );
       console.log(`  stored\n`);
     }
+  } catch (err) {
+    if (!(err instanceof DatabaseGone)) throw err;
+    // Stop, but say so and still print the summary: everything stored above is
+    // saved, and the rows not reached are simply still in the queue.
+    console.log(`\nlh: the database stopped answering (${err.message.slice(0, 80)}) — stopping here`);
+    process.exitCode = 1;
   } finally {
     // Chrome itself exits; on Windows the launcher then fails to delete its own
     // temp profile directory and throws EPERM out of kill(). Losing a batch of
@@ -427,7 +470,8 @@ async function main() {
 
   if (queue.length > 1) {
     console.log(
-      `lh: ${measured} measured, ${refused} refused, ${blocked} disallowed by robots.txt`,
+      `lh: ${measured} measured, ${refused} refused, ${blocked} disallowed by robots.txt` +
+        (restarted ? `, ${restarted} browser restart(s)` : ""),
     );
   }
   if (!measured && queue.length === 1) process.exit(1);
