@@ -3,17 +3,16 @@
 **Cap: 150 lines.** When it exceeds that, roll closed items into `DECISIONS.md`
 and truncate. This file is read every session; every line costs tokens repeatedly.
 
-Last updated: 2026-09-20 · Phase: **all six built. No success criterion met yet.**
+Last updated: 2026-09-24 · Phase: **all six built. No success criterion met yet.**
 
 ## The honest position
 
-**The machine is built and unproven.** Six phases shipped, both funnels live, 684
-tests, nightly green — twelve consecutive runs, weekdays only, checked 20 Sept.
-And: **23 sends, zero replies, zero logged outcomes** — counted in the database on 20 Sept, not remembered. Phase 6's
-exit test needs 20 *outcomes* before the learning loop can say anything, so
-`/review` is not broken — it is unfed, and it now says which condition is unmet
-rather than blaming the send count it has already passed. Everything below is
-ordered by that.
+**The machine is built and unproven.** Six phases shipped, both funnels live, 694
+tests, nightly green through 23 Sept. And: **23 sends, zero replies, zero logged
+outcomes** — counted in the database on 24 Sept, not remembered. Phase 6's exit
+test needs 20 *outcomes* before the learning loop can say anything, so `/review`
+is not broken — it is unfed, and it says which condition is unmet rather than
+blaming the send count it has already passed. Everything below is ordered by that.
 
 **Prospect email goes through the Gmail API** as of 11 Sept, and **a draft is not
 a send**: the row carries `gmailDraftId` with `sentAt` null, so the ladder does
@@ -28,18 +27,18 @@ opens a page that is unambiguously the message.
 
 ### 1. Outcomes — this is the project
 
-- **The follow-ups are six days overdue.** Due Sunday 13 Sept 19:31 Manila; on
-  20 Sept `select step … from outreach` still returns **no row above step 0**, so
-  not one has been written. All 23 sends are past rung one and the older ones are
-  past rung two. They were dry-run on 11 Sept — **0 verifier violations, 0 over
-  length, correct channel** — so nothing is blocking but the clicking. The app
-  writes them on the click; `pnpm followups` emits the two leads only.
-- **Send the 12 unsent drafts.** Twelve `step = -1` rows, none in Gmail yet.
-  Verified 10 Sept; sites change, so re-run `pnpm drafts:verify` first.
+- **The follow-ups are ten days overdue.** Due 13–14 Sept; on 24 Sept
+  `select step … from outreach` still returns **no row above step 0**. Dry-run
+  11 Sept: **0 verifier violations, 0 over length, correct channel** — nothing
+  blocks but the clicking. Rung 2 falls 7 days after rung 1 is actually sent (the
+  ladder ran 4 days long until 20 Sept), so starting late does not stack them.
+  The app writes them on the click; `pnpm followups` emits the two leads only.
+- **Send the 12 unsent drafts.** All `no_website` Cebu rows, so Lighthouse has
+  nothing to add to them. Re-verified 20 Sept: 0 false.
 - **Check whether the WhatsApp sends delivered.** 6 of 12 went to *guessed*
   numbers, all Austin. Nothing here knows — `sentAt` records the click, only
   WhatsApp has the ticks, and one tick means it never arrived. If those six
-  failed the real sample is 14, not 20. Each has a working email.
+  failed the real sample is 17, not 23. Each has a working email.
 - **Log every outcome** — `no_reply | reply | call | won`. Zero exist.
 
 ### 2. Decisions only Joshua can make
@@ -63,12 +62,14 @@ opens a page that is unambiguously the message.
 
 ### 3. Code — real, and none of it changes the outcome
 
-- Enrichment backlog **959 rows** at 200/night: about a week, unattended.
-- `pnpm lh --limit=N` on rows as enrichment reaches them. **390 measured.** The
+- Enrichment backlog **359 rows** at 200/night: two nights, unattended.
+- `pnpm lh --limit=N` on rows as enrichment reaches them. **~430 measured.** The
   cap is 150 per process and not negotiable — see below. A refusal is now
   recorded under `lighthouseRefused` and skipped for 30 days, so dead sites stop
   filling the front of every batch; `/prospects` shows "site did not load".
-- 17 leads now queue for model scoring under rubric 1.2.0 — `pnpm leads:scoring`.
+- Lead scoring is clear: 17 scored 24 Sept, 1 promoted (CyberAtlas, 75), 16 parked.
+- `pnpm test:integration` passed 24 Sept on a scratch branch, created and deleted
+  per its header. The Neon CLI here is signed in to the account holding the project.
 
 ### Deliberately not doing — recorded so it is not re-proposed
 
@@ -78,15 +79,14 @@ licence). Any send path — CLAUDE.md rule 2.
 
 ## Live state
 
-**10,069 prospects** · 2,540 reachable · 33 MB of 512 · 20 hot · 959 awaiting
-enrichment · 390 measured by `pnpm lh`. Page weight, low contrast and unsized
+**10,069 prospects** · 2,540 reachable · 33 MB of 512 · 20 hot · 359 awaiting
+enrichment · ~430 measured by `pnpm lh`. Page weight, low contrast and unsized
 images now print under the site link in the `/prospects` SITE column. The
 `Australia [schools]` search was deleted 11 Sept: 13,134 rows, 57% of the table,
 0 outreach attached, and 6,711 of the then-8,870 backlog. Exported to
 `C:\dev\lead-engine-backups` first.
 
-**404 leads** · 178 disqualified · 206 parked · 2 sent · 1 drafted · 17 awaiting
-model scoring. Rubric **1.2.0**: full-time counts.
+**428 leads** · 0 awaiting model scoring. Rubric **1.2.0**: full-time counts.
 
 **The repo is public, deliberately.** Private broke CI on 11 Sept — GitHub
 billing is failing and a private repo draws metered Actions minutes. Fixing the
@@ -110,9 +110,9 @@ Working copy `C:\dev\lead-engine`; `F:\lead-engine` is corrupt, awaiting chkdsk.
   takes 150. A backlog costs repeated commands, not a bigger number.
 - **`--dry` still measures.** It only skips the write. Never run it to check a
   log line — that is 150 third-party servers hit to read a `console.log`.
-- **Australian sites refuse from here.** It killed the schools search and it now
-  dominates the lh queue: 44 of one 150-row batch, then 9 of the first 11 of the
-  next, all `PAGE_HUNG` or `ERRORED_DOCUMENT_REQUEST`. Not a bug at this end.
+- **Some Australian hosts refuse from here** — the schools search died of it. But
+  AU is 1,071 of the 1,102 left for lh and mostly loads (329 measured, 17 refused
+  by 24 Sept); a streak of refusals was one cluster, not the country.
 - **A ladder's labels and its arithmetic are two different things.** `LADDER_DAYS`
   counts from first contact; due-ness counts from the last touch. They were the
   same numbers, so rung 2 ran to day 15 under a label reading "Day 11".
