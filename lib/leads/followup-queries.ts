@@ -1,4 +1,4 @@
-import { desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { getDb } from "../db";
 import { events, leads, outreach, prospects } from "../db/schema";
 import { MAX_STEP, REPLIED_TYPES, isDue } from "../followups";
@@ -15,6 +15,12 @@ export interface FollowupRow {
   previousSubject: string;
   previousAngle: string | null;
   daysSince: number;
+  /**
+   * An unsent draft already written for `nextStep`, if any. The rung is still
+   * owed — nothing has gone out — but writing it again is waste, and the page
+   * must not read "due now" to someone whose draft is sitting in Gmail.
+   */
+  pendingDraft: "in_gmail" | "drafted" | null;
 }
 
 /**
@@ -39,7 +45,10 @@ export interface FollowupRow {
  * with them.
  */
 export function forLeadDrafting(rows: readonly FollowupRow[]): FollowupRow[] {
-  return rows.filter((r) => r.kind === "lead");
+  // Minus any whose draft already exists: on 24 Sept `pnpm followups` still
+  // asked for Atria and This Dot Labs step 1 with both drafts waiting in Gmail,
+  // so the next run would have paid to write them twice.
+  return rows.filter((r) => r.kind === "lead" && !r.pendingDraft);
 }
 
 export async function getDueFollowups(now = new Date()): Promise<FollowupRow[]> {
@@ -79,6 +88,22 @@ export async function getDueFollowups(now = new Date()): Promise<FollowupRow[]> 
     highestStep.set(row.leadId, Math.max(highestStep.get(row.leadId) ?? 0, row.step));
   }
 
+  // Follow-up drafts written but not sent, by lead and rung.
+  const drafts = await db
+    .select({
+      leadId: sql<string>`${outreach.leadId}`,
+      step: outreach.step,
+      inGmail: sql<boolean>`${outreach.gmailDraftId} is not null`,
+    })
+    .from(outreach)
+    .where(and(isNotNull(outreach.leadId), isNull(outreach.sentAt), gt(outreach.step, 0)));
+  const pending = new Map<string, "in_gmail" | "drafted">();
+  for (const d of drafts) {
+    const key = `${d.leadId}:${d.step}`;
+    if (d.inGmail) pending.set(key, "in_gmail");
+    else if (!pending.has(key)) pending.set(key, "drafted");
+  }
+
   const due: FollowupRow[] = [];
   for (const [leadId, row] of latest) {
     const nextStep = (highestStep.get(leadId) ?? 0) + 1;
@@ -99,6 +124,7 @@ export async function getDueFollowups(now = new Date()): Promise<FollowupRow[]> 
       previousSubject: row.subject,
       previousAngle: row.angle,
       daysSince: Math.floor((now.getTime() - row.sentAt!.getTime()) / 86_400_000),
+      pendingDraft: pending.get(`${leadId}:${nextStep}`) ?? null,
     });
   }
 
@@ -163,6 +189,9 @@ async function prospectFollowups(now: Date): Promise<FollowupRow[]> {
       previousSubject: row.subject,
       previousAngle: row.angle,
       daysSince: Math.floor((now.getTime() - row.sentAt!.getTime()) / 86_400_000),
+      // Prospect follow-ups are written by the app on the click, never drafted
+      // ahead, so there is nothing pending to find.
+      pendingDraft: null,
     });
   }
 

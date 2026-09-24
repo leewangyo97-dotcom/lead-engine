@@ -12,6 +12,7 @@ const row = (kind: "lead" | "prospect", id: string): FollowupRow => ({
   previousSubject: "s",
   previousAngle: null,
   daysSince: 4,
+  pendingDraft: null,
 });
 
 describe("forLeadDrafting", () => {
@@ -38,5 +39,16 @@ describe("forLeadDrafting", () => {
   it("keeps the row untouched, so the payload shape does not change", () => {
     const lead = row("lead", "a");
     expect(forLeadDrafting([lead])[0]).toBe(lead);
+  });
+});
+
+describe("forLeadDrafting and drafts already written", () => {
+  // 24 Sept: Atria and This Dot Labs had step-1 drafts waiting in Gmail, and
+  // `pnpm followups` still asked the copywriter for both.
+  it("leaves out a lead whose next rung is already drafted, in Gmail or not", () => {
+    const inGmail = { ...row("lead", "atria"), pendingDraft: "in_gmail" as const };
+    const drafted = { ...row("lead", "tdl"), pendingDraft: "drafted" as const };
+    const owed = row("lead", "cyberatlas");
+    expect(forLeadDrafting([inGmail, drafted, owed]).map((r) => r.leadId)).toEqual(["cyberatlas"]);
   });
 });

@@ -1,4 +1,4 @@
-import { getDueFollowups } from "@/lib/leads/followup-queries";
+import { getDueFollowups, type FollowupRow } from "@/lib/leads/followup-queries";
 import { LADDER_DAYS, ladderRungs } from "@/lib/followups";
 
 import { Shell } from "@/app/components/shell";
@@ -12,7 +12,13 @@ export const dynamic = "force-dynamic";
  * A row used to read "step 2", which requires the reader to hold the ladder in
  * their head to know what is owed and how much is left. The track says both.
  */
-function LadderTrack({ nextStep }: { nextStep: number }) {
+function LadderTrack({
+  nextStep,
+  pendingDraft,
+}: {
+  nextStep: number;
+  pendingDraft: FollowupRow["pendingDraft"];
+}) {
   const rungs = ladderRungs(nextStep);
   return (
     <ol className="flex items-center gap-2" aria-label="Follow-up sequence">
@@ -40,11 +46,20 @@ function LadderTrack({ nextStep }: { nextStep: number }) {
               }`}
             >
               {rung.label}
+              {/* Owed but already written: "due now" alone sent the reader off
+                  to write a draft that was waiting in Gmail. */}
+              {rung.state === "due" && pendingDraft && (
+                <span className="text-muted">
+                  {pendingDraft === "in_gmail" ? " · in Gmail, unsent" : " · drafted, not yet in Gmail"}
+                </span>
+              )}
               <span className="sr-only">
                 {rung.state === "done"
                   ? " — sent"
                   : rung.state === "due"
-                    ? " — due now"
+                    ? pendingDraft
+                      ? " — drafted, not sent"
+                      : " — due now"
                     : " — not yet"}
               </span>
             </span>
@@ -103,7 +118,7 @@ export default async function Followups() {
               </div>
               <p className="mt-2 text-body-sm text-secondary">{row.title}</p>
               <div className="mt-3">
-                <LadderTrack nextStep={row.nextStep} />
+                <LadderTrack nextStep={row.nextStep} pendingDraft={row.pendingDraft} />
               </div>
               <p className="mt-2 text-caption text-faint">
                 previous: &ldquo;{row.previousSubject}&rdquo;
