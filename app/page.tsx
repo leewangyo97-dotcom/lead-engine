@@ -183,6 +183,9 @@ export default async function Inbox({
             ))}
           </nav>
 
+          {/* Only with rows: the shortcuts live in InboxList, which is not
+              mounted for an empty list — J, K and ? did nothing there. */}
+          {rows.length > 0 && (
           <p className="flex items-center gap-2 pb-2 text-caption text-faint">
             Navigate
             <kbd className="rounded-xs border border-rule bg-sunk px-2 py-1 font-mono text-data-sm">
@@ -192,6 +195,7 @@ export default async function Inbox({
               K
             </kbd>
           </p>
+          )}
         </div>
 
         <p className="mt-4 flex gap-4 font-mono text-data-sm tabular-nums text-muted">
@@ -213,6 +217,7 @@ export default async function Inbox({
           )}
         </div>
 
+        {rows.length > 0 && (
         <p className="mt-5 text-caption text-faint">
           Press{" "}
           <kbd className="rounded-xs border border-rule bg-sunk px-2 py-1 font-mono text-data-sm">
@@ -224,6 +229,7 @@ export default async function Inbox({
           </kbd>{" "}
           for all shortcuts
         </p>
+        )}
       </div>
     </Shell>
   );
