@@ -7,7 +7,7 @@ Last updated: 2026-09-24 · Phase: **all six built. No success criterion met yet
 
 ## The honest position
 
-**The machine is built and unproven.** Six phases shipped, both funnels live, 706
+**The machine is built and unproven.** Six phases shipped, both funnels live, 712
 tests, nightly green through 23 Sept. And: **24 sends, zero replies, zero logged
 outcomes** — counted in the database on 24 Sept, not remembered. Phase 6's exit
 test needs 20 *outcomes* before the learning loop can say anything, so `/review`
