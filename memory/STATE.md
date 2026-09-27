@@ -3,7 +3,7 @@
 **Cap: 150 lines.** When it exceeds that, roll closed items into `DECISIONS.md`
 and truncate. This file is read every session; every line costs tokens repeatedly.
 
-Last updated: 2026-09-24 · Phase: **all six built. No success criterion met yet.**
+Last updated: 2026-09-27 · Phase: **all six built. No success criterion met yet.**
 
 ## The honest position
 
@@ -62,8 +62,9 @@ opens a page that is unambiguously the message.
 
 ### 3. Code — real, and none of it changes the outcome
 
-- Enrichment backlog **359 rows** at 200/night: two nights, unattended.
-- `pnpm lh --limit=N` as enrichment reaches rows. **~500 measured, 58 refused.** The
+- Enrichment backlog **cleared** — 0 on 27 Sept. A batch ending in exit 1073807364
+  (0x40010004) was killed with the idle session, not a bug: rerun it.
+- `pnpm lh --limit=N` as enrichment reaches rows. **855 measured, 816 to go.** The
   cap is 150 per process and not negotiable — see below. A refusal is now
   recorded under `lighthouseRefused` and skipped for 30 days, so dead sites stop
   filling the front of every batch; `/prospects` shows "site did not load".
@@ -74,14 +75,13 @@ opens a page that is unambiguously the message.
 
 ### Deliberately not doing — recorded so it is not re-proposed
 
-Unused JavaScript as a signal (stable, but the theme's doing and invisible to
-the owner). Lighthouse in the nightly (42 min against 15). Wappalyzer (no
-licence). Any send path — CLAUDE.md rule 2.
+Unused JS as a signal (the theme's doing, invisible to the owner). Lighthouse in
+the nightly (42 min against 15). Wappalyzer (no licence). Any send path (rule 2).
 
 ## Live state
 
-**10,069 prospects** · 2,540 reachable · 33 MB of 512 · 20 hot · 359 awaiting
-enrichment · ~500 measured by `pnpm lh`. Page weight, low contrast and unsized
+**10,069 prospects** · 2,540 reachable · 33 MB of 512 · 20 hot · 0 awaiting
+enrichment · 855 measured by `pnpm lh`. Page weight, low contrast and unsized
 images now print under the site link in the `/prospects` SITE column. The
 `Australia [schools]` search was deleted 11 Sept: 13,134 rows, 57% of the table,
 0 outreach attached, and 6,711 of the then-8,870 backlog. Exported to
