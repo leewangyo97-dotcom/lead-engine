@@ -61,7 +61,30 @@ export function readCredentials(): GmailCredentials {
   return { clientId: clientId!, clientSecret: clientSecret!, refreshToken: refreshToken! };
 }
 
-export async function getAccessToken(creds: GmailCredentials): Promise<string> {
+/**
+ * The last access token, reused until shortly before Google says it expires.
+ *
+ * Every Email click used to exchange the refresh token first — a round trip to
+ * Google, 0.3–0.7 s, before the draft could even be created — for a token that
+ * lives an hour. Keyed by refresh token, so a re-auth never reuses the old one.
+ * Module memory: it survives between requests on a warm server and costs
+ * nothing when it does not.
+ */
+let cached: { refreshToken: string; token: string; expiresAt: number } | null = null;
+
+/** Leave this long before Google's stated expiry, so a token never dies mid-request. */
+const EXPIRY_MARGIN_MS = 120_000;
+
+export async function getAccessToken(
+  creds: GmailCredentials,
+  { fresh = false, now = Date.now }: { fresh?: boolean; now?: () => number } = {},
+): Promise<string> {
+  // `fresh` skips the cache: /settings asks whether the refresh token works
+  // right now, and a remembered answer to that question would be a stale one.
+  if (!fresh && cached && cached.refreshToken === creds.refreshToken && now() < cached.expiresAt) {
+    return cached.token;
+  }
+
   const res = await fetch(TOKEN_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -78,9 +101,19 @@ export async function getAccessToken(creds: GmailCredentials): Promise<string> {
     const body = await res.text();
     throw new Error(explainTokenFailure(res.status, body));
   }
-  const data = (await res.json()) as { access_token?: string };
+  const data = (await res.json()) as { access_token?: string; expires_in?: number };
   if (!data.access_token) throw new Error("token refresh returned no access_token");
+  cached = {
+    refreshToken: creds.refreshToken,
+    token: data.access_token,
+    expiresAt: now() + (data.expires_in ?? 3600) * 1000 - EXPIRY_MARGIN_MS,
+  };
   return data.access_token;
+}
+
+/** For tests: forget the remembered token. */
+export function clearTokenCache(): void {
+  cached = null;
 }
 
 /** RFC 2822, base64url. Non-ASCII subjects are encoded rather than mangled. */

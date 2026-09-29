@@ -54,30 +54,50 @@ export function forLeadDrafting(rows: readonly FollowupRow[]): FollowupRow[] {
 export async function getDueFollowups(now = new Date()): Promise<FollowupRow[]> {
   const db = getDb();
 
-  const sent = await db
-    .select({
-      // The inner join to leads guarantees this is present; outreach.leadId is
-      // nullable only because a row may instead belong to a geo prospect.
-      leadId: sql<string>`${outreach.leadId}`,
-      step: outreach.step,
-      sentAt: outreach.sentAt,
-      subject: outreach.subject,
-      angle: outreach.angle,
-      company: leads.company,
-      title: leads.title,
-      contact: leads.contact,
-    })
-    .from(outreach)
-    .innerJoin(leads, eq(leads.id, outreach.leadId))
-    .where(isNotNull(outreach.sentAt))
-    .orderBy(desc(outreach.sentAt));
+  // Started now, awaited at the end: the prospect ladder shares nothing with the
+  // lead queries below, and each round trip is paid in full when they queue.
+  const prospectRows = prospectFollowups(now);
+  // Its error still surfaces at the await below; this only stops it being
+  // reported as unhandled if the lead queries fail first.
+  prospectRows.catch(() => {});
 
-  // No early return on an empty lead set: prospects have their own ladder below,
-  // and returning here would silently skip every one of them.
-  const replies = await db
-    .select({ leadId: events.leadId })
-    .from(events)
-    .where(inArray(events.type, [...REPLIED_TYPES]));
+  // The three lead queries are independent too, so they go out together. They
+  // ran one after another — plus the prospect ladder's own — which is five round
+  // trips in series on every load of /followups.
+  const [sent, replies, drafts] = await Promise.all([
+    db
+      .select({
+        // The inner join to leads guarantees this is present; outreach.leadId is
+        // nullable only because a row may instead belong to a geo prospect.
+        leadId: sql<string>`${outreach.leadId}`,
+        step: outreach.step,
+        sentAt: outreach.sentAt,
+        subject: outreach.subject,
+        angle: outreach.angle,
+        company: leads.company,
+        title: leads.title,
+        contact: leads.contact,
+      })
+      .from(outreach)
+      .innerJoin(leads, eq(leads.id, outreach.leadId))
+      .where(isNotNull(outreach.sentAt))
+      .orderBy(desc(outreach.sentAt)),
+    // No early return on an empty lead set: prospects have their own ladder,
+    // and returning early would silently skip every one of them.
+    db
+      .select({ leadId: events.leadId })
+      .from(events)
+      .where(inArray(events.type, [...REPLIED_TYPES])),
+    // Follow-up drafts written but not sent, by lead and rung.
+    db
+      .select({
+        leadId: sql<string>`${outreach.leadId}`,
+        step: outreach.step,
+        inGmail: sql<boolean>`${outreach.gmailDraftId} is not null`,
+      })
+      .from(outreach)
+      .where(and(isNotNull(outreach.leadId), isNull(outreach.sentAt), gt(outreach.step, 0))),
+  ]);
   const answered = new Set(replies.map((r) => r.leadId).filter(Boolean) as string[]);
 
   // Rows arrive newest-first, so the first entry per lead is its latest touch.
@@ -88,15 +108,6 @@ export async function getDueFollowups(now = new Date()): Promise<FollowupRow[]> 
     highestStep.set(row.leadId, Math.max(highestStep.get(row.leadId) ?? 0, row.step));
   }
 
-  // Follow-up drafts written but not sent, by lead and rung.
-  const drafts = await db
-    .select({
-      leadId: sql<string>`${outreach.leadId}`,
-      step: outreach.step,
-      inGmail: sql<boolean>`${outreach.gmailDraftId} is not null`,
-    })
-    .from(outreach)
-    .where(and(isNotNull(outreach.leadId), isNull(outreach.sentAt), gt(outreach.step, 0)));
   const pending = new Map<string, "in_gmail" | "drafted">();
   for (const d of drafts) {
     const key = `${d.leadId}:${d.step}`;
@@ -128,7 +139,7 @@ export async function getDueFollowups(now = new Date()): Promise<FollowupRow[]> 
     });
   }
 
-  const all = [...due, ...(await prospectFollowups(now))];
+  const all = [...due, ...(await prospectRows)];
   return all.sort((a, b) => b.daysSince - a.daysSince);
 }
 

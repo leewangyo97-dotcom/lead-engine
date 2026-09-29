@@ -31,7 +31,12 @@ export interface GmailStatusDeps {
   token: (creds: GmailCredentials) => Promise<string>;
 }
 
-const DEFAULTS: GmailStatusDeps = { read: readCredentials, token: getAccessToken };
+// Always a live exchange: this is the "does the refresh token work right now"
+// check, and the access-token cache would answer it from memory.
+const DEFAULTS: GmailStatusDeps = {
+  read: readCredentials,
+  token: (creds) => getAccessToken(creds, { fresh: true }),
+};
 
 export async function checkGmail(deps: GmailStatusDeps = DEFAULTS): Promise<GmailStatus> {
   let creds: GmailCredentials;

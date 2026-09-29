@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { credentialAdvice, explainTokenFailure } from "./client";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { clearTokenCache, credentialAdvice, explainTokenFailure, getAccessToken } from "./client";
 
 describe("explainTokenFailure", () => {
   it("explains the expiry that will actually happen", () => {
@@ -52,5 +52,50 @@ describe("credentialAdvice", () => {
 
   it("locally, with only the token missing, gmail:auth alone is right", () => {
     expect(credentialAdvice(["GOOGLE_REFRESH_TOKEN"], false)).toBe("run pnpm gmail:auth");
+  });
+});
+
+describe("getAccessToken's cache", () => {
+  const creds = { clientId: "c", clientSecret: "s", refreshToken: "r1" };
+  let calls = 0;
+  const ok = () =>
+    ({ ok: true, json: async () => ({ access_token: `tok${++calls}`, expires_in: 3600 }) }) as Response;
+
+  beforeEach(() => {
+    calls = 0;
+    clearTokenCache();
+    vi.stubGlobal("fetch", vi.fn(async () => ok()));
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  // Every Email click used to pay a round trip to Google first, for a token
+  // that lives an hour.
+  it("reuses a live token instead of asking Google again", async () => {
+    expect(await getAccessToken(creds)).toBe("tok1");
+    expect(await getAccessToken(creds)).toBe("tok1");
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks again when told to — /settings wants a live answer", async () => {
+    await getAccessToken(creds);
+    expect(await getAccessToken(creds, { fresh: true })).toBe("tok2");
+  });
+
+  it("never serves a token from a previous refresh token", async () => {
+    await getAccessToken(creds);
+    expect(await getAccessToken({ ...creds, refreshToken: "r2" })).toBe("tok2");
+  });
+
+  it("asks again once the token is near its expiry", async () => {
+    const t0 = 1_000_000;
+    await getAccessToken(creds, { now: () => t0 });
+    expect(await getAccessToken(creds, { now: () => t0 + 3_599_000 })).toBe("tok2");
+  });
+
+  it("does not remember a failed exchange", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 400, text: async () => '{"error":"invalid_grant"}' }) as Response));
+    await expect(getAccessToken(creds)).rejects.toThrow();
+    vi.stubGlobal("fetch", vi.fn(async () => ok()));
+    expect(await getAccessToken(creds)).toBe("tok1");
   });
 });
