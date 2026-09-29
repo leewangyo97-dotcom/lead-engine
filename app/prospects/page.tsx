@@ -175,30 +175,35 @@ export default async function Prospects({
   // prospect follow-up pointed at a page that could not contain it.
   const focused = focusId ? await getProspect(focusId) : null;
 
-  // Four queries, and this page is dominated by their latency: it renders in
-  // anything from 0.5s to 4.5s depending on how awake Neon is, which is what the
-  // loading skeleton exists for. Arranging them in one Promise.all was tried and
-  // measured no better — the spread between samples of identical code was wider
-  // than the difference between the two arrangements, so the simpler shape stays.
-  const recent = await listSearches();
-  const active = searchId ? await getSearch(searchId) : null;
-
+  // This page is dominated by query latency, so everything that does not depend
+  // on something else goes out in one batch. A Promise.all here was once tried
+  // and "measured no better", but that was in dev mode, whose own overhead and
+  // Neon's wake-ups swamped the difference; against a production build on 29
+  // Sept, the queue view's three independent loads cost ~180 ms in series.
+  //
   // With no search chosen the rows are a work queue rather than an empty frame:
   // the best across every search, which is the question "who do I message next"
-  // actually asks.
-  const stats = searchId && !focused ? await getProspectStats(searchId) : null;
-  // The count comes first, because the page number has to be clamped against a
-  // total before the rows are asked for. A search of 13,134 rows showed its
-  // first 200 and offered no way to the rest.
+  // actually asks. Only the queue is filterable — a search's own page answers
+  // "what did this search find", and narrowing that would answer a different
+  // question quietly.
+  const queueView = !searchId && !focused;
+  const [recent, active, stats, queueRows, options] = await Promise.all([
+    listSearches(),
+    searchId ? getSearch(searchId) : null,
+    searchId && !focused ? getProspectStats(searchId) : null,
+    queueView ? getTopProspects(25, filter) : null,
+    queueView ? getQueueOptions() : null,
+  ]);
+
+  // A search's count must come first, because the page number has to be
+  // clamped against a total before its rows are asked for. A search of 13,134
+  // rows showed its first 200 and offered no way to the rest.
   const page = stats ? pageOf(stats.total, parsePage(pageParam)) : null;
   const rows = focused
     ? [focused]
     : searchId && page
       ? await getProspects(searchId, PAGE_SIZE, page.offset)
-      : await getTopProspects(25, filter);
-  // Only the queue is filterable. A search's own page answers "what did this
-  // search find", and narrowing that would answer a different question quietly.
-  const options = searchId || focused ? null : await getQueueOptions();
+      : (queueRows ?? (await getTopProspects(25, filter)));
 
   return (
     <Shell current="/prospects">

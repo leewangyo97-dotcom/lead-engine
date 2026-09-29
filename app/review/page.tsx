@@ -78,8 +78,8 @@ function ScoreDistribution({ bands }: { bands: Band[] }) {
 }
 
 export default async function Review() {
-  const rollup = await buildRollup();
-  const bands = await getScoreDistribution();
+  // Independent, so fetched together rather than one after the other.
+  const [rollup, bands] = await Promise.all([buildRollup(), getScoreDistribution()]);
 
   return (
     <Shell current="/review">

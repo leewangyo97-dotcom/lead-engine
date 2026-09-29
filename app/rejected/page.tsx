@@ -15,13 +15,15 @@ export const dynamic = "force-dynamic";
 export default async function Rejected() {
   // The tally is counted in SQL over every rejected lead; only the list is
   // capped. Rendering all 187 rows to derive the counts made this page 757 KB.
-  const [rows, summary, total, bands] = await Promise.all([
+  // All five in one batch. The what-if ran after the other four had finished,
+  // though it needs nothing from them — its ~120 ms went on top of theirs.
+  const [rows, summary, total, bands, scenarios] = await Promise.all([
     getRejected(),
     getRejectedTally(),
     getRejectedCount(),
     getScoreBands(),
+    getScenarios(),
   ]);
-  const scenarios = await getScenarios();
   const peak = Math.max(1, ...bands.map((b) => b.n));
 
   return (

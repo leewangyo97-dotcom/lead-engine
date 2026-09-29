@@ -24,10 +24,18 @@ export interface Scenario {
  */
 export async function getScenarios(): Promise<Scenario[]> {
   const db = getDb();
-  const rows = await db
-    .select()
-    .from(leads)
-    .where(inArray(leads.status, ["parked", "needs_scoring"]));
+  // Both queries go out together; neither needs the other's result.
+  const [rows, judged] = await Promise.all([
+    db
+      .select()
+      .from(leads)
+      .where(inArray(leads.status, ["parked", "needs_scoring"])),
+    db
+      .select({ leadId: scores.leadId, modelScore: scores.modelScore, scoredAt: scores.scoredAt })
+      .from(scores)
+      .where(isNotNull(scores.modelScore))
+      .orderBy(desc(scores.scoredAt)),
+  ]);
 
   // Disqualified leads are not here at all. A disqualifier — region-locked,
   // Rust as the primary language, a non-engineering role — is a rule, not a
@@ -40,11 +48,6 @@ export async function getScenarios(): Promise<Scenario[]> {
   // qualifying, on the page that shows them turned away: the model scored both
   // 0 as not engineering roles. Held fixed, a reweighting moves Lucia to 5,
   // while a lead the model trimmed by six points can still clear the gate.
-  const judged = await db
-    .select({ leadId: scores.leadId, modelScore: scores.modelScore, scoredAt: scores.scoredAt })
-    .from(scores)
-    .where(isNotNull(scores.modelScore))
-    .orderBy(desc(scores.scoredAt));
   const modelScore = new Map<string, number>();
   for (const j of judged) {
     if (!modelScore.has(j.leadId)) modelScore.set(j.leadId, j.modelScore!); // newest first

@@ -44,28 +44,32 @@ export interface Rollup {
 export async function buildRollup(since?: Date): Promise<Rollup> {
   const db = getDb();
 
-  const sent = await db
-    .select({
-      // Inner joined to leads, so present; nullable in the schema only because
-      // an outreach row may belong to a geo prospect instead.
-      leadId: sql<string>`${outreach.leadId}`,
-      angle: outreach.angle,
-      sentAt: outreach.sentAt,
-      sourceId: leads.sourceId,
-      stack: leads.stack,
-    })
-    .from(outreach)
-    .innerJoin(leads, eq(leads.id, outreach.leadId))
-    .where(
-      since
-        ? and(sql`${outreach.sentAt} is not null`, gte(outreach.sentAt, since))
-        : sql`${outreach.sentAt} is not null`,
-    );
-
-  const replied = await db
-    .select({ leadId: events.leadId })
-    .from(events)
-    .where(inArray(events.type, [...REPLIED_TYPES]));
+  // Three independent reads, sent together. In series they were three of the
+  // five round trips /review waited on before it could render.
+  const [sent, replied, prospectSends] = await Promise.all([
+    db
+      .select({
+        // Inner joined to leads, so present; nullable in the schema only because
+        // an outreach row may belong to a geo prospect instead.
+        leadId: sql<string>`${outreach.leadId}`,
+        angle: outreach.angle,
+        sentAt: outreach.sentAt,
+        sourceId: leads.sourceId,
+        stack: leads.stack,
+      })
+      .from(outreach)
+      .innerJoin(leads, eq(leads.id, outreach.leadId))
+      .where(
+        since
+          ? and(sql`${outreach.sentAt} is not null`, gte(outreach.sentAt, since))
+          : sql`${outreach.sentAt} is not null`,
+      ),
+    db
+      .select({ leadId: events.leadId })
+      .from(events)
+      .where(inArray(events.type, [...REPLIED_TYPES])),
+    prospectRollupRows(since),
+  ]);
 
   const repliedLeads = new Set(replied.map((r) => r.leadId).filter(Boolean) as string[]);
 
@@ -95,7 +99,6 @@ export async function buildRollup(since?: Date): Promise<Rollup> {
   // Prospect outreach counts too. Leaving it out meant "what works" was answered
   // from job applications alone while half the messages went to businesses, and
   // the angles differ completely between the two.
-  const prospectSends = await prospectRollupRows(since);
   for (const row of prospectSends) {
     bump("angle", row.angle ?? "unrecorded", row.replied);
     bump("source", row.source, row.replied);

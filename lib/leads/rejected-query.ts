@@ -25,7 +25,10 @@ export const REJECTED_PAGE_SIZE = 50;
 export async function getRejected(limit = REJECTED_PAGE_SIZE): Promise<RejectedRow[]> {
   const db = getDb();
 
-  const rows = await db
+  // The two queries below are independent, so they go out together — in series
+  // they were half of this page's ~230 ms of database time.
+  const [rows, reasons] = await Promise.all([
+    db
     .select({
       id: leads.id,
       company: leads.company,
@@ -49,14 +52,14 @@ export async function getRejected(limit = REJECTED_PAGE_SIZE): Promise<RejectedR
       select coalesce(s.model_score, s.pre_score) from scores s
       where s.lead_id = leads.id order by s.scored_at desc limit 1
     )`))
-    .limit(limit);
-
-  // Disqualified leads have no score row, so their reason comes from the event
-  // the pre-filter writes.
-  const reasons = await db
-    .select({ leadId: events.leadId, meta: events.meta })
-    .from(events)
-    .where(eq(events.type, "disqualified"));
+    .limit(limit),
+    // Disqualified leads have no score row, so their reason comes from the
+    // event the pre-filter writes.
+    db
+      .select({ leadId: events.leadId, meta: events.meta })
+      .from(events)
+      .where(eq(events.type, "disqualified")),
+  ]);
 
   const byLead = new Map<string, string>();
   for (const r of reasons) {
