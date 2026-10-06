@@ -3,11 +3,11 @@
 **Cap: 150 lines.** When it exceeds that, roll closed items into `DECISIONS.md`
 and truncate. This file is read every session; every line costs tokens repeatedly.
 
-Last updated: 2026-09-27 · Phase: **all six built. No success criterion met yet.**
+Last updated: 2026-10-06 · Phase: **all six built. No success criterion met yet.**
 
 ## The honest position
 
-**The machine is built and unproven.** Six phases shipped, both funnels live, 712
+**The machine is built and unproven.** Six phases shipped, both funnels live, 719
 tests, nightly green through 23 Sept. And: **24 sends, zero replies, zero logged
 outcomes** — counted in the database on 24 Sept, not remembered. Phase 6's exit
 test needs 20 *outcomes* before the learning loop can say anything, so `/review`
@@ -47,8 +47,8 @@ opens a page that is unambiguously the message.
 - **Publish the Google OAuth consent screen.** In Testing the refresh token dies
   every 7 days, and now it takes more with it: prospect email falls back to
   `mailto:` when the token is dead, so a weekly expiry silently changes how every
-  email prospect is contacted. **Re-authed 24 Sept; it dies again ~1 Oct**
-  unless published. Stuck since 12 Sept: Branding is filled and saved, but
+  email prospect is contacted. **Dead again** (`invalid_grant`, checked 6 Oct)
+  — the 24 Sept re-auth lasted its seven days. Stuck since 12 Sept: Branding is filled and saved, but
   Audience still reports the configuration incomplete and Publish is unavailable.
   Next thing to check is whether **Data Access** lists `gmail.compose` — an app
   with no scope recorded has nothing to publish.
@@ -64,7 +64,7 @@ opens a page that is unambiguously the message.
 
 - Enrichment backlog **cleared** — 0 on 27 Sept. A batch ending in exit 1073807364
   (0x40010004) was killed with the idle session, not a bug: rerun it.
-- `pnpm lh --limit=N` as enrichment reaches rows. **855 measured, 816 to go.** The
+- `pnpm lh --limit=N` as enrichment reaches rows. **~1,450 measured, ~100 to go.** The
   cap is 150 per process and not negotiable — see below. A refusal is now
   recorded under `lighthouseRefused` and skipped for 30 days, so dead sites stop
   filling the front of every batch; `/prospects` shows "site did not load".
@@ -89,13 +89,10 @@ images now print under the site link in the `/prospects` SITE column. The
 
 **428 leads** · 0 awaiting model scoring. Rubric **1.2.0**: full-time counts.
 
-**The repo is public, deliberately.** Private broke CI on 11 Sept — GitHub
-billing is failing and a private repo draws metered Actions minutes. Fixing the
-billing is the prerequisite for ever going private.
+**The repo is public, deliberately:** private broke CI (GitHub billing failing).
+Fix the billing before ever going private.
 
-**Access control is closed.** Vercel Authentication, All Deployments — pages
-*and* write endpoints 302 to the SSO wall, verified from outside. Nothing
-automated calls the deployment.
+**Access control is closed:** Vercel Authentication on all deployments, verified.
 
 **Geo discovery is live.** `/prospects` searches OSM, enriches, scores, opens a
 pre-filled message; `/prospect-run` is the loop. Nightly enriches; monthly refreshes.
@@ -108,6 +105,9 @@ Working copy `C:\dev\lead-engine`; `F:\lead-engine` is corrupt, awaiting chkdsk.
   near heap limit`, with the heap already at 4 GB. Lighthouse does not give its
   memory back. Hence `MAX_PER_PROCESS = 150`; asking for more prints why and
   takes 150. A backlog costs repeated commands, not a bigger number.
+- **Speed: Vercel runs in sin1, beside Neon** (ap-southeast-1). Unset, Hobby ran
+  functions in iad1 and every query crossed the Pacific. Pages batch independent
+  queries; measure on a production build — `pnpm dev` is 2-4x slower.
 - **`--dry` still measures.** It only skips the write. Never run it to check a
   log line — that is 150 third-party servers hit to read a `console.log`.
 - **Some Australian hosts refuse from here** — the schools search died of it. But
