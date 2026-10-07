@@ -3,7 +3,7 @@
 **Cap: 150 lines.** When it exceeds that, roll closed items into `DECISIONS.md`
 and truncate. This file is read every session; every line costs tokens repeatedly.
 
-Last updated: 2026-10-06 · Phase: **all six built. No success criterion met yet.**
+Last updated: 2026-10-07 · Phase: **all six built. No success criterion met yet.**
 
 ## The honest position
 
@@ -64,7 +64,7 @@ opens a page that is unambiguously the message.
 
 - Enrichment backlog **cleared** — 0 on 27 Sept. A batch ending in exit 1073807364
   (0x40010004) was killed with the idle session, not a bug: rerun it.
-- `pnpm lh --limit=N` as enrichment reaches rows. **~1,450 measured, ~100 to go.** The
+- `pnpm lh --limit=N` as enrichment reaches rows. **1,597 measured, backlog cleared 7 Oct.** The
   cap is 150 per process and not negotiable — see below. A refusal is now
   recorded under `lighthouseRefused` and skipped for 30 days, so dead sites stop
   filling the front of every batch; `/prospects` shows "site did not load".
