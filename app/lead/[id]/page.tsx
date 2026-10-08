@@ -188,7 +188,7 @@ export default async function LeadDetail({ params }: { params: Promise<{ id: str
 
       <section className="mb-9">
         <h2 className="mb-5 text-label uppercase text-muted">Outcome</h2>
-        <OutcomeButtons leadId={lead.id} />
+        <OutcomeButtons leadId={lead.id} status={lead.status} />
         <p className="mt-4 max-w-prose text-caption text-faint">
           Recorded by hand, because this system never sends. The weekly review can only be as honest
           as what is logged here — an unrecorded send makes every reply rate below it wrong.
