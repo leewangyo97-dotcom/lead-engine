@@ -134,7 +134,7 @@ export function ProspectSearchForm({
 
   return (
     <form onSubmit={submit} className="rounded-md border border-rule bg-surface p-5">
-      <label className="block text-label uppercase text-muted" htmlFor="place">
+      <label className="block text-label text-secondary" htmlFor="place">
         Location
       </label>
       <input
@@ -145,7 +145,7 @@ export function ProspectSearchForm({
         className="mt-2 w-full rounded-sm border border-rule bg-sunk px-4 py-3 text-body text-primary placeholder:text-faint"
       />
 
-      <p className="mt-5 text-label uppercase text-muted">Categories</p>
+      <p className="mt-5 text-label text-secondary">Categories</p>
       <div className="mt-2 flex flex-wrap gap-2">
         {PLACE_CATEGORIES.map((c) => {
           const on = selected.includes(c);
@@ -171,7 +171,7 @@ export function ProspectSearchForm({
 
       {!looksLikeArea && (
         <div className="mt-5">
-          <label className="block text-label uppercase text-muted" htmlFor="radius">
+          <label className="block text-label text-secondary" htmlFor="radius">
             Radius — {radiusKm} km
           </label>
           <input

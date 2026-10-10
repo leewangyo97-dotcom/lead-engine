@@ -65,7 +65,6 @@ export default async function LeadDetail({ params }: { params: Promise<{ id: str
         <div className="min-w-0">
           <h1
             className="font-display text-heading-lg text-primary"
-            style={{ fontVariationSettings: "'opsz' 24, 'SOFT' 25, 'WONK' 0" }}
           >
             {lead.company}
           </h1>
@@ -98,7 +97,7 @@ export default async function LeadDetail({ params }: { params: Promise<{ id: str
           a lead here is a posting, not a candidate, and neither field exists in
           docs/03-DATA-MODEL.md. Inventing them would be inventing facts. */}
       <section className="mb-9">
-        <h2 className="mb-5 text-label uppercase text-muted">Key facts</h2>
+        <h2 className="mb-5 text-label text-secondary">Key facts</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
             ["Stack", lead.stack.length ? lead.stack.slice(0, 3).join(" / ") : "not stated"],
@@ -107,7 +106,7 @@ export default async function LeadDetail({ params }: { params: Promise<{ id: str
             ["Contact", lead.isDirect ? "direct inbox" : lead.contact ? "role inbox" : "none"],
           ].map(([label, value]) => (
             <div key={label} className="rounded-sm border border-rule bg-surface px-4 py-3">
-              <p className="text-label uppercase text-muted">{label}</p>
+              <p className="text-label text-secondary">{label}</p>
               <p className="mt-1 truncate text-body-sm text-primary">{value}</p>
             </div>
           ))}
@@ -121,7 +120,7 @@ export default async function LeadDetail({ params }: { params: Promise<{ id: str
       </section>
 
       <section className="mb-9">
-        <h2 className="mb-5 text-label uppercase text-muted">Why it scored</h2>
+        <h2 className="mb-5 text-label text-secondary">Why it scored</h2>
         <table className="w-full max-w-prose text-body-sm">
           <tbody>
             {rows.map(([key, label, max]) => (
@@ -154,7 +153,7 @@ export default async function LeadDetail({ params }: { params: Promise<{ id: str
       </section>
 
       <section className="mb-9">
-        <h2 className="mb-5 text-label uppercase text-muted">The opening</h2>
+        <h2 className="mb-5 text-label text-secondary">The opening</h2>
         <dl className="max-w-prose text-body-sm">
           <div className="flex justify-between border-b border-rule-soft py-3">
             <dt className="text-secondary">Trigger</dt>
@@ -187,7 +186,7 @@ export default async function LeadDetail({ params }: { params: Promise<{ id: str
       </section>
 
       <section className="mb-9">
-        <h2 className="mb-5 text-label uppercase text-muted">Outcome</h2>
+        <h2 className="mb-5 text-label text-secondary">Outcome</h2>
         <OutcomeButtons leadId={lead.id} status={lead.status} />
         <p className="mt-4 max-w-prose text-caption text-faint">
           Recorded by hand, because this system never sends. The weekly review can only be as honest
@@ -196,7 +195,7 @@ export default async function LeadDetail({ params }: { params: Promise<{ id: str
       </section>
 
       <section>
-        <h2 className="mb-5 text-label uppercase text-muted">Source</h2>
+        <h2 className="mb-5 text-label text-secondary">Source</h2>
         <p className="max-w-prose whitespace-pre-wrap text-body text-secondary">
           {lead.summary ?? "no summary captured"}
         </p>

@@ -50,7 +50,7 @@ function Channel({
               ? `${label}: they publish this number`
               : `${label} available`
       }
-      className={`rounded-xs px-2 py-1 text-label uppercase ${
+      className={`rounded-xs px-2 py-1 text-label ${
         strong ? "bg-go-tint text-go" : ok ? "bg-sunk text-secondary" : "bg-sunk text-faint"
       }`}
     >
@@ -85,7 +85,7 @@ function FilterChips({
   if (!options.length) return null;
   return (
     <div className="mt-3 flex flex-wrap items-baseline gap-2">
-      <span className="mr-1 text-label uppercase text-muted">{label}</span>
+      <span className="mr-1 text-label text-secondary">{label}</span>
       {options.map((option) => {
         const on = active === option.name;
         return (
@@ -210,7 +210,6 @@ export default async function Prospects({
       <div className="mx-auto max-w-content">
         <h1
           className="font-display text-heading-lg text-primary"
-          style={{ fontVariationSettings: "'opsz' 24, 'SOFT' 25, 'WONK' 0" }}
         >
           Find prospects
         </h1>
@@ -386,7 +385,7 @@ export default async function Prospects({
               <div className="mt-6 hidden overflow-x-auto rounded-md border border-rule bg-surface md:block">
                 <table className="w-full min-w-[82rem] text-body-sm">
                   <thead>
-                    <tr className="border-b border-rule text-label uppercase text-muted">
+                    <tr className="border-b border-rule text-label text-secondary">
                       <th className="px-4 py-3 text-left font-normal">Score</th>
                       <th className="px-4 py-3 text-left font-normal">Business</th>
                       <th className="px-4 py-3 text-left font-normal">City</th>

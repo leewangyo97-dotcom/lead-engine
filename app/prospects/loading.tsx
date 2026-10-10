@@ -24,7 +24,6 @@ export default function Loading() {
       <div className="mx-auto max-w-content">
         <h1
           className="font-display text-heading-lg text-primary"
-          style={{ fontVariationSettings: "'opsz' 24, 'SOFT' 25, 'WONK' 0" }}
         >
           Find prospects
         </h1>

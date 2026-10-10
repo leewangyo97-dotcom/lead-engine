@@ -3,7 +3,7 @@
 **Cap: 150 lines.** When it exceeds that, roll closed items into `DECISIONS.md`
 and truncate. This file is read every session; every line costs tokens repeatedly.
 
-Last updated: 2026-10-07 · Phase: **all six built. No success criterion met yet.**
+Last updated: 2026-10-10 · Phase: **all six built. No success criterion met yet.**
 
 ## The honest position
 
@@ -146,5 +146,5 @@ Working copy `C:\dev\lead-engine`; `F:\lead-engine` is corrupt, awaiting chkdsk.
   before believing it — see RUNBOOK
 - `tokens:record` writes to the **most recent** run and its figures come from a
   person — never paste numbers out of a usage line
-- Tailwind's spacing scale is **replaced**, keys 0-12 only. `py-0.5`, `h-14`,
-  `py-16` emit nothing and fail silently — use an arbitrary value like `h-[6px]`
+- **UI is the Pivora restyle (10 Oct): read DESIGN.md first.** Spacing is
+  replaced, keys 0-12 only: `py-0.5`, `h-14` emit nothing; use `h-[6px]`.

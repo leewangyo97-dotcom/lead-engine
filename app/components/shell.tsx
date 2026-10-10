@@ -94,8 +94,8 @@ function Icon({ d }: { d: keyof typeof ICON }) {
   return (
     <svg
       aria-hidden
-      width="20"
-      height="20"
+      width="18"
+      height="18"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -125,24 +125,28 @@ const NAV = [
  * so the query must not block the frame. Only the sidebar status suspends:
  * wrapping the whole shell would put `children` in both the fallback tree and
  * the resolved one, and render every page's queries twice.
+ *
+ * Laid out after the Pivora reference (globals.css): a full-height grey
+ * sidebar carrying the brand, the sections and the engine's health card; and
+ * beside it a slim bar naming where you are. On a phone the sidebar becomes a
+ * brand row over a scrollable strip rather than disappearing — hiding it left
+ * the small screen with no navigation at all.
  */
 export function Shell({ current, children }: { current: string; children: ReactNode }) {
+  const here = NAV.find((item) => item.href === current);
   return (
-    <div className="min-h-screen bg-canvas">
-      <header className="flex h-[56px] items-center gap-3 border-b border-rule bg-surface px-6">
-        <LogoMark />
-        <span className="text-body-sm text-primary">Lead Engine</span>
-      </header>
+    <div className="min-h-screen bg-canvas md:flex">
+      <aside className="shrink-0 border-b border-rule bg-sunk md:sticky md:top-0 md:flex md:h-screen md:w-[248px] md:flex-col md:border-b-0 md:border-r">
+        <div className="flex h-[56px] items-center gap-3 px-5 md:h-[64px]">
+          <LogoMark />
+          <div className="min-w-0">
+            <p className="text-body-sm font-semibold leading-tight text-primary">Lead Engine</p>
+            <p className="hidden text-caption leading-tight text-muted md:block">Lead pipeline</p>
+          </div>
+        </div>
 
-      <div className="flex flex-col md:flex-row">
-        {/* A 220px sidebar on desktop, per Figma 3:793. On a phone it becomes a
-            scrollable strip rather than disappearing: hiding it left the small
-            screen with no navigation at all once the back-links were removed. */}
-        <nav
-          aria-label="Sections"
-          className="shrink-0 border-b border-rule bg-surface md:w-[220px] md:border-b-0 md:border-r md:py-5"
-        >
-          <ul className="flex overflow-x-auto md:block">
+        <nav aria-label="Sections" className="md:flex-1 md:overflow-y-auto md:px-3 md:pt-3">
+          <ul className="flex gap-2 overflow-x-auto px-4 pb-3 md:block md:space-y-[2px] md:px-0 md:pb-0">
             {NAV.map((item) => {
               const active = item.href === current;
               return (
@@ -150,10 +154,10 @@ export function Shell({ current, children }: { current: string; children: ReactN
                   <a
                     href={item.href}
                     aria-current={active ? "page" : undefined}
-                    className={`flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 text-body-sm transition-colors md:gap-3 md:border-b-0 md:border-l-2 md:py-3 md:pl-5 md:pr-4 ${
+                    className={`flex items-center gap-4 whitespace-nowrap rounded-md px-4 py-[7px] text-body-sm transition-colors ${
                       active
-                        ? "border-accent bg-selected text-primary"
-                        : "border-transparent text-secondary hover:bg-hovered"
+                        ? "bg-surface font-medium text-primary shadow-raised ring-1 ring-rule"
+                        : "text-secondary hover:bg-hovered hover:text-primary"
                     }`}
                   >
                     <Icon d={item.icon} />
@@ -166,16 +170,21 @@ export function Shell({ current, children }: { current: string; children: ReactN
               );
             })}
           </ul>
-
-          {/* Figma 3:1004 puts the engine's health at the foot of the sidebar.
-              It is the one place a dead source is visible without opening the
-              Actions log. */}
-          <Suspense fallback={null}>
-            <EngineHealth />
-          </Suspense>
         </nav>
 
-        <main className="min-w-0 flex-1 px-6 py-6 md:px-8">{children}</main>
+        {/* The engine's health at the foot of the sidebar: the one place a dead
+            source is visible without opening the Actions log. */}
+        <Suspense fallback={null}>
+          <EngineHealth />
+        </Suspense>
+      </aside>
+
+      <div className="min-w-0 flex-1">
+        <header className="sticky top-0 z-10 hidden h-[64px] items-center gap-3 border-b border-rule bg-canvas px-8 md:flex">
+          {here ? <Icon d={here.icon} /> : null}
+          <span className="text-subhead text-primary">{here?.label ?? "Lead Engine"}</span>
+        </header>
+        <main className="px-5 py-6 md:px-8 md:py-7">{children}</main>
       </div>
     </div>
   );
@@ -192,7 +201,7 @@ async function NavCount({ href }: { href: string }) {
   return (
     <span
       title={`${count.toLocaleString()} waiting`}
-      className="ml-auto hidden rounded-xs bg-sunk px-2 py-1 font-mono text-data-sm tabular-nums text-muted md:inline"
+      className="ml-auto hidden text-data-sm tabular-nums text-muted md:inline"
     >
       {formatCount(count)}
     </span>
@@ -203,14 +212,17 @@ async function EngineHealth() {
   const s = await cachedNavStatus();
   if (!s) return null;
   return (
-    <p className="mt-5 hidden items-center gap-2 px-5 md:flex">
-      <span
-        aria-hidden="true"
-        className={`h-2 w-2 rounded-full ${
-          s.health === "ok" ? "bg-go" : s.health === "warn" ? "bg-hold" : "bg-stop"
-        }`}
-      />
-      <span className="text-caption text-faint">{s.healthLabel}</span>
-    </p>
+    <div className="mx-3 mb-4 mt-4 hidden rounded-lg border border-rule bg-surface p-4 md:block">
+      <p className="flex items-center gap-3 text-body-sm font-medium text-primary">
+        <span
+          aria-hidden="true"
+          className={`h-[8px] w-[8px] shrink-0 rounded-full ${
+            s.health === "ok" ? "bg-go" : s.health === "warn" ? "bg-hold" : "bg-stop"
+          }`}
+        />
+        Engine
+      </p>
+      <p className="mt-1 text-caption text-muted">{s.healthLabel}</p>
+    </div>
   );
 }

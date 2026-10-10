@@ -194,7 +194,7 @@ export function InboxList({ rows }: { rows: InboxRow[]; judged?: number }) {
           aria-label="Disqualify reason"
           className="fixed inset-x-0 bottom-0 border-t border-rule bg-surface p-5 shadow-overlay"
         >
-          <p className="mb-3 text-label uppercase text-muted">Disqualify — pick a reason</p>
+          <p className="mb-3 text-label text-secondary">Disqualify — pick a reason</p>
           <ul className="flex flex-wrap gap-4 text-body-sm text-secondary">
             {REASONS.map((r) => (
               <li key={r.key}>
@@ -217,7 +217,7 @@ export function InboxList({ rows }: { rows: InboxRow[]; judged?: number }) {
           aria-label="Keyboard shortcuts"
           className="fixed inset-x-0 bottom-0 border-t border-rule bg-surface p-5 shadow-overlay"
         >
-          <p className="mb-3 text-label uppercase text-muted">Shortcuts</p>
+          <p className="mb-3 text-label text-secondary">Shortcuts</p>
           <ul className="flex flex-wrap gap-5 text-body-sm text-secondary">
             {SHORTCUTS.map(([k, label]) => (
               <li key={k}>

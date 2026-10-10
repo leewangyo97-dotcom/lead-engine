@@ -71,8 +71,8 @@ const config: Config = {
       none: "0",
       // xs has no Figma counterpart: it is the pill radius for chips, which the
       // design draws at 3px inside components rather than as a scale step.
-      xs: "3px",
-      sm: "4px",
+      xs: "4px",
+      sm: "6px",
       md: "8px",
       lg: "12px",
       xl: "16px",
@@ -85,25 +85,27 @@ const config: Config = {
       overlay: "var(--elev-overlay)",
     },
     fontFamily: {
-      display: ["Fraunces", "Georgia", "Times New Roman", "serif"],
-      sans: ["Instrument Sans", "Helvetica Neue", "Arial", "sans-serif"],
-      mono: ["JetBrains Mono", "ui-monospace", "Menlo", "monospace"],
+      // One family for every word, per the Pivora direction (globals.css).
+      display: ["Geist", "Helvetica Neue", "Arial", "sans-serif"],
+      sans: ["Geist", "Helvetica Neue", "Arial", "sans-serif"],
+      mono: ["Geist Mono", "ui-monospace", "Menlo", "monospace"],
     },
     // Line-height falls as size rises. Never one value across the scale.
     fontSize: {
-      "display-xl": ["44px", { lineHeight: "1.02", letterSpacing: "-0.022em", fontWeight: "700" }],
-      "display-lg": ["32px", { lineHeight: "1.08", letterSpacing: "-0.018em", fontWeight: "700" }],
-      "heading-lg": ["24px", { lineHeight: "1.22", letterSpacing: "-0.012em", fontWeight: "600" }],
-      "heading-md": ["19px", { lineHeight: "1.3", letterSpacing: "-0.008em", fontWeight: "600" }],
-      subhead: ["16px", { lineHeight: "1.4", fontWeight: "600" }],
-      "body-lg": ["16px", { lineHeight: "1.62", fontWeight: "400" }],
-      body: ["14.5px", { lineHeight: "1.6", fontWeight: "400" }],
-      "body-sm": ["13px", { lineHeight: "1.55", letterSpacing: "0.004em", fontWeight: "400" }],
-      label: ["11px", { lineHeight: "1.25", letterSpacing: "0.09em", fontWeight: "600" }],
-      "data-lg": ["22px", { lineHeight: "1.1", letterSpacing: "-0.01em", fontWeight: "700" }],
-      data: ["13.5px", { lineHeight: "1.3", fontWeight: "500" }],
-      "data-sm": ["11.5px", { lineHeight: "1.3", letterSpacing: "0.01em", fontWeight: "400" }],
-      caption: ["12px", { lineHeight: "1.45", letterSpacing: "0.006em", fontWeight: "400" }],
+      "display-xl": ["40px", { lineHeight: "1.05", letterSpacing: "-0.03em", fontWeight: "600" }],
+      "display-lg": ["30px", { lineHeight: "1.1", letterSpacing: "-0.025em", fontWeight: "600" }],
+      "heading-lg": ["22px", { lineHeight: "1.25", letterSpacing: "-0.02em", fontWeight: "600" }],
+      "heading-md": ["17px", { lineHeight: "1.35", letterSpacing: "-0.012em", fontWeight: "600" }],
+      subhead: ["15px", { lineHeight: "1.4", letterSpacing: "-0.006em", fontWeight: "550" }],
+      "body-lg": ["15px", { lineHeight: "1.6", fontWeight: "400" }],
+      body: ["14px", { lineHeight: "1.6", fontWeight: "400" }],
+      "body-sm": ["13px", { lineHeight: "1.5", fontWeight: "400" }],
+      // Section headings: sentence case, weight not tracking (no uppercase labels).
+      label: ["13px", { lineHeight: "1.3", letterSpacing: "-0.003em", fontWeight: "600" }],
+      "data-lg": ["24px", { lineHeight: "1.1", letterSpacing: "-0.02em", fontWeight: "600" }],
+      data: ["13px", { lineHeight: "1.3", fontWeight: "500" }],
+      "data-sm": ["12px", { lineHeight: "1.3", fontWeight: "450" }],
+      caption: ["12px", { lineHeight: "1.45", fontWeight: "400" }],
     },
     extend: {
       // Content caps at 1240; reading columns cap at 68ch regardless of container.

@@ -8,6 +8,8 @@ const config: NextConfig = {
   // sharing .next corrupts the dev server's client manifest, which surfaces as
   // phantom 500s on pages that are actually fine.
   distDir: process.env.NEXT_DIST_DIR ?? ".next",
+  // The development badge sat on the sidebar's Engine card, bottom-left.
+  devIndicators: { position: "bottom-right" },
 };
 
 export default config;

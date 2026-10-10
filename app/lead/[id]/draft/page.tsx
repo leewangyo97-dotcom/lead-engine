@@ -36,12 +36,11 @@ export default async function DraftReview({ params }: { params: Promise<{ id: st
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1
             className="font-display text-heading-lg text-primary"
-            style={{ fontVariationSettings: "'opsz' 24, 'SOFT' 25, 'WONK' 0" }}
           >
             Review generated draft
           </h1>
           {issues > 0 && (
-            <span className="rounded-xs bg-stop-tint px-3 py-1 text-label uppercase text-stop">
+            <span className="rounded-xs bg-stop-tint px-3 py-1 text-label text-stop">
               {issues} issue{issues === 1 ? "" : "s"}
             </span>
           )}
@@ -81,12 +80,12 @@ export default async function DraftReview({ params }: { params: Promise<{ id: st
               </div>
             ))}
 
-            <p className="text-label uppercase text-muted">Subject</p>
+            <p className="text-label text-secondary">Subject</p>
             <p className="mt-2 rounded-sm border border-rule bg-sunk px-4 py-3 text-body text-primary">
               {draft.subject}
             </p>
 
-            <p className="mt-5 text-label uppercase text-muted">Email body</p>
+            <p className="mt-5 text-label text-secondary">Email body</p>
             <div className="mt-2 max-w-prose whitespace-pre-wrap rounded-sm border border-rule bg-sunk px-4 py-3 text-body text-secondary">
               {highlight(
                 draft.body,

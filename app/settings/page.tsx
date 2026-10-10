@@ -38,13 +38,12 @@ export default async function Settings() {
 
       <h1
         className="mt-4 font-display text-heading-lg text-primary"
-        style={{ fontVariationSettings: "'opsz' 24, 'SOFT' 25, 'WONK' 0" }}
       >
         Settings
       </h1>
 
       <section className="mt-8">
-        <h2 className="mb-5 text-label uppercase text-muted">Sources</h2>
+        <h2 className="mb-5 text-label text-secondary">Sources</h2>
         <ul className="max-w-prose">
           {rows.map((s) => (
             <li key={s.id} className="flex items-baseline justify-between border-b border-rule-soft py-3">
@@ -64,12 +63,12 @@ export default async function Settings() {
           `pnpm gmail:drafts` and watch it fail, and while the consent screen is
           in Testing that happens every seven days. */}
       <section className="mt-9">
-        <h2 className="mb-5 text-label uppercase text-muted">Gmail</h2>
+        <h2 className="mb-5 text-label text-secondary">Gmail</h2>
         <GmailCard status={gmail} />
       </section>
 
       <section className="mt-9">
-        <h2 className="mb-5 text-label uppercase text-muted">Thresholds</h2>
+        <h2 className="mb-5 text-label text-secondary">Thresholds</h2>
         <dl className="max-w-prose text-body-sm">
           {[
             ["Rubric version", RUBRIC_VERSION],

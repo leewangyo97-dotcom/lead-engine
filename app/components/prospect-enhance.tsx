@@ -100,7 +100,7 @@ export function ProspectEnhance({ id, name }: { id: string; name: string }) {
     >
       <div className="mt-10 w-full max-w-3xl rounded-md border border-rule bg-surface p-6 shadow-lg">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-label uppercase text-muted">Message for {name}</span>
+        <span className="text-label text-secondary">Message for {name}</span>
         <button
           type="button"
           onClick={() => setOpen(false)}
@@ -112,11 +112,11 @@ export function ProspectEnhance({ id, name }: { id: string; name: string }) {
 
       <div className="mt-3 grid gap-3 md:grid-cols-2">
         <div>
-          <p className="text-label uppercase text-muted">Current</p>
+          <p className="text-label text-secondary">Current</p>
           <p className="mt-1 whitespace-pre-wrap text-body-sm text-secondary">{data?.current}</p>
         </div>
         <div>
-          <p className="text-label uppercase text-muted">
+          <p className="text-label text-secondary">
             Enhanced {data?.draft?.angle ? `· ${data.draft.angle}` : ""}
           </p>
           {data?.draft ? (

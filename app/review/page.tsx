@@ -9,7 +9,7 @@ function CutTable({ title, cuts }: { title: string; cuts: Cut[] }) {
   if (!cuts.length) return null;
   return (
     <section className="mb-9">
-      <h2 className="mb-5 text-label uppercase text-muted">{title}</h2>
+      <h2 className="mb-5 text-label text-secondary">{title}</h2>
       <table className="w-full max-w-prose text-body-sm">
         <tbody>
           {cuts.map((c) => (
@@ -46,7 +46,7 @@ function ScoreDistribution({ bands }: { bands: Band[] }) {
   const total = bands.reduce((n, b) => n + b.count, 0);
   return (
     <section className="mb-9">
-      <h2 className="mb-5 text-label uppercase text-muted">Score distribution</h2>
+      <h2 className="mb-5 text-label text-secondary">Score distribution</h2>
       {total === 0 ? (
         <p className="max-w-prose text-body-sm text-muted">No lead has been scored yet.</p>
       ) : (
@@ -87,7 +87,6 @@ export default async function Review() {
 
       <h1
         className="mt-4 font-display text-heading-lg text-primary"
-        style={{ fontVariationSettings: "'opsz' 24, 'SOFT' 25, 'WONK' 0" }}
       >
         Weekly review
       </h1>

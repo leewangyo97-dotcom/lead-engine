@@ -46,7 +46,6 @@ export function EmptyInbox({
 
       <h2
         className="mt-5 font-display text-heading-lg text-primary"
-        style={{ fontVariationSettings: "'opsz' 24, 'SOFT' 25, 'WONK' 0" }}
       >
         You&rsquo;re through today&rsquo;s list
       </h2>

@@ -17,18 +17,15 @@ export function StatTiles({ stats }: { stats: InboxStats }) {
     ["Score avg", stats.scoreAvg == null ? "--" : String(stats.scoreAvg), "quality threshold"],
   ];
 
+  // Separate cards on a gap, after the reference's KPI row: each one a figure
+  // you can read without the others.
   return (
-    <div className="grid grid-cols-2 overflow-hidden rounded-md border border-rule bg-surface sm:grid-cols-3 lg:grid-cols-5">
-      {tiles.map(([label, value, caption], i) => (
-        <div
-          key={label}
-          className={`px-5 py-4 ${i > 0 ? "border-rule lg:border-l" : ""} ${
-            i % 2 === 1 ? "border-l border-rule lg:border-l" : ""
-          }`}
-        >
-          <p className="text-label uppercase text-muted">{label}</p>
-          <p className="mt-1 font-mono text-data-lg tabular-nums text-primary">{value}</p>
-          <p className="mt-1 text-caption text-faint">{caption}</p>
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+      {tiles.map(([label, value, caption]) => (
+        <div key={label} className="rounded-lg border border-rule bg-surface p-5">
+          <p className="text-body-sm font-medium text-secondary">{label}</p>
+          <p className="mt-3 text-display-lg tabular-nums text-primary">{value}</p>
+          <p className="mt-1 text-caption text-muted">{caption}</p>
         </div>
       ))}
     </div>

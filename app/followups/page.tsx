@@ -79,7 +79,6 @@ export default async function Followups() {
 
       <h1
         className="mt-4 font-display text-heading-lg text-primary"
-        style={{ fontVariationSettings: "'opsz' 24, 'SOFT' 25, 'WONK' 0" }}
       >
         Follow-ups due
       </h1>

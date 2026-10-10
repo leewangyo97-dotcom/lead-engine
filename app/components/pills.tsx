@@ -11,7 +11,9 @@ export function TierStripe({ tier }: { tier: string }) {
   return (
     <span
       aria-hidden
-      className={`w-1 self-stretch rounded-full ${TIER_STRIPE[tier] ?? TIER_STRIPE.cold}`}
+      // A dot, not a stripe down the row: a coloured bar wider than a hairline
+      // reads as decoration, a dot reads as a status.
+      className={`h-[8px] w-[8px] shrink-0 self-center rounded-full ${TIER_STRIPE[tier] ?? TIER_STRIPE.cold}`}
     />
   );
 }
@@ -24,15 +26,23 @@ export function Pill({
   children: ReactNode;
 }) {
   const tones = {
-    default: "bg-sunk text-muted",
+    default: "bg-hovered text-secondary",
     go: "bg-go-tint text-go",
     hold: "bg-hold-tint text-hold",
   };
-  return <span className={`rounded-xs px-3 py-1 text-label uppercase ${tones[tone]}`}>{children}</span>;
+  // Status values arrive as `needs_draft`; a chip reads them as words.
+  const text = typeof children === "string" ? children.replace(/_/g, " ") : children;
+  return (
+    <span
+      className={`inline-flex items-center rounded-sm px-[7px] py-[2px] text-data-sm font-medium ${tones[tone]}`}
+    >
+      {text}
+    </span>
+  );
 }
 
 export function Score({ value }: { value: number | null }) {
-  return <span className="font-mono text-data-lg tabular-nums text-primary">{value ?? "--"}</span>;
+  return <span className="text-data-lg tabular-nums text-primary">{value ?? "--"}</span>;
 }
 
 /**
@@ -52,7 +62,7 @@ export function ScoreMeter({ value, tier }: { value: number | null; tier: string
   const filled = Math.max(0, Math.min(100, value ?? 0));
   return (
     <div className="flex w-[52px] shrink-0 flex-col gap-1">
-      <span className="font-mono text-data-lg tabular-nums text-primary">{value ?? "--"}</span>
+      <span className="text-data-lg tabular-nums text-primary">{value ?? "--"}</span>
       <span aria-hidden className="block h-[3px] w-full rounded-full bg-rule-soft">
         <span
           className={`block h-[3px] rounded-full ${TIER_STRIPE[tier] ?? TIER_STRIPE.cold}`}

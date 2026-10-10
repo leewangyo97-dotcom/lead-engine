@@ -2,111 +2,133 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Ember & Paper foundations — docs/design/00-LEAD-ENGINE-FOUNDATIONS.md
-   Primitives are raw values. Components reference only the semantic tokens.
-   Contrast pairs in that doc are computed, not estimated — if you change a
-   colour here, recompute them there. */
+/*
+ * DIRECTION — 10 Oct 2026, from the user's pinned reference, Pivora CRM (Dribbble).
+ * WORLD: a calm operator's console. Cool neutral ground, white working surfaces on
+ *   hairline borders, one violet accent spent only on what is selected or current.
+ * TYPE: Geist for every word, Geist Mono for counts and measurements. Sentence-case
+ *   headings carry weight; no tracked uppercase labels, no serif display.
+ * NUMBERS: big tabular figures with a small tinted delta chip beside them — green
+ *   up, red down — the way the reference states change.
+ * SHAPE: 8px controls, 12px cards, pill segments; depth is a 1px border first and a
+ *   soft, offset shadow only for what floats.
+ * REPLACED: warm paper, ink and terracotta with a Fraunces display — the old look.
+ */
+
 @layer base {
-  /* primitive/colour + semantic/colour — Light */
   :root {
-    --paper-50: #fbfaf6;  --paper-100: #f5f3ec; --paper-200: #f2f1ea;
-    --paper-300: #eae8df; --paper-400: #ddd9ce; --paper-500: #c7c2b3;
-    --ink-900: #1b1a16;   --ink-800: #2c2a24;   --ink-700: #3f3d37;
-    --ink-600: #56534a;   --ink-500: #5a574f;   --ink-400: #6e6b60;
-    --ink-300: #b3afa2;
-    --night-900: #100f0c; --night-800: #14130f; --night-700: #1d1b16;
-    --night-600: #262319; --night-500: #2e2b23;
-    --ember-700: #93300f; --ember-600: #a93a17; --ember-500: #c2451f;
-    --ember-400: #d4633f; --ember-300: #e58c6c; --ember-200: #f0bca7;
-    --ember-100: #f7e4da;
-    --go-600: #245741;    --go-500: #2f6b4f;    --go-400: #4e9271;
-    --go-300: #6fbf93;    --go-100: #dfebe2;
-    --hold-600: #7a5410;  --hold-500: #855c0f;  --hold-400: #c08d2a;
-    --hold-300: #d6a445;  --hold-100: #f5e8ce;
-    --stop-600: #6e2430;  --stop-500: #8a2e3b;  --stop-300: #d4707c;
-    --stop-100: #f3dde1;
-    
-    --bg-canvas: var(--paper-200);
-    --bg-surface: var(--paper-50);
-    --bg-sunk: var(--paper-300);
-    --bg-hover: var(--paper-300);
-    --bg-selected: var(--ember-100);
-    --text-primary: var(--ink-900);
-    --text-secondary: var(--ink-700);
-    --text-muted: var(--ink-500);
-    --text-faint: var(--ink-400);
-    --text-on-accent: var(--paper-50);
-    --rule-default: var(--paper-400);
-    --rule-soft: var(--paper-300);
-    --rule-strong: var(--ink-300);
-    --accent-base: var(--ember-500);
-    --accent-hover: var(--ember-600);
-    --accent-tint: var(--ember-100);
-    --status-go: var(--go-500);
-    --status-go-tint: var(--go-100);
-    --status-hold: var(--hold-500);
-    --status-hold-tint: var(--hold-100);
-    --status-stop: var(--stop-500);
-    --status-stop-tint: var(--stop-100);
-    --elev-raised: 0 1px 2px rgb(27 26 22 / 0.05), 0 8px 24px -16px rgb(27 26 22 / 0.2);
-    --elev-overlay: 0 2px 6px rgb(27 26 22 / 0.07), 0 28px 56px -28px rgb(27 26 22 / 0.3);
+    /* Cool neutrals. 0 is pure white; 950 is the darkest ink. */
+    --n-0: #ffffff;
+    --n-25: #fcfcfd;
+    --n-50: #f7f7f8;
+    --n-100: #f1f1f4;
+    --n-150: #ebebef;
+    --n-200: #e4e4e9;
+    --n-300: #d2d2da;
+    --n-500: #8b8b97;
+    --n-600: #6a6a76;
+    --n-700: #4b4b56;
+    --n-800: #2d2d35;
+    --n-900: #1b1b21;
+    --n-950: #121216;
+
+    /* The one accent, and the three statuses. */
+    --violet-700: #4f2fc4;
+    --violet-600: #5d3ad9;
+    --violet-500: #6c4ae6;
+    --violet-400: #8f75f0;
+    --violet-300: #ad98f6;
+    --violet-100: #efebfd;
+    --green-600: #157a43;
+    --green-100: #e5f5eb;
+    --amber-600: #9a5b07;
+    --amber-100: #fcf1dc;
+    --red-600: #c42b2b;
+    --red-100: #fceaea;
+
+    --bg-canvas: var(--n-0);
+    --bg-surface: var(--n-0);
+    --bg-sunk: var(--n-50);
+    --bg-hover: var(--n-100);
+    --bg-selected: var(--n-100);
+    --text-primary: var(--n-900);
+    --text-secondary: var(--n-700);
+    --text-muted: var(--n-600);
+    /* 4.6:1 on white — small captions still read. */
+    --text-faint: #72727e;
+    --text-on-accent: var(--n-0);
+    --rule-default: var(--n-200);
+    --rule-soft: var(--n-150);
+    --rule-strong: var(--n-300);
+    --accent-base: var(--violet-500);
+    --accent-hover: var(--violet-600);
+    --accent-tint: var(--violet-100);
+    --status-go: var(--green-600);
+    --status-go-tint: var(--green-100);
+    --status-hold: var(--amber-600);
+    --status-hold-tint: var(--amber-100);
+    --status-stop: var(--red-600);
+    --status-stop-tint: var(--red-100);
+    --elev-raised: 0 1px 2px rgb(18 18 22 / 0.04), 0 1px 3px rgb(18 18 22 / 0.06);
+    --elev-overlay: 0 2px 6px rgb(18 18 22 / 0.06), 0 12px 32px -8px rgb(18 18 22 / 0.16);
   }
 
-  /* semantic/colour — Dark. Only the semantics move; primitives never do. */
+  /* The same console after dark: a deep cool ground, surfaces one step lighter,
+     the violet lifted so it keeps its contrast. */
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg-canvas: var(--night-800);
-      --bg-surface: var(--night-700);
-      --bg-sunk: var(--night-900);
-      --bg-hover: var(--night-600);
-      --bg-selected: rgb(147 48 15 / 0.22);
-      --text-primary: var(--paper-100);
-      --text-secondary: var(--paper-500);
-      --text-muted: var(--ink-300);
-      --text-faint: var(--ink-500);
-      --text-on-accent: var(--night-900);
-      --rule-default: var(--night-500);
-      --rule-soft: var(--night-600);
-      --rule-strong: var(--ink-600);
-      --accent-base: var(--ember-400);
-      --accent-hover: var(--ember-300);
-      --accent-tint: rgb(147 48 15 / 0.3);
-      --status-go: var(--go-300);
-      --status-go-tint: rgb(36 87 65 / 0.3);
-      --status-hold: var(--hold-300);
-      --status-hold-tint: rgb(122 84 16 / 0.3);
-      --status-stop: var(--stop-300);
-      --status-stop-tint: rgb(110 36 48 / 0.3);
-      --elev-raised: 0 1px 2px rgb(0 0 0 / 0.35), 0 8px 24px -16px rgb(0 0 0 / 0.7);
-      --elev-overlay: 0 2px 6px rgb(0 0 0 / 0.45), 0 28px 56px -28px rgb(0 0 0 / 0.8);
+      --bg-canvas: #0e0e12;
+      --bg-surface: #15151a;
+      --bg-sunk: #111115;
+      --bg-hover: #1d1d24;
+      --bg-selected: #22222a;
+      --text-primary: #f1f1f4;
+      --text-secondary: #c6c6d0;
+      --text-muted: #a0a0ac;
+      --text-faint: #8b8b97;
+      --text-on-accent: #ffffff;
+      --rule-default: #26262e;
+      --rule-soft: #1f1f26;
+      --rule-strong: #34343e;
+      --accent-base: var(--violet-400);
+      --accent-hover: var(--violet-300);
+      --accent-tint: #241d3d;
+      --status-go: #4cc283;
+      --status-go-tint: #12291c;
+      --status-hold: #e9a64c;
+      --status-hold-tint: #2b2111;
+      --status-stop: #f07272;
+      --status-stop-tint: #2e1616;
+      --elev-raised: 0 1px 2px rgb(0 0 0 / 0.4), 0 1px 3px rgb(0 0 0 / 0.3);
+      --elev-overlay: 0 2px 6px rgb(0 0 0 / 0.4), 0 16px 40px -8px rgb(0 0 0 / 0.6);
     }
   }
 
   [data-theme="dark"] {
-    --bg-canvas: var(--night-800);
-    --bg-surface: var(--night-700);
-    --bg-sunk: var(--night-900);
-    --bg-hover: var(--night-600);
-    --bg-selected: rgb(147 48 15 / 0.22);
-    --text-primary: var(--paper-100);
-    --text-secondary: var(--paper-500);
-    --text-muted: var(--ink-300);
-    --text-faint: var(--ink-500);
-    --text-on-accent: var(--night-900);
-    --rule-default: var(--night-500);
-    --rule-soft: var(--night-600);
-    --rule-strong: var(--ink-600);
-    --accent-base: var(--ember-400);
-    --accent-hover: var(--ember-300);
-    --accent-tint: rgb(147 48 15 / 0.3);
-    --status-go: var(--go-300);
-    --status-go-tint: rgb(36 87 65 / 0.3);
-    --status-hold: var(--hold-300);
-    --status-hold-tint: rgb(122 84 16 / 0.3);
-    --status-stop: var(--stop-300);
-    --status-stop-tint: rgb(110 36 48 / 0.3);
-    --elev-raised: 0 1px 2px rgb(0 0 0 / 0.35), 0 8px 24px -16px rgb(0 0 0 / 0.7);
-    --elev-overlay: 0 2px 6px rgb(0 0 0 / 0.45), 0 28px 56px -28px rgb(0 0 0 / 0.8);
+    --bg-canvas: #0e0e12;
+    --bg-surface: #15151a;
+    --bg-sunk: #111115;
+    --bg-hover: #1d1d24;
+    --bg-selected: #22222a;
+    --text-primary: #f1f1f4;
+    --text-secondary: #c6c6d0;
+    --text-muted: #a0a0ac;
+    --text-faint: #8b8b97;
+    --text-on-accent: #ffffff;
+    --rule-default: #26262e;
+    --rule-soft: #1f1f26;
+    --rule-strong: #34343e;
+    --accent-base: var(--violet-400);
+    --accent-hover: var(--violet-300);
+    --accent-tint: #241d3d;
+    --status-go: #4cc283;
+    --status-go-tint: #12291c;
+    --status-hold: #e9a64c;
+    --status-hold-tint: #2b2111;
+    --status-stop: #f07272;
+    --status-stop-tint: #2e1616;
+    --elev-raised: 0 1px 2px rgb(0 0 0 / 0.4), 0 1px 3px rgb(0 0 0 / 0.3);
+    --elev-overlay: 0 2px 6px rgb(0 0 0 / 0.4), 0 16px 40px -8px rgb(0 0 0 / 0.6);
   }
 
   html {
@@ -130,5 +152,9 @@
   h3,
   h4 {
     text-wrap: balance;
+  }
+
+  ::selection {
+    background: var(--accent-tint);
   }
 }

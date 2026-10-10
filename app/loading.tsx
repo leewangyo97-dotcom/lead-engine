@@ -36,7 +36,6 @@ export default function InboxLoading() {
         <header className="flex flex-wrap items-baseline justify-between gap-3">
           <h1
             className="font-display text-heading-lg text-primary"
-            style={{ fontVariationSettings: "'opsz' 24, 'SOFT' 25, 'WONK' 0" }}
           >
             Inbox
           </h1>

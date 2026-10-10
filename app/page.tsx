@@ -86,7 +86,6 @@ export default async function Inbox({
         <header className="flex flex-wrap items-baseline justify-between gap-3">
           <h1
             className="font-display text-heading-lg text-primary"
-            style={{ fontVariationSettings: "'opsz' 24, 'SOFT' 25, 'WONK' 0" }}
           >
             Inbox
           </h1>
@@ -105,7 +104,7 @@ export default async function Inbox({
             aria-label="Drafts awaiting send"
             className="mt-5 rounded-md border border-rule bg-surface p-5"
           >
-            <p className="text-label uppercase text-muted">
+            <p className="text-label text-secondary">
               {awaiting.length} draft{awaiting.length === 1 ? "" : "s"} waiting in Gmail
             </p>
             <ul className="mt-3 flex flex-col gap-2">
@@ -151,7 +150,7 @@ export default async function Inbox({
             role="alert"
             className="mt-5 rounded-md border border-stop bg-stop-tint p-5 text-body-sm text-primary"
           >
-            <p className="mb-2 text-label uppercase text-stop">Pipeline fault</p>
+            <p className="mb-2 text-label text-stop">Pipeline fault</p>
             <ul className="list-disc pl-5">
               {faults.map((f) => (
                 <li key={f}>{f}</li>
@@ -165,17 +164,17 @@ export default async function Inbox({
           </div>
         )}
 
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-rule">
-          <nav aria-label="Time range" className="flex gap-6">
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+          <nav aria-label="Time range" className="inline-flex gap-1 rounded-md bg-sunk p-1 ring-1 ring-rule-soft">
             {TABS.map((t) => (
               <a
                 key={t.key}
                 href={t.key === "all" ? "/" : `/?tab=${t.key}`}
                 aria-current={t.key === active.key ? "page" : undefined}
-                className={`-mb-px border-b-2 pb-2 text-body-sm transition-colors ${
+                className={`rounded-sm px-4 py-[5px] text-body-sm transition-colors ${
                   t.key === active.key
-                    ? "border-accent text-primary"
-                    : "border-transparent text-muted hover:text-secondary"
+                    ? "bg-surface font-medium text-primary shadow-raised"
+                    : "text-muted hover:text-primary"
                 }`}
               >
                 {t.label}

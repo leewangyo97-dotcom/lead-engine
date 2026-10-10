@@ -32,7 +32,6 @@ export default async function Rejected() {
 
       <h1
         className="mt-4 font-display text-heading-lg text-primary"
-        style={{ fontVariationSettings: "'opsz' 24, 'SOFT' 25, 'WONK' 0" }}
       >
         Turned away
       </h1>
@@ -44,7 +43,7 @@ export default async function Rejected() {
       </p>
 
       <section className="mt-7">
-        <h2 className="mb-4 text-label uppercase text-muted">By reason</h2>
+        <h2 className="mb-4 text-label text-secondary">By reason</h2>
         <ul className="flex flex-wrap gap-3">
           {summary.map((row) => (
             <li
@@ -59,7 +58,7 @@ export default async function Rejected() {
       </section>
 
       <section className="mt-9">
-        <h2 className="mb-4 text-label uppercase text-muted">How close they came</h2>
+        <h2 className="mb-4 text-label text-secondary">How close they came</h2>
         <ul className="max-w-prose">
           {bands.map((b) => (
             <li key={b.band} className="flex items-center gap-3 py-1 text-body-sm">
@@ -81,7 +80,7 @@ export default async function Rejected() {
       </section>
 
       <section className="mt-9">
-        <h2 className="mb-4 text-label uppercase text-muted">What would change</h2>
+        <h2 className="mb-4 text-label text-secondary">What would change</h2>
         <ul className="max-w-prose">
           {scenarios.map((s) => (
             <li key={s.key} className="border-b border-rule-soft py-3">
