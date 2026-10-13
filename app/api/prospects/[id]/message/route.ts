@@ -22,6 +22,12 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     subject: composed.subject,
     body: composed.body,
     to: to ? (cleanEmail(to) ?? to) : null,
+    // The copy is the message already marked sent, inside the reopen window, so
+    // the panel shows when instead of offering "I sent it" a second time.
+    alreadySent:
+      composed.reopening && !composed.awaiting && composed.lastSentAt
+        ? composed.lastSentAt.toISOString()
+        : null,
   });
 }
 

@@ -486,6 +486,7 @@ export default async function Prospects({
                           <ProspectRowActions
                             id={p.id}
                             email={p.email}
+                            lastContact={p.lastContact}
                             phoneE164={p.phoneE164}
                             overridden={p.overridden}
                           />

@@ -6,7 +6,8 @@ import { dedupeByPhone } from "./dedupe-queue";
 import type { QueueFilter } from "./queue-filter";
 import { isScoreProvisional, scoreProspect } from "./score";
 import { siteFindings } from "./lighthouse-signals";
-import { contactedIds } from "./outreach-log";
+import { lastContacts } from "./outreach-log";
+import type { LastContact } from "./contact-status";
 
 export interface ProspectRow {
   id: string;
@@ -26,6 +27,8 @@ export interface ProspectRow {
   whatsapp: ContactOption;
   emailChannel: ContactOption;
   contacted: boolean;
+  /** The latest contact, for the row's status line; null when there is none. */
+  lastContact: LastContact | null;
   /** On the do-not-contact list, so the row offers no way to message them. */
   declined: boolean;
   status: string;
@@ -213,7 +216,7 @@ async function queryProspects(
     .offset(offset);
 
   // One query for the contact history rather than one per row.
-  const contacted = await contactedIds(rows.map((r) => r.id));
+  const contacts = await lastContacts(rows.map((r) => r.id));
 
   return rows.map(({ manualOverrides, siteSignals, scoreReasons, ...r }) => {
     const plan = chooseChannel(r);
@@ -238,7 +241,8 @@ async function queryProspects(
       overridden: Object.keys(manualOverrides ?? {}),
       whatsapp: plan.whatsapp,
       emailChannel: plan.email,
-      contacted: contacted.has(r.id),
+      contacted: contacts.has(r.id),
+      lastContact: contacts.get(r.id) ?? null,
       declined: r.status === "do_not_contact",
     };
   });

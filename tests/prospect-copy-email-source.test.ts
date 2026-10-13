@@ -43,6 +43,15 @@ describe("Copy email", () => {
     expect(ROW).toContain("I sent it — start the follow-up clock");
   });
 
+  it("remembers a send across a reload: the row says it, and the panel stops offering it", () => {
+    // 13 Oct: marked sent, reloaded, and "I sent it" was offered again.
+    expect(ROW).toContain("const status = contactStatus(lastContact);");
+    expect(ROW).toMatch(/copied\.alreadySent \? \(/);
+    expect(body(ROUTE, "export async function GET(")).toMatch(
+      /alreadySent:\s*composed\.reopening && !composed\.awaiting && composed\.lastSentAt/,
+    );
+  });
+
   it("puts a copy icon beside the address and the subject", () => {
     expect(ROW).toContain('<CopyIcon text={copied.to} label="email address" />');
     expect(ROW).toContain('<CopyIcon text={copied.subject} label="subject" />');

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { contactStatus, dayLabel, type LastContact } from "@/lib/places/contact-status";
 
 /** What the Copy email button put on the clipboard, and where it goes. */
 interface Copied {
@@ -10,6 +11,8 @@ interface Copied {
   to: string | null;
   /** False when the browser refused the clipboard and the text is shown instead. */
   onClipboard: boolean;
+  /** When this same message was already marked sent (ISO), or null. */
+  alreadySent: string | null;
 }
 
 async function toClipboard(text: string): Promise<boolean> {
@@ -74,6 +77,7 @@ function CopyIcon({ text, label }: { text: string; label: string }) {
 interface Props {
   id: string;
   email: string | null;
+  lastContact: LastContact | null;
   phoneE164: string | null;
   overridden: string[];
 }
@@ -86,12 +90,15 @@ interface Props {
  * page transition to fix one field is enough friction that the field stays
  * wrong.
  */
-export function ProspectRowActions({ id, email, phoneE164, overridden }: Props) {
+export function ProspectRowActions({ id, email, phoneE164, overridden, lastContact }: Props) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState<"refresh" | "save" | "copy" | null>(null);
   const [copied, setCopied] = useState<Copied | null>(null);
   const [sent, setSent] = useState<"no" | "saving" | "yes">("no");
+  // From the server, so it survives a reload: whether "I sent it" was clicked,
+  // when, and when the next follow-up falls due.
+  const status = contactStatus(lastContact);
   const [note, setNote] = useState<string | null>(null);
   const [draft, setDraft] = useState({ email: email ?? "", phoneE164: phoneE164 ?? "" });
 
@@ -309,7 +316,15 @@ export function ProspectRowActions({ id, email, phoneE164, overridden }: Props) 
                 Open a new Gmail message
               </a>
               {sent === "yes" ? (
-                <span className="text-caption text-muted">Marked as sent.</span>
+                <span className="text-caption text-go">
+                  ✓ Marked as sent. The follow-up clock has started.
+                </span>
+              ) : copied.alreadySent ? (
+                // The same message, already marked sent: say when, rather than
+                // offer the click again as if it had never happened.
+                <span className="text-caption text-go">
+                  ✓ Already marked sent {dayLabel(copied.alreadySent)}
+                </span>
               ) : (
                 <button
                   type="button"
@@ -350,6 +365,9 @@ export function ProspectRowActions({ id, email, phoneE164, overridden }: Props) 
             done
           </button>
         </div>
+      )}
+      {status && (
+        <span className={`text-caption ${status.sent ? "text-go" : "text-hold"}`}>{status.text}</span>
       )}
       {overridden.length > 0 && (
         <span

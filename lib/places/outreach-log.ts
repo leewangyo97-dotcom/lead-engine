@@ -3,6 +3,7 @@ import { getDb } from "../db";
 import { outreach, prospects, suppressions } from "../db/schema";
 import { rootDomain } from "./normalize";
 import { chooseChannel, type Channel, type ContactOption } from "./contact";
+import { toLastContact, type LastContact } from "./contact-status";
 import { draftEmail, firstEmail } from "./email-message";
 import { messageFor } from "./follow-up-message";
 import { MAX_STEP } from "../followups";
@@ -308,6 +309,8 @@ export type ComposedContact =
        * and never confirmed — or undefined when there is none.
        */
       awaiting: { id: string; gmailDraftId: string | null } | undefined;
+      /** When the latest real contact was marked sent, or null. */
+      lastSentAt: Date | null;
       subject: string;
       body: string;
       option: ContactOption;
@@ -430,7 +433,8 @@ export async function composeContact(
   const body = chooseChannel(place, text).message;
   const plan = chooseChannel(place, body, channel === "email" ? { subject, body } : undefined);
   const option = channel === "whatsapp" ? plan.whatsapp : plan.email;
-  return { ok: true, place, draft, step, reopening, awaiting, subject, body, option };
+  const lastSentAt = previous?.sentAt ?? null;
+  return { ok: true, place, draft, step, reopening, awaiting, lastSentAt, subject, body, option };
 }
 
 /**
@@ -634,13 +638,30 @@ export async function recordCopiedEmail(
   return { ok: true, outreachId: row.id };
 }
 
-/** Prospect ids already contacted, so the table can say so without a join per row. */
-export async function contactedIds(prospectIds: string[]): Promise<Set<string>> {
-  if (prospectIds.length === 0) return new Set();
+/**
+ * The latest contact per prospect, so the table can say what happened, not just
+ * that something did, without a query per row. A bare set of contacted ids could
+ * not say whether "I sent it" had been clicked (13 Oct).
+ */
+export async function lastContacts(prospectIds: string[]): Promise<Map<string, LastContact>> {
+  if (prospectIds.length === 0) return new Map();
   const db = getDb();
   const rows = await db
-    .select({ prospectId: outreach.prospectId })
+    .select({
+      prospectId: outreach.prospectId,
+      step: outreach.step,
+      channel: outreach.channel,
+      sentAt: outreach.sentAt,
+    })
     .from(outreach)
-    .where(and(inArray(outreach.prospectId, prospectIds), gte(outreach.step, 0)));
-  return new Set(rows.map((r) => r.prospectId).filter((id): id is string => id !== null));
+    .where(and(inArray(outreach.prospectId, prospectIds), gte(outreach.step, 0)))
+    .orderBy(desc(outreach.step));
+
+  const latest = new Map<string, LastContact>();
+  for (const row of rows) {
+    if (row.prospectId && !latest.has(row.prospectId)) {
+      latest.set(row.prospectId, toLastContact(row));
+    }
+  }
+  return latest;
 }
