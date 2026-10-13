@@ -105,6 +105,16 @@ export function nounFor(category: string): string {
 }
 
 /**
+ * "an accountant", "a dentist". Every noun above that starts with a vowel letter
+ * starts with a vowel sound, so the letter decides. "a accountant" went out in
+ * every no-website email to an accountant, auto repair shop or event service
+ * until the verifier read one on 13 Oct.
+ */
+export function withArticle(noun: string): string {
+  return `${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun}`;
+}
+
+/**
  * What an assistant would do for this kind of business, finishing "answers common
  * questions and ...". Worded per kind: "books appointments" is right for a dentist
  * and wrong for a restaurant.
@@ -220,7 +230,7 @@ export function firstEmail(place: EmailPlace): Email {
         // Two sentences, not one of 37 words: the readability test holds every
         // sentence to 30 (13 Oct).
         `For example: one simple page with photos, your services and prices, and a big ` +
-          `"Message us" button. Someone looking for a ${noun}${where} could then decide in a ` +
+          `"Message us" button. Someone looking for ${withArticle(noun)}${where} could then decide in a ` +
           `minute, even late at night.`,
         tools,
         PROOF,

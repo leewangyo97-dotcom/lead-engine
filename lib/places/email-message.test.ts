@@ -11,10 +11,12 @@ import {
   SIGNATURE,
   taskFor,
   toolsLine,
+  withArticle,
   type EmailPlace,
 } from "./email-message";
 import { signalKeys } from "./enhance";
 import { messageFor } from "./follow-up-message";
+import { PLACE_CATEGORIES } from "./osm-categories";
 import { measuredMegabytes } from "./lighthouse-signals";
 import { verifyMessage } from "./message-verify";
 
@@ -204,6 +206,16 @@ describe("firstEmail", () => {
     // PROFILE lists AI automation under services, not shipped work.
     expect(toolsLine("clinics")).toMatch(/^I can also set up/);
     expect(toolsLine("clinics")).not.toMatch(/I've built|I built|clients|businesses like yours/i);
+  });
+
+  it("says 'an accountant', never 'a accountant', for every kind of business", () => {
+    // The verifier caught "a accountant", "a auto repair shop", "a event service".
+    for (const category of PLACE_CATEGORIES) {
+      const { body } = firstEmail(place({ category, website: null }));
+      expect(body).not.toMatch(/\ba [aeiou]/i);
+    }
+    expect(withArticle("accountant")).toBe("an accountant");
+    expect(withArticle("dentist")).toBe("a dentist");
   });
 
   it("calls a business by its kind, and falls back to 'business'", () => {
