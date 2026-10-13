@@ -3,6 +3,30 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+/** What the Copy email button put on the clipboard, and where it goes. */
+interface Copied {
+  subject: string;
+  body: string;
+  to: string | null;
+  /** False when the browser refused the clipboard and the text is shown instead. */
+  onClipboard: boolean;
+}
+
+async function toClipboard(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** A new Gmail message with the address and subject filled in; the body is pasted. */
+function gmailCompose({ to, subject }: Copied): string {
+  const query = new URLSearchParams({ view: "cm", fs: "1", to: to ?? "", su: subject });
+  return `https://mail.google.com/mail/?${query}`;
+}
+
 interface Props {
   id: string;
   email: string | null;
@@ -11,7 +35,7 @@ interface Props {
 }
 
 /**
- * Per-row refresh and hand editing.
+ * Per-row refresh, hand editing, and copying the first email.
  *
  * Editing is here rather than on a detail page because the correction people
  * actually make is one wrong phone number, spotted while scanning the table. A
@@ -21,7 +45,9 @@ interface Props {
 export function ProspectRowActions({ id, email, phoneE164, overridden }: Props) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
-  const [busy, setBusy] = useState<"refresh" | "save" | null>(null);
+  const [busy, setBusy] = useState<"refresh" | "save" | "copy" | null>(null);
+  const [copied, setCopied] = useState<Copied | null>(null);
+  const [sent, setSent] = useState<"no" | "saving" | "yes">("no");
   const [note, setNote] = useState<string | null>(null);
   const [draft, setDraft] = useState({ email: email ?? "", phoneE164: phoneE164 ?? "" });
 
@@ -40,6 +66,49 @@ export function ProspectRowActions({ id, email, phoneE164, overridden }: Props) 
       setNote("could not reach the server");
     } finally {
       setBusy(null);
+    }
+  }
+
+  /*
+   * Copies the email the Email button would send, for pasting into Gmail by hand
+   * — the path that still works when the Gmail token has expired and the mail
+   * link opens an empty message.
+   *
+   * Nothing is recorded and the row stays in the queue until "I sent it": a
+   * copy that never got pasted is not a contact.
+   */
+  async function copyEmail() {
+    setBusy("copy");
+    setNote(null);
+    try {
+      const res = await fetch(`/api/prospects/${id}/message`);
+      const data = await res.json();
+      if (!res.ok) {
+        setNote(data.error ?? "could not write the email");
+        return;
+      }
+      setCopied({ ...data, onClipboard: await toClipboard(data.body) });
+      setSent("no");
+    } catch {
+      setNote("could not reach the server");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function markSent() {
+    setSent("saving");
+    try {
+      const res = await fetch(`/api/prospects/${id}/message`, { method: "POST" });
+      const data = await res.json();
+      if (res.ok) setSent("yes");
+      else {
+        setSent("no");
+        setNote(data.error ?? "could not mark it sent");
+      }
+    } catch {
+      setSent("no");
+      setNote("could not reach the server");
     }
   }
 
@@ -141,7 +210,94 @@ export function ProspectRowActions({ id, email, phoneE164, overridden }: Props) 
         >
           Edit
         </button>
+        <button
+          type="button"
+          onClick={copyEmail}
+          disabled={busy !== null}
+          title="Copy a short, plain-English email for this business, ready to paste into Gmail"
+          className="rounded-xs border border-rule px-3 py-1 text-body-sm text-secondary hover:bg-hovered disabled:opacity-50"
+        >
+          {busy === "copy" ? "Copying…" : "Copy email"}
+        </button>
       </div>
+      {copied && (
+        <div
+          role="status"
+          className="mt-1 flex w-[320px] flex-col items-start gap-2 rounded-xs border border-rule bg-sunk p-3"
+        >
+          <span className="text-caption text-muted">
+            {copied.onClipboard
+              ? "Email copied. Open a new message and paste it in (Ctrl+V)."
+              : "Your browser blocked copying. Select this text and press Ctrl+C:"}
+          </span>
+          {!copied.onClipboard && (
+            <textarea
+              readOnly
+              rows={8}
+              value={copied.body}
+              onFocus={(e) => e.currentTarget.select()}
+              className="w-full rounded-xs border border-rule bg-surface p-2 text-body-sm text-primary"
+            />
+          )}
+          <span className="text-caption text-muted">
+            Subject: <span className="text-secondary">{copied.subject}</span>
+          </span>
+          {copied.to ? (
+            <>
+              <span className="text-caption text-muted">
+                To: <span className="font-mono text-data-sm text-secondary">{copied.to}</span>
+              </span>
+              <a
+                href={gmailCompose(copied)}
+                target="_blank"
+                rel="noreferrer"
+                className="text-body-sm text-accent underline underline-offset-2"
+              >
+                Open a new Gmail message
+              </a>
+              {sent === "yes" ? (
+                <span className="text-caption text-muted">Marked as sent.</span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={markSent}
+                  disabled={sent === "saving"}
+                  className="text-caption text-accent underline underline-offset-2 disabled:opacity-50"
+                >
+                  I sent it — start the follow-up clock
+                </button>
+              )}
+            </>
+          ) : (
+            <span className="text-caption text-faint">
+              No email address on file — paste it into their contact form or page instead.
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={async () => setCopied({ ...copied, onClipboard: await toClipboard(copied.body) })}
+            className="text-caption text-secondary underline underline-offset-2 hover:text-primary"
+          >
+            copy the email again
+          </button>
+          {/*
+            * No refresh until dismissed: a send sets the prospect to contacted,
+            * the queue lists only new ones, and refreshing on the click would
+            * pull this panel out from under the person reading it.
+            */}
+          <button
+            type="button"
+            onClick={() => {
+              setCopied(null);
+              if (sent === "yes") router.refresh();
+              setSent("no");
+            }}
+            className="text-caption text-secondary underline underline-offset-2 hover:text-primary"
+          >
+            done
+          </button>
+        </div>
+      )}
       {overridden.length > 0 && (
         <span
           title={`Edited by hand: ${overridden.join(", ")}. Refreshes will not overwrite these.`}

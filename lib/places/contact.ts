@@ -116,7 +116,16 @@ export function firstMessage(place: ContactablePlace): string {
   return `${opener} ${observation}\n\n${ask}`;
 }
 
-export function chooseChannel(place: ContactablePlace, message?: string): ContactPlan {
+/**
+ * `compose`, when given, is the subject and body the mail-app link carries instead of
+ * the WhatsApp text: an email's first message is written for a desk, not a phone
+ * (see `firstEmail`).
+ */
+export function chooseChannel(
+  place: ContactablePlace,
+  message?: string,
+  compose?: { subject: string; body: string },
+): ContactPlan {
   const text = message ?? firstMessage(place);
 
   // A number the business published for WhatsApp beats our classifier.
@@ -154,8 +163,8 @@ export function chooseChannel(place: ContactablePlace, message?: string): Contac
         channel: "email",
         available: true,
         href: `mailto:${place.email}?subject=${encodeURIComponent(
-          `A quick idea for ${place.name}`,
-        )}&body=${encodeURIComponent(text)}`,
+          compose?.subject ?? `A quick idea for ${place.name}`,
+        )}&body=${encodeURIComponent(compose?.body ?? text)}`,
       }
     : { channel: "email", available: false, reason: "no email address" };
 

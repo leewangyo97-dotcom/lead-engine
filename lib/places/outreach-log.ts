@@ -2,7 +2,8 @@ import { and, desc, eq, gte, inArray, isNull, isNotNull, ne } from "drizzle-orm"
 import { getDb } from "../db";
 import { outreach, prospects, suppressions } from "../db/schema";
 import { rootDomain } from "./normalize";
-import { chooseChannel, type Channel } from "./contact";
+import { chooseChannel, type Channel, type ContactOption } from "./contact";
+import { draftEmail, firstEmail } from "./email-message";
 import { messageFor } from "./follow-up-message";
 import { MAX_STEP } from "../followups";
 import { keyOf, releasable, type Identifier } from "./undecline";
@@ -293,18 +294,39 @@ export function withinReopenWindow(sentAt: Date | null, now: Date): boolean {
   return now.getTime() - sentAt.getTime() < REOPEN_WINDOW_MS;
 }
 
+/** Everything `logContact` needs to send, worked out without writing anything. */
+export type ComposedContact =
+  | { ok: false; blocked: string }
+  | {
+      ok: true;
+      place: typeof prospects.$inferSelect;
+      draft: { id: string; body: string | null; angle: string | null } | undefined;
+      step: number;
+      reopening: boolean;
+      /**
+       * The unsent row a click would reopen — logged by an earlier Email click
+       * and never confirmed — or undefined when there is none.
+       */
+      awaiting: { id: string; gmailDraftId: string | null } | undefined;
+      subject: string;
+      body: string;
+      option: ContactOption;
+    };
+
 /**
- * Logs one outreach and returns the link to open.
+ * The message the next click would send — subject, body and link — with no side
+ * effects.
  *
- * The link is built here rather than in the browser so that what is recorded and
- * what is opened are the same text. Building the message in two places is how
- * the log quietly stops describing what was actually sent.
+ * Split out of `logContact` so the row's "Copy email" button copies exactly what
+ * the Email button would send: the same step, the same accepted draft, the same
+ * do-not-contact refusals. Two builders of one message is how the log quietly
+ * stops describing what was actually sent.
  */
-export async function logContact(
+export async function composeContact(
   prospectId: string,
   channel: Channel,
   now: () => Date = () => new Date(),
-): Promise<LogContactResult> {
+): Promise<ComposedContact> {
   const db = getDb();
 
   const [place] = await db.select().from(prospects).where(eq(prospects.id, prospectId)).limit(1);
@@ -334,7 +356,12 @@ export async function logContact(
   // Step counts what has already gone out, so the follow-up rules see a real
   // sequence rather than a pile of first touches.
   const [previous] = await db
-    .select({ step: outreach.step, sentAt: outreach.sentAt })
+    .select({
+      id: outreach.id,
+      step: outreach.step,
+      sentAt: outreach.sentAt,
+      gmailDraftId: outreach.gmailDraftId,
+    })
     .from(outreach)
     .where(and(eq(outreach.prospectId, prospectId), gte(outreach.step, 0)))
     .orderBy(desc(outreach.step))
@@ -348,6 +375,10 @@ export async function logContact(
   // to another application, so a click is a request to open, not evidence of a
   // second conversation.
   const reopening = Boolean(previous && withinReopenWindow(previous.sentAt, now()));
+  const awaiting =
+    previous && !previous.sentAt
+      ? { id: previous.id, gmailDraftId: previous.gmailDraftId }
+      : undefined;
 
   // Reopening shows the message that was already sent, so it keeps the previous
   // step rather than advancing to one nobody has seen.
@@ -369,26 +400,69 @@ export async function logContact(
   // whatever the step — so a prospect reaching day four would have received
   // their opening message again, word for word, from someone they had already
   // ignored once. Sixteen of those came due on 13 September.
-  const body = messageFor({
-    step,
-    draftBody: draft?.body,
-    name: place.name,
-    category: place.category,
-    hasWebsite: Boolean(place.website),
-  });
+  //
+  // An email's first message is written for a desk rather than a phone —
+  // `firstEmail`: their situation in plain words, an example, checkable proof,
+  // one easy question. An accepted draft was written for this very business and
+  // still wins, signed as an email; follow-ups keep their own ladder text.
+  const email =
+    channel === "email" && step === 0
+      ? draft?.body
+        ? draftEmail(place, draft.body)
+        : firstEmail(place)
+      : null;
+  const text =
+    email?.body ??
+    messageFor({
+      step,
+      draftBody: draft?.body,
+      name: place.name,
+      category: place.category,
+      hasWebsite: Boolean(place.website),
+    });
+  const subject =
+    channel === "whatsapp"
+      ? `WhatsApp to ${place.name}`
+      : (email?.subject ?? `A quick idea for ${place.name}`);
 
-  const plan = chooseChannel(place, body);
+  // Resolved through the plan, which falls back to the first message when the
+  // ladder has nothing to say; the email link then carries that same text.
+  const body = chooseChannel(place, text).message;
+  const plan = chooseChannel(place, body, channel === "email" ? { subject, body } : undefined);
   const option = channel === "whatsapp" ? plan.whatsapp : plan.email;
+  return { ok: true, place, draft, step, reopening, awaiting, subject, body, option };
+}
+
+/**
+ * Logs one outreach and returns the link to open.
+ *
+ * The message comes from `composeContact`, so what is recorded, what is opened
+ * and what the Copy button copies are the same text.
+ */
+export async function logContact(
+  prospectId: string,
+  channel: Channel,
+  now: () => Date = () => new Date(),
+): Promise<LogContactResult> {
+  const db = getDb();
+  const composed = await composeContact(prospectId, channel, now);
+  if (!composed.ok) return composed;
+  const { place, draft, step, reopening, awaiting, subject, body, option } = composed;
+
   if (!option.available || !option.href) {
     return { ok: false, blocked: option.reason ?? "channel unavailable" };
   }
 
   if (reopening) {
+    // An unconfirmed mail-app row is rewritten to the text this link now carries:
+    // the email template changed on 13 Oct, and a row logged before that would
+    // otherwise record a message that was never the one sent. A Gmail draft
+    // keeps its text — that draft is what gets sent.
+    if (channel === "email" && awaiting && !awaiting.gmailDraftId) {
+      await db.update(outreach).set({ subject, body }).where(eq(outreach.id, awaiting.id));
+    }
     return { ok: true, outreachId: undefined, href: option.href, reopened: true };
   }
-
-  const subject =
-    channel === "whatsapp" ? `WhatsApp to ${place.name}` : `A quick idea for ${place.name}`;
 
   /*
    * Email goes through the Gmail API, and only falls back to a mailto: link.
@@ -411,7 +485,7 @@ export async function logContact(
       gmail.id = await createDraft(token, {
         to: cleanEmail(place.email) ?? place.email,
         subject,
-        body: plan.message,
+        body,
       });
     } catch (err) {
       // Expected roughly weekly: the consent screen is in Testing, so Google
@@ -429,7 +503,7 @@ export async function logContact(
       channel,
       step,
       subject,
-      body: plan.message,
+      body,
       // A draft is not a send. Everything else still is, because a person is
       // about to press the button themselves and nothing here will see it.
       sentAt: outcome.countsAsSent ? now() : null,
@@ -503,6 +577,60 @@ export async function markProspectSent(
   if (!row) return { ok: false, error: "nothing awaiting confirmation for this prospect" };
 
   await db.update(outreach).set({ sentAt: now() }).where(eq(outreach.id, row.id));
+  return { ok: true, outreachId: row.id };
+}
+
+/**
+ * Records an email the person copied with the row's Copy button and sent by hand.
+ *
+ * Copying writes nothing — it is not sending, and a prospect copied and then
+ * abandoned must stay in the queue. So the row is written here, at "I sent it",
+ * with `sentAt` now: the one moment this system knows a message left.
+ *
+ * The text is composed again rather than taken from the browser, and comes out
+ * the same, because `composeContact` is deterministic. An unconfirmed row from an
+ * earlier Email click is the same message, not a second one: it is marked sent and
+ * takes the copied text, which is what actually went. A row already sent inside
+ * the reopen window means this send was recorded once already.
+ */
+export async function recordCopiedEmail(
+  prospectId: string,
+  now: () => Date = () => new Date(),
+): Promise<{ ok: boolean; outreachId?: string; alreadySent?: boolean; error?: string }> {
+  const composed = await composeContact(prospectId, "email", now);
+  if (!composed.ok) return { ok: false, error: composed.blocked };
+  const { place, draft, step, reopening, awaiting, subject, body, option } = composed;
+  if (!option.available) return { ok: false, error: option.reason ?? "no email address" };
+
+  const db = getDb();
+  if (reopening) {
+    if (!awaiting) return { ok: true, alreadySent: true };
+    await db
+      .update(outreach)
+      .set({ sentAt: now(), subject, body })
+      .where(eq(outreach.id, awaiting.id));
+    return { ok: true, outreachId: awaiting.id };
+  }
+
+  const [row] = await db
+    .insert(outreach)
+    .values({
+      prospectId,
+      channel: "email",
+      step,
+      subject,
+      body,
+      sentAt: now(),
+      gmailDraftId: null,
+      angle: draft?.angle ?? (place.website ? "site-improvement" : "no-website"),
+    })
+    .returning({ id: outreach.id });
+
+  if (draft) await db.delete(outreach).where(eq(outreach.id, draft.id));
+  await db
+    .update(prospects)
+    .set({ status: "contacted", updatedAt: now() })
+    .where(eq(prospects.id, prospectId));
   return { ok: true, outreachId: row.id };
 }
 

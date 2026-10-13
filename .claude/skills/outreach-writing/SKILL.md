@@ -147,3 +147,9 @@ Joshua Senining
 Full Stack + Mobile Developer · the Philippines (UTC+8)
 joshuasenining.dev · WhatsApp +63 915 858 7388
 ```
+
+To a local business owner (the `/prospects` funnel), the same block in plain words —
+"Web and app developer · the Philippines", no "Full Stack", no "UTC+8". It lives in
+`lib/places/email-message.ts`. Proof there is shipped work only (ThredUp,
+ShopGoodwill, Jollibee, JoyRide): Majar Funeral Service is his own project, never a
+client's website.
