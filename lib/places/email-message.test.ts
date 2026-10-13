@@ -5,6 +5,7 @@ import {
   findingOf,
   firstEmail,
   nounFor,
+  OPT_OUT,
   PROOF,
   SIGNATURE,
   taskFor,
@@ -83,10 +84,22 @@ describe("firstEmail", () => {
       const { subject, body } = firstEmail(p);
       expect(subject.length).toBeLessThan(60);
       expect(body.startsWith(`Hi ${p.name},`)).toBe(true);
-      // Six short paragraphs plus the signature — a pitch, not a letter.
-      // The sixth paragraph (13 Oct) offers AI tools, so the cap rose from 160 to 170.
-      expect(body.split("\n\n").length).toBe(7);
+      // Seven short paragraphs plus the signature — a pitch, not a letter. Two
+      // were added on 13 Oct, the AI offer and the way out, so the cap rose from
+      // 160 words to 170.
+      expect(body.split("\n\n").length).toBe(8);
       expect(body.split(/\s+/).length).toBeLessThan(170);
+    });
+
+    // Asked for on 13 Oct, after "will this go to spam?". A way out turns a
+    // spam report into a reply. One link and one "free" read less like a mass
+    // mailing than two of each.
+    it(`gives a way out, one link and one "free", for ${label}`, () => {
+      const { body } = firstEmail(p);
+      expect(body).toContain(OPT_OUT);
+      expect(body.split("joshuasenining.dev").length - 1).toBe(1);
+      expect((body.match(/\bfree\b/gi) ?? []).length).toBeLessThanOrEqual(1);
+      expect(body).not.toMatch(/no obligation|no cost/i);
     });
   }
 
@@ -138,22 +151,31 @@ describe("firstEmail", () => {
     }
   });
 
-  it("sends an accepted draft word for word, signed, with the AI offer as a P.S.", () => {
+  it("sends an accepted draft word for word, with what an email needs added after it", () => {
     const text = "Hi Otaku-Yaki Restaurant — I couldn't find a website for you. Want me to?";
     const place = { name: "Otaku-Yaki Restaurant", category: "restaurants" };
     const { subject, body } = draftEmail(place, `${text}\n`);
-    expect(body).toBe(`${text}\n\n${SIGNATURE}\n\nP.S. ${toolsLine("restaurants")}`);
-    expect(body).toContain("joshuasenining.dev");
+    expect(body).toBe(
+      [
+        text,
+        "You can see my work at joshuasenining.dev.",
+        OPT_OUT,
+        SIGNATURE,
+        `P.S. ${toolsLine("restaurants")}`,
+      ].join("\n\n"),
+    );
     expect(subject).toBe("A quick idea for Otaku-Yaki Restaurant");
   });
 
-  it("does not sign a draft twice, or offer the AI tools twice", () => {
-    const signed = `Hi there.\n\n${SIGNATURE}`;
-    expect(draftEmail({ name: "X", category: "cafes" }, signed).body).toBe(
-      `${signed}\n\nP.S. ${toolsLine("cafes")}`,
-    );
-    const offered = `Hi there. ${toolsLine("cafes")}\n\n${SIGNATURE}`;
-    expect(draftEmail({ name: "X", category: "cafes" }, offered).body).toBe(offered);
+  it("adds nothing a draft already has: the link, the way out, the signature, the AI offer", () => {
+    // Drafts written since 13 Oct link the portfolio and offer the assistant
+    // themselves; adding them again would put two links in the email.
+    const text = `Hi there. My work is at joshuasenining.dev. ${toolsLine("cafes")}`;
+    const { body } = draftEmail({ name: "X", category: "cafes" }, text);
+    expect(body).toBe([text, OPT_OUT, SIGNATURE].join("\n\n"));
+    expect(body.split("joshuasenining.dev").length - 1).toBe(1);
+    const complete = [text, OPT_OUT, SIGNATURE].join("\n\n");
+    expect(draftEmail({ name: "X", category: "cafes" }, complete).body).toBe(complete);
   });
 
   it("offers AI tools in every variant, worded for the kind of business", () => {

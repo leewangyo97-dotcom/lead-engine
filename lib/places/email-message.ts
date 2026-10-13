@@ -45,19 +45,34 @@ export const SIGNATURE = [
   "—",
   "Joshua Senining",
   "Web and app developer · the Philippines",
-  "joshuasenining.dev · WhatsApp +63 915 858 7388",
+  "WhatsApp +63 915 858 7388",
 ].join("\n");
 
 /**
  * Who he is and what can be checked — every claim in PROFILE.md.
  *
  * The signature above is the outreach one in plain words: an owner does not know
- * what "Full Stack" or "UTC+8" means, and neither changes their answer.
+ * what "Full Stack" or "UTC+8" means, and neither changes their answer. The
+ * portfolio link appears once, here. The signature repeated it until 13 Oct, and
+ * one link reads less like a mass mailing than two.
  */
 export const PROOF =
   "I'm Joshua, a web and app developer in the Philippines. I've worked on websites " +
   "like ThredUp and ShopGoodwill and apps like Jollibee and JoyRide — you can see " +
   "my work at joshuasenining.dev.";
+
+/**
+ * Every email ends with a way out (13 Oct). Someone who cannot say no says it
+ * with the Report spam button instead, and each report counts against the Gmail
+ * account that sends everything else. Australia's Spam Act asks for an
+ * unsubscribe in commercial email too, and most of the list is Australian. A
+ * reply of "no" is that unsubscribe: "they said no" puts the business on the
+ * do-not-contact list.
+ */
+export const OPT_OUT = `Not interested? Reply "no" and I won't email you again.`;
+
+/** The portfolio, for an accepted draft that does not link it already. */
+const PORTFOLIO = "You can see my work at joshuasenining.dev.";
 
 /** What one of these is called in a sentence: "the next clinic on the list". */
 const NOUN: Record<string, string> = {
@@ -155,22 +170,21 @@ const join = (...paragraphs: string[]): string => paragraphs.join("\n\n");
  * An accepted enhanced message, sent as an email.
  *
  * The person read and chose that text, so it goes word for word. It was written
- * short enough for WhatsApp, which needs no sign-off; an email does, and the
- * signature carries the portfolio link — the one piece of proof an owner can
- * check in a click. Copying Otaku-Yaki's on 13 Oct gave a bare paragraph with
- * neither. The AI offer every first email carries rides after it as a P.S., so
- * the accepted text itself is not touched.
+ * short enough for WhatsApp, which needs no sign-off. An email needs what every
+ * first email has: the portfolio link once (the one proof an owner can check in
+ * a click), the way out, and the signature. Copying Otaku-Yaki's on 13 Oct gave
+ * a bare paragraph with none of them. Each is added only when the draft lacks
+ * it: drafts written since 13 Oct link the portfolio and offer an AI assistant
+ * themselves. The AI offer rides after it all as a P.S.
  */
 export function draftEmail(place: Pick<EmailPlace, "name" | "category">, draft: string): Email {
   const text = draft.trim();
-  // Signed means the signature, not the link: enhanced drafts written since
-  // 13 Oct name joshuasenining.dev in the text itself and still need a sign-off.
-  const signed = text.includes("Joshua Senining") ? text : join(text, SIGNATURE);
-  // And they offer an AI tool of their own, which a P.S. would only repeat.
-  return {
-    subject: `A quick idea for ${place.name.trim()}`,
-    body: /\bAI\b/.test(text) ? signed : join(signed, `P.S. ${toolsLine(place.category)}`),
-  };
+  const parts = [text];
+  if (!text.includes("joshuasenining.dev")) parts.push(PORTFOLIO);
+  if (!text.includes(OPT_OUT)) parts.push(OPT_OUT);
+  if (!text.includes("Joshua Senining")) parts.push(SIGNATURE);
+  if (!/\bAI\b/.test(text)) parts.push(`P.S. ${toolsLine(place.category)}`);
+  return { subject: `A quick idea for ${place.name.trim()}`, body: join(...parts) };
 }
 
 export function firstEmail(place: EmailPlace): Email {
@@ -192,8 +206,8 @@ export function firstEmail(place: EmailPlace): Email {
           `minute, even late at night.`,
         tools,
         PROOF,
-        `Would a free sample of that page be useful? Just reply "yes" and I'll send it — ` +
-          `no cost, no obligation.`,
+        `Would a free sample of that page be useful? Just reply "yes" and I'll send it.`,
+        OPT_OUT,
         SIGNATURE,
       ),
     };
@@ -218,6 +232,7 @@ export function firstEmail(place: EmailPlace): Email {
         tools,
         PROOF,
         offer,
+        OPT_OUT,
         SIGNATURE,
       ),
     };
@@ -236,6 +251,7 @@ export function firstEmail(place: EmailPlace): Email {
         tools,
         PROOF,
         offer,
+        OPT_OUT,
         SIGNATURE,
       ),
     };
@@ -254,6 +270,7 @@ export function firstEmail(place: EmailPlace): Email {
         tools,
         PROOF,
         offer,
+        OPT_OUT,
         SIGNATURE,
       ),
     };
@@ -271,8 +288,10 @@ export function firstEmail(place: EmailPlace): Email {
         `your contact details are easy to find.`,
       tools,
       PROOF,
-      `Would you like the free check? I'll send a short, plain-English list of what ` +
-        `could help — yours to keep either way.`,
+      // "Free" once per email: the offer above already says it.
+      `Would you like the check? I'll send a short, plain-English list of what could ` +
+        `help — yours to keep either way.`,
+      OPT_OUT,
       SIGNATURE,
     ),
   };

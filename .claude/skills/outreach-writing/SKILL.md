@@ -150,6 +150,9 @@ joshuasenining.dev · WhatsApp +63 915 858 7388
 
 To a local business owner (the `/prospects` funnel), the same block in plain words —
 "Web and app developer · the Philippines", no "Full Stack", no "UTC+8". It lives in
-`lib/places/email-message.ts`. Proof there is shipped work only (ThredUp,
+`lib/places/email-message.ts`. Two more rules there since 13 Oct, both for the
+spam folder. The portfolio link appears once, in the body, and the signature does
+not repeat it. Every email ends with a way out: *Not interested? Reply "no" and I
+won't email you again.* At most one "free", and never "no obligation". Proof there is shipped work only (ThredUp,
 ShopGoodwill, Jollibee, JoyRide): Majar Funeral Service is his own project, never a
 client's website.
