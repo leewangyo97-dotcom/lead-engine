@@ -12,6 +12,7 @@ import {
   type EmailPlace,
 } from "./email-message";
 import { signalKeys } from "./enhance";
+import { measuredMegabytes } from "./lighthouse-signals";
 import { verifyMessage } from "./message-verify";
 
 const SITE = "https://example-dental.com.au/";
@@ -52,6 +53,8 @@ const violations = (p: EmailPlace) =>
       whatsappE164: null,
       siteSignals: p.siteSignals as Record<string, unknown> | null,
     }),
+    // A stated size is held to the measurement too, as apply:enhance holds it.
+    { megabytes: measuredMegabytes(p.website, p.siteSignals) },
   );
 
 const VARIANTS: [string, EmailPlace][] = [

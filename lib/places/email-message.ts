@@ -142,7 +142,7 @@ export function findingOf(place: Pick<EmailPlace, "website" | "siteSignals">): F
   const lh = storedLighthouse(place.siteSignals);
   if (!lh || !measuredOn(lh, place.website)) return null;
   if (lh.totalBytes >= HEAVY_PAGE_BYTES) {
-    return { kind: "heavy", megabytes: Math.round(lh.totalBytes / 1_048_576) };
+    return { kind: "heavy", megabytes: Math.round(lh.totalBytes / 1_000_000) };
   }
   if (lh.contrastFailures >= CONTRAST_FAILURE_FLOOR) return { kind: "contrast" };
   if (lh.unsizedImages >= UNSIZED_IMAGE_FLOOR) return { kind: "unsized" };

@@ -261,6 +261,20 @@ export function measuredOn(signals: Pick<LighthouseSignals, "url">, website: str
 }
 
 /**
+ * Their measured homepage weight in megabytes, or null when nothing was measured
+ * on their current site.
+ *
+ * Decimal megabytes, as an owner reads "MB". Lighthouse labels in KiB, and
+ * dividing by 1,048,576 called JT Dental's 15,628 KiB "about 15 MB" when it is
+ * 16.0. The verifier caught it on 13 Oct. Every "N MB" a message says is
+ * checked against this number (`verifyMessage`).
+ */
+export function measuredMegabytes(website: string | null | undefined, siteSignals: unknown): number | null {
+  const lh = storedLighthouse(siteSignals);
+  return lh && measuredOn(lh, website) ? Math.round(lh.totalBytes / 1_000_000) : null;
+}
+
+/**
  * Whether a row is worth spending fifteen seconds and a browser on.
  *
  * Re-measures a row whose stored reading was taken on a different host: a site

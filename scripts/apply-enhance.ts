@@ -4,6 +4,7 @@ import { loadLocalEnv } from "../lib/env";
 import { outreach, prospects } from "../lib/db/schema";
 import { EnhanceBatch, readValidatedStdin } from "../lib/model/schemas";
 import { signalKeys } from "../lib/places/enhance";
+import { measuredMegabytes } from "../lib/places/lighthouse-signals";
 import { verifyMessage } from "../lib/places/message-verify";
 import { DRAFT_STEP } from "../lib/places/outreach-log";
 
@@ -51,7 +52,9 @@ async function main() {
   // real, so the text is checked against the facts as well as the keys.
   const untrue = enhanced.flatMap((e) => {
     const known = signalKeys(byId.get(e.prospectId)!);
-    return verifyMessage(e.message, known).map((v) => ({ e, v }));
+    const place = byId.get(e.prospectId)!;
+    const megabytes = measuredMegabytes(place.website, place.siteSignals);
+    return verifyMessage(e.message, known, { megabytes }).map((v) => ({ e, v }));
   });
   if (untrue.length) {
     for (const { e, v } of untrue) {

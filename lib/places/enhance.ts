@@ -102,9 +102,13 @@ export function buildSignals(place: EnhanceablePlace): Signal[] {
     if (current && current.totalBytes >= HEAVY_PAGE_BYTES) {
       signals.push({
         key: "page_weight",
+        // In megabytes, the unit an owner reads and the one `verifyMessage`
+        // checks a stated size against. Given as KiB, the model did its own
+        // conversion and came out a megabyte short.
         fact:
-          `Their homepage loads ${current.totalBytesLabel.replace(/^Total size was /, "")} ` +
-          `(measured with Lighthouse on ${current.measuredAt.slice(0, 10)})`,
+          `Their homepage is about ${Math.round(current.totalBytes / 1_000_000)} MB ` +
+          `(Lighthouse measured ${current.totalBytesLabel.replace(/^Total size was /, "")} ` +
+          `on ${current.measuredAt.slice(0, 10)})`,
       });
     }
 
@@ -219,12 +223,17 @@ export function buildEnhancePrompt(places: EnhanceablePlace[]): string {
     `joshuasenining.dev.`,
     ``,
     `How to write it:`,
-    `- Open "Hi <name> —", then their problem, taken from the facts listed for`,
-    `  that business, in words an owner understands: "slow to open", not "page`,
-    `  weight"; "hard to read", not "contrast".`,
-    `- Then one concrete example of what he would do about it, and what it means`,
-    `  for their customers.`,
-    `- Then one short sentence on an AI tool that would help this kind of business.`,
+    `- Open "Hi <name> —" and say who he is in a few words: "I'm Joshua, a web`,
+    `  and app developer in the Philippines."`,
+    `- Then their problem, taken from the facts listed for that business, in`,
+    `  words an owner understands: "slow to open", not "page weight"; "hard to`,
+    `  read", not "contrast". Give a size exactly as the facts give it.`,
+    `- Then one concrete example of what he would do about it. Say why it matters`,
+    `  in general terms ("people often give up on a slow page"), never as a claim`,
+    `  about their own customers.`,
+    `- Then one short sentence offering the one AI tool he offers: an assistant`,
+    `  that answers common questions and takes bookings or enquiries, worded for`,
+    `  their kind of business. No other AI claim of any kind.`,
     `- Mention joshuasenining.dev once.`,
     `- End with one question, answerable in a word. No sign-off.`,
     ``,
@@ -232,7 +241,11 @@ export function buildEnhancePrompt(places: EnhanceablePlace[]): string {
     `- Use only the facts listed for that business. Do not invent a detail about`,
     `  their website, their reviews, their opening hours or their customers.`,
     `- If a business has no website, that is the opening. If it has one, do not`,
-    `  call it bad. Name the measured problem, or say what could be added.`,
+    `  call it bad. Name the measured problem; with none measured, offer a free`,
+    `  check rather than guess what is missing.`,
+    `- No prices, deadlines or guarantees ("without changing how it looks" is a`,
+    `  guarantee; "keeping your design as it is" is not).`,
+    `- Never say he has built anything for a business before.`,
     `- Under ${MAX_MESSAGE_CHARS} characters. One question, answerable in a word.`,
     `- Say "the Philippines", never "Manila".`,
     `- No "I hope this finds you well", "reach out", "leverage", "passionate",`,

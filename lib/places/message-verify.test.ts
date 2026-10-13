@@ -231,3 +231,51 @@ describe("claims about the page moving as it loads", () => {
     ).toHaveLength(0);
   });
 });
+
+/**
+ * The rules added when Enhance went one-click (13 Oct). Claude now writes these
+ * messages unattended, and the verifier named what a prompt alone cannot stop.
+ */
+describe("verifyMessage, for messages Claude writes unattended", () => {
+  const offer =
+    "I can also set up simple AI tools that save you time, like an assistant that answers common questions and books appointments, day or night.";
+
+  it("lets the one AI offer PROFILE makes through", () => {
+    expect(verifyMessage(offer, ["website"])).toHaveLength(0);
+    expect(verifyMessage("Hi AI Dental — I'm Joshua.", ["website"])).toHaveLength(0);
+  });
+
+  it("stops AI claims beyond it", () => {
+    expect(ok("I can build an AI chatbot that handles your marketing.", ["website"])).toBe(false);
+    expect(ok("I can set up an AI assistant that reads your X-rays and answers questions.", ["website"])).toBe(false);
+    expect(ok("An AI system that learns from your data could book more patients.", ["website"])).toBe(false);
+  });
+
+  it("holds a stated size to the measurement, within a megabyte", () => {
+    const heavy = "Your homepage is about 16 MB, so it is slow to open.";
+    expect(verifyMessage(heavy, ["website", "page_weight"], { megabytes: 16 })).toHaveLength(0);
+    expect(verifyMessage("It is over 15 MB.", ["page_weight"], { megabytes: 16 })).toHaveLength(0);
+    expect(verifyMessage("It is about 9 MB.", ["page_weight"], { megabytes: 16 })).toEqual([
+      { quote: "9 MB", reason: "says 9 MB, and the measurement is about 16 MB" },
+    ]);
+  });
+
+  it("treats 'slow to open' as the page-weight claim it is", () => {
+    expect(ok("Your site is slow to open.", ["website"])).toBe(false);
+    expect(ok("Your site is slow to open.", ["website", "page_weight"])).toBe(true);
+  });
+
+  it("refuses past work for a client, and leaves the honest phrasings alone", () => {
+    expect(ok("I've built websites for three dentists in Sydney.", ["website"])).toBe(false);
+    expect(ok("I built a booking system for a clinic last year.", ["website"])).toBe(false);
+    expect(ok("I've worked on websites like ThredUp and ShopGoodwill.", ["website"])).toBe(true);
+    expect(ok("I'd build a free sample first so you can see it.", ["no_website"])).toBe(true);
+  });
+
+  it("refuses prices, deadlines and guarantees, and allows free", () => {
+    expect(ok("A new site is $500.", ["no_website"])).toBe(false);
+    expect(ok("I can have it live within a week.", ["no_website"])).toBe(false);
+    expect(ok("Guaranteed more bookings.", ["no_website"])).toBe(false);
+    expect(ok("A free sample, no cost and no obligation.", ["no_website"])).toBe(true);
+  });
+});

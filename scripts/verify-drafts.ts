@@ -7,6 +7,7 @@ import { signalKeys } from "../lib/places/enhance";
 import { storedLighthouse } from "../lib/places/lighthouse-signals";
 import { extractEmails, extractPhones, extractSiteSignals, looksLikePage } from "../lib/places/extract";
 import { verifyMessage } from "../lib/places/message-verify";
+import { measuredMegabytes } from "../lib/places/lighthouse-signals";
 import { ownDomainFromEmail } from "../lib/places/own-domain";
 import { OSM_USER_AGENT } from "../lib/places/nominatim";
 import { DRAFT_STEP } from "../lib/places/outreach-log";
@@ -153,7 +154,8 @@ async function main() {
 
     // The stored-signal check first: it costs nothing and catches a message that
     // drifted from the record without needing the network.
-    for (const v of verifyMessage(message, signalKeys(row))) {
+    const megabytes = measuredMegabytes(row.website, row.siteSignals);
+    for (const v of verifyMessage(message, signalKeys(row), { megabytes })) {
       notes.push(`against its own signals: "${v.quote}" — ${v.reason}`);
       verdict = "false";
     }

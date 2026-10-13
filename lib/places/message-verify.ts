@@ -68,7 +68,7 @@ const RULES: Rule[] = [
     // measured. `pnpm lh` stores it for one prospect at a time and most rows
     // have never been through it, so the default state of this claim is
     // unsupported.
-    pattern: /\b(\d+(?:\.\d+)? ?(?:mb|megabytes?|kb)|page ?weight|loads? slowly|slow to load|heavy (?:page|homepage|site))\b/i,
+    pattern: /\b(\d+(?:\.\d+)? ?(?:mb|megabytes?|kb)|page ?weight|loads? slowly|opens? slowly|slow to (?:load|open)|heavy (?:page|homepage|site))\b/i,
     requires: ["page_weight"],
     reason:
       "says something about how much their page weighs or how slowly it loads, " +
@@ -127,6 +127,25 @@ const RULES: Rule[] = [
     reason: "claims a visit or a conversation that did not happen",
   },
   {
+    // Past work for a client. PROFILE's proof is shipped work it names (ThredUp,
+    // ShopGoodwill, Jollibee, JoyRide), and its services are offers. "I built …
+    // for" is a client relationship the profile does not hold. Narrow on purpose:
+    // "I've worked on", "I'd build" and "I can set up" are not past work for
+    // anyone.
+    pattern:
+      /\bI(?:'ve| have)? (?:built|made|created|designed|set up) (?:a|an|the|their|websites?|sites?|apps?|systems?|assistants?|tools?)\b[^.!?]*\bfor\b/i,
+    never: true,
+    reason: "claims past work for a business, and PROFILE lists none: its proof is shipped work only",
+  },
+  {
+    // Nothing is agreed before a reply, so no message may name a price, a date
+    // or a guarantee. "Free" stays allowed: the offers are free.
+    pattern:
+      /(\$ ?\d|₱ ?\d|\b(?:php|usd|aud) ?\d|\b\d+ ?(?:dollars|pesos|bucks)\b|\bguarantee\w*|\bwithin (?:a|one|two|three|\d+) (?:hours?|days?|weeks?)\b|\bin (?:24|48|72) hours\b|\bby (?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|tomorrow)\b)/i,
+    never: true,
+    reason: "names a price, a deadline or a guarantee, and nothing is agreed before they reply",
+  },
+  {
     pattern: /\b(here in (?!the Philippines)[A-Z][a-z]+|based here in|local to you|just around the corner|in your area)\b/,
     never: true,
     reason:
@@ -134,7 +153,45 @@ const RULES: Rule[] = [
   },
 ];
 
-export function verifyMessage(message: string, signals: string[]): MessageViolation[] {
+/**
+ * AI, only as PROFILE offers it: an assistant that answers common questions and
+ * takes bookings or enquiries. Checked per sentence, because the overreach comes
+ * in the same breath: "an AI assistant that reads your X-rays". A business that
+ * merely has "AI" in its name is not a tool, so the word alone does not fire.
+ */
+const AI_TOOL = /\b(?:AI[- ]?(?:tools?|assistants?|chat ?bots?|automation|agents?|systems?|powered)|chat ?bots?)\b/i;
+const AI_JOB = /\b(?:questions?|bookings?|books?|appointments?|enquir\w*|inquir\w*|quotes?|orders?|reservations?|visits?)\b/i;
+const AI_OVERREACH = /\b(?:diagnos\w*|x-?rays?|prescri\w*|medical advice|legal advice|tax advice|predicts?|learns? from)\b/i;
+
+function aiViolations(message: string): MessageViolation[] {
+  return message
+    .split(/(?<=[.!?])\s+/)
+    .filter((sentence) => AI_TOOL.test(sentence))
+    .filter((s) => !/\bassistant\b/i.test(s) || !AI_JOB.test(s) || AI_OVERREACH.test(s))
+    .map((sentence) => ({
+      quote: sentence.trim().slice(0, 120),
+      reason:
+        "offers AI beyond what PROFILE lists — an assistant that answers common " +
+        "questions and takes bookings or enquiries",
+    }));
+}
+
+/** A size a message states, held to the measurement within a megabyte. */
+function sizeViolations(message: string, megabytes: number | null | undefined): MessageViolation[] {
+  if (megabytes == null) return [];
+  return [...message.matchAll(/\b(\d+(?:\.\d+)?) ?(?:mb|megabytes?)\b/gi)]
+    .filter((m) => Math.abs(Number(m[1]) - megabytes) > 1)
+    .map((m) => ({
+      quote: m[0],
+      reason: `says ${m[1]} MB, and the measurement is about ${megabytes} MB`,
+    }));
+}
+
+export function verifyMessage(
+  message: string,
+  signals: string[],
+  facts: { megabytes?: number | null } = {},
+): MessageViolation[] {
   const present = new Set(signals);
   const violations: MessageViolation[] = [];
 
@@ -147,5 +204,5 @@ export function verifyMessage(message: string, signals: string[]): MessageViolat
     }
   }
 
-  return violations;
+  return [...violations, ...aiViolations(message), ...sizeViolations(message, facts.megabytes)];
 }
