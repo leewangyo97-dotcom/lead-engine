@@ -1,0 +1,66 @@
+name: enhance
+
+# Started by the Enhance button on /prospects (lib/github/dispatch.ts). The title
+# carries the prospect id, which is how the button finds this run again.
+run-name: Enhance ${{ inputs.prospect_id }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      prospect_id:
+        description: Prospect to write an enhanced message for
+        required: true
+        type: string
+
+# A second click while one is running waits rather than racing it.
+concurrency:
+  group: enhance-${{ inputs.prospect_id }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  enhance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # The input reaches the shell as an environment variable, never pasted into
+      # the script, so no id can be read as a command.
+      - name: Build the prompt
+        run: pnpm -s enhance:prompt --id="$PROSPECT_ID" > "$RUNNER_TEMP/prompt.txt"
+        env:
+          PROSPECT_ID: ${{ inputs.prospect_id }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      # Claude Code on Joshua's Max plan: the token comes from `claude setup-token`,
+      # not an API key (DECISIONS 002). It runs outside the checkout, with every
+      # tool switched off and no database URL in reach: text in, text out.
+      - name: Ask Claude
+        working-directory: ${{ runner.temp }}
+        run: >-
+          npx -y @anthropic-ai/claude-code@2.1.291
+          -p --model sonnet --output-format json --tools ""
+          --no-session-persistence
+          < prompt.txt > answer.json
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+      # apply:enhance holds the answer to the same checks as a pasted one: known
+      # prospect, declared signals real, every sentence past verifyMessage.
+      - name: Store the draft
+        run: pnpm -s claude:unwrap < "$RUNNER_TEMP/answer.json" | pnpm -s apply:enhance
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}

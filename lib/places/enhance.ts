@@ -17,6 +17,10 @@ import { ownDomainFromEmail } from "./own-domain";
  * Claude Code, and the same shape is kept here — a prompt goes out, validated
  * JSON comes back through `pnpm apply:enhance`. A server-side model call would
  * be a second way of doing the one thing this project already has a way to do.
+ *
+ * Since 13 Oct the Enhance button runs that same loop without a terminal:
+ * `.github/workflows/enhance.yml` builds this prompt, Claude Code answers it on
+ * Joshua's subscription, and `apply:enhance` stores what passes.
  */
 
 export interface EnhanceablePlace extends ContactablePlace {
@@ -186,23 +190,53 @@ export function buildEnhancePrompt(places: EnhanceablePlace[]): string {
     ].join("\n");
   });
 
+  // Rewritten 13 Oct, when Enhance became one click, to win the work rather
+  // than only shorten the message: their problem in plain words, what he would
+  // do about it, and one AI tool that would help, all within PROFILE.md. The
+  // services are PROFILE's "Services for local businesses", and they are offers.
+  // The proof is shipped work only. Never Majar, which is his own project.
   return [
-    `Rewrite the first outreach message for each business below.`,
+    `Rewrite the first message to each business below so it is more likely to win`,
+    `the work.`,
     ``,
-    `Joshua is a web developer based in San Jose del Monte, Bulacan, in the`,
-    `Philippines, writing to small businesses. Most of these go out over WhatsApp`,
-    `and are read on a phone between customers.`,
+    `Joshua is a web and app developer based in San Jose del Monte, Bulacan, in the`,
+    `Philippines, writing to small business owners who are not technical. The`,
+    `message goes out by WhatsApp, or by email with his signature added after it,`,
+    `so it must read well as both.`,
     ``,
     `He is not local to any of these businesses unless they are in Bulacan. Never`,
     `imply he is nearby, and never claim he has visited or seen the place.`,
+    ``,
+    `What he can offer. These are offers only; never say he has done them for a`,
+    `business before:`,
+    `- a simple website, or fixes to the one they have`,
+    `- online booking and enquiry forms`,
+    `- simple AI tools that save time, like an assistant that answers common`,
+    `  questions and takes bookings, day or night`,
+    ``,
+    `Proof he may mention, and no other: he has worked on the websites ThredUp and`,
+    `ShopGoodwill and the apps Jollibee and JoyRide. His work is at`,
+    `joshuasenining.dev.`,
+    ``,
+    `How to write it:`,
+    `- Open "Hi <name> —", then their problem, taken from the facts listed for`,
+    `  that business, in words an owner understands: "slow to open", not "page`,
+    `  weight"; "hard to read", not "contrast".`,
+    `- Then one concrete example of what he would do about it, and what it means`,
+    `  for their customers.`,
+    `- Then one short sentence on an AI tool that would help this kind of business.`,
+    `- Mention joshuasenining.dev once.`,
+    `- End with one question, answerable in a word. No sign-off.`,
     ``,
     `Rules:`,
     `- Use only the facts listed for that business. Do not invent a detail about`,
     `  their website, their reviews, their opening hours or their customers.`,
     `- If a business has no website, that is the opening. If it has one, do not`,
-    `  imply it is bad — say what could be added.`,
+    `  call it bad. Name the measured problem, or say what could be added.`,
     `- Under ${MAX_MESSAGE_CHARS} characters. One question, answerable in a word.`,
-    `- No "I hope this finds you well", no bullet lists, no emoji.`,
+    `- Say "the Philippines", never "Manila".`,
+    `- No "I hope this finds you well", "reach out", "leverage", "passionate",`,
+    `  bullet lists or emoji.`,
     `- Write as a person messaging another person, not as a company.`,
     ``,
     `Return JSON only:`,

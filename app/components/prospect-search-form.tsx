@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
 import { PLACE_CATEGORIES } from "@/lib/places/osm-categories";
+import { RunSearchesButton } from "@/app/components/run-searches-button";
 
 /** Turns `lawFirms` into `Law firms` without a second label table to drift. */
 function label(category: string): string {
@@ -18,9 +19,9 @@ const DRAIN = "pnpm search:run --drain";
  *
  * A country resolves to an OpenStreetMap area rather than a radius, and querying
  * one takes minutes — longer than a serverless function may run. So it is
- * queued, and the only thing that empties the queue is the worker on the command
- * line. Saying that plainly, with the command to hand, is the difference between
- * a queue and a dead end.
+ * queued. "Run now" empties the queue on GitHub Actions (13 Oct); the worker on
+ * the command line still does the same. Saying that plainly, with both to hand,
+ * is the difference between a queue and a dead end.
  */
 function QueuedPanel({
   searchId,
@@ -40,7 +41,10 @@ function QueuedPanel({
         radius. A country-wide OpenStreetMap query takes minutes, which is longer than a web request
         may stay open, so nothing is running yet.
       </p>
-      <p className="mt-3 text-secondary">Start the worker in a terminal:</p>
+      <div className="mt-3">
+        <RunSearchesButton />
+      </div>
+      <p className="mt-3 text-secondary">Or start the worker in a terminal:</p>
       <div className="mt-2 flex flex-wrap items-center gap-3">
         <code className="rounded-xs border border-rule bg-surface px-3 py-1 font-mono text-data">
           {DRAIN}

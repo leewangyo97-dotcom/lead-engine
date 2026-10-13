@@ -2,6 +2,7 @@ import { Shell } from "@/app/components/shell";
 import { ProspectSearchForm } from "@/app/components/prospect-search-form";
 import { ProspectContact } from "@/app/components/prospect-contact";
 import { ProspectEnhance } from "@/app/components/prospect-enhance";
+import { RunSearchesButton } from "@/app/components/run-searches-button";
 import {
   ProspectRowActions,
   RefreshAllButton,
@@ -337,8 +338,12 @@ export default async function Prospects({
 
             {rows.length === 0 ? (
               <p className="mt-6 rounded-md border border-rule bg-surface p-7 text-body text-muted">
-                {active?.status === "queued"
-                  ? "Queued. Whole-country searches run in the background — run `pnpm search:run --drain`."
+                {active?.status === "queued" ? (
+                  <span className="flex flex-col items-start gap-3">
+                    Queued. Whole-country searches run in the background.
+                    <RunSearchesButton />
+                  </span>
+                )
                   : isFiltered(filter)
                     ? "Nothing in the queue matches that filter. Clear it, or pick another chip."
                     : "Nothing found here. Try a wider radius or another category."}

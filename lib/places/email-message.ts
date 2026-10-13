@@ -163,10 +163,13 @@ const join = (...paragraphs: string[]): string => paragraphs.join("\n\n");
  */
 export function draftEmail(place: Pick<EmailPlace, "name" | "category">, draft: string): Email {
   const text = draft.trim();
-  const signed = text.includes("joshuasenining.dev") ? text : join(text, SIGNATURE);
+  // Signed means the signature, not the link: enhanced drafts written since
+  // 13 Oct name joshuasenining.dev in the text itself and still need a sign-off.
+  const signed = text.includes("Joshua Senining") ? text : join(text, SIGNATURE);
+  // And they offer an AI tool of their own, which a P.S. would only repeat.
   return {
     subject: `A quick idea for ${place.name.trim()}`,
-    body: text.includes("AI tools") ? signed : join(signed, `P.S. ${toolsLine(place.category)}`),
+    body: /\bAI\b/.test(text) ? signed : join(signed, `P.S. ${toolsLine(place.category)}`),
   };
 }
 

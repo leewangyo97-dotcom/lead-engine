@@ -341,16 +341,52 @@ radius. Querying an area that size takes minutes, longer than a serverless
 function may run, so `POST /api/searches` writes the row and stops. Nothing
 drains the queue on its own — there is no worker process, by design.
 
-**What to do.**
+**What to do.** Click **Run now** on the queued panel. Since 13 Oct it starts
+`search-run.yml` on GitHub Actions, which drains, enriches 200 rows and rescores,
+and the page refreshes itself when the run finishes. It needs the one-time setup
+in the next section. Without it, or from a terminal:
 
 ```bash
 pnpm search:run --drain
 ```
 
 It processes every queued search in order and prints found/new/dupes for each.
-The `/prospects` form now says this on screen with the command to copy, so the
-queued state is not a dead end. Expect minutes per country and the odd Overpass
-504 — that is load, not a fault; run it again.
+Expect minutes per country and the odd Overpass 504 — that is load, not a
+fault; run it again.
+
+## One click: Enhance and Run now (GitHub Actions)
+
+Two buttons on `/prospects` start GitHub Actions runs instead of asking for a
+terminal. **Enhance** runs `enhance.yml`: Claude Code writes the message on
+Joshua's Max plan, and `apply:enhance` stores it if it passes. **Run now** runs
+`search-run.yml`. Neither uses an Anthropic API key (DECISIONS 002). Until the
+setup below is done, both fall back to the commands they replaced and say so.
+
+**One-time setup.** These are credentials, so Joshua does them himself:
+
+1. **Max-plan token for Claude Code.** In a terminal, run `claude setup-token`
+   and sign in. Then store the printed token as a repository secret (paste it
+   when asked):
+
+   ```bash
+   gh secret set CLAUDE_CODE_OAUTH_TOKEN
+   ```
+
+2. **A GitHub token the website can start runs with.** Create one at
+   github.com → Settings → Developer settings → Fine-grained tokens. Give it
+   *only* this repository, with **Actions: Read and write** and nothing else.
+3. Add that token as `GITHUB_DISPATCH_TOKEN`: in Vercel under Project → Settings
+   → Environment Variables, then redeploy; and in `.env.local` for `pnpm dev`.
+
+`DATABASE_URL` is already a repository secret (the nightly uses it).
+
+**Checking it.** Open Enhance on a row with no draft. It says "Claude is writing
+it" and shows a "Watch the run" link, and the draft appears in 1–3 minutes.
+
+**If a run fails**, the panel links to it. `Failed to authenticate` means the
+Max token expired or was revoked: run `claude setup-token` again and replace the
+secret. `apply:enhance` naming a sentence means the checks refused Claude's
+claim. That is the guard working: click "Write a new one".
 
 **If you did not mean to queue one**, search a city instead: anything with a
 comma ("Sydney, Australia") geocodes to a radius and runs inside the request in

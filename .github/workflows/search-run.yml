@@ -1,0 +1,55 @@
+name: search-run
+
+# Started by "Run now" on /prospects (lib/github/dispatch.ts). A country-wide
+# search takes minutes, which no Vercel request may stay open for. This is the
+# same `pnpm search:run --drain` that used to need a terminal.
+run-name: Run queued searches
+
+on:
+  workflow_dispatch: {}
+
+# One drain at a time: two would race for the same queued rows.
+concurrency:
+  group: search-run
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  drain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Drain the search queue
+        run: pnpm search:run --drain
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      # The new rows mean little until their sites are read for an email
+      # address. The same bound as the nightly, for the same reason: other
+      # people's servers, one second a host.
+      - name: Enrich prospect websites
+        continue-on-error: true
+        timeout-minutes: 6
+        run: pnpm enrich --limit=200
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Score prospects
+        continue-on-error: true
+        run: pnpm prospects:score
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
