@@ -882,3 +882,18 @@ local businesses" on his word, framed as an offer and never as past work.
 `firstEmail` carries one line of it, an assistant that answers common questions
 and takes bookings, worded per business kind. Recommended to him: list AI
 automation on the portfolio too, because the email links there.
+
+## Enhance and Run now start GitHub Actions; still no API key (13 October)
+
+Amends 002. Joshua asked for Enhance to work in one click and for queued
+searches to run without a terminal. He also asked whether the website could use
+his Max plan directly. It cannot: a Max plan carries no API key, and its login
+token is for running Claude Code, not for sitting in a website's server. So the
+buttons start workflows instead. `enhance.yml` runs Claude Code headless on his
+subscription token (`claude setup-token`, as the `CLAUDE_CODE_OAUTH_TOKEN`
+secret), with tools off and outside the checkout. `apply:enhance` stores only
+what passes. `search-run.yml` is `search:run --drain` plus enrich and score. The
+website holds one fine-grained GitHub token (Actions only, this repo only).
+Without it, both buttons fall back to the commands. Rejected: an Anthropic API
+key, a separate bill he declined; a local watcher polling Neon, which keeps
+compute awake against the 100 CU-hour budget.

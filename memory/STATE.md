@@ -55,6 +55,8 @@ opens a page that is unambiguously the message.
 - **Add the three `GOOGLE_*` variables to Vercel** and redeploy. The deployed app
   has `DATABASE_URL` only, so every email click there uses the fallback.
 - **Closed 12 Sept (DECISIONS):** full-time counts; geo funnel stays. Don't reopen.
+- **One-click Enhance + Run now** (13 Oct) wait on two tokens: `claude setup-token` into the
+  `CLAUDE_CODE_OAUTH_TOKEN` secret, `GITHUB_DISPATCH_TOKEN` into Vercel. RUNBOOK "One click".
 - **What to do about the lead funnel.** Full-time doubled its top — **6 of 194**
   clear 75, average 39 — but the ceiling is stack and timezone, not terms: those
   boards do not carry UTC+8 work in his stack. Accept the rate, or stop spending
@@ -137,8 +139,6 @@ Working copy `C:\dev\lead-engine`; `F:\lead-engine` is corrupt, awaiting chkdsk.
 - `enrichment_status` is the enrichment queue; a `no_website` row must be
   reopened when one appears, or its site is never read
 - Overpass 504s several times a day. It is load, not a bug — retry
-- Vercel Hobby cron is **once per day, ±59 min** — the scheduler is GitHub Actions
-- Vercel Hobby is **non-commercial only**
 - Neon autosuspends at 5 min idle; use the HTTP driver
 - Phases 1–3 contain **zero** model calls. Keep it that way.
 - `contentHash` stability is the single biggest cost lever — its test is not optional
