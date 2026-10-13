@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
+  asEmail,
   draftEmail,
   findingOf,
   firstEmail,
@@ -13,6 +14,7 @@ import {
   type EmailPlace,
 } from "./email-message";
 import { signalKeys } from "./enhance";
+import { messageFor } from "./follow-up-message";
 import { measuredMegabytes } from "./lighthouse-signals";
 import { verifyMessage } from "./message-verify";
 
@@ -165,6 +167,19 @@ describe("firstEmail", () => {
       ].join("\n\n"),
     );
     expect(subject).toBe("A quick idea for Otaku-Yaki Restaurant");
+  });
+
+  it("sends the ladder's follow-ups by email with the link, the way out and the signature", () => {
+    // 13 Oct: only first emails had them, and the day-4 and day-11 emails went bare.
+    for (const step of [1, 2]) {
+      const ladder = messageFor({ step, name: "Bay Dental Studio", category: "dentists", hasWebsite: true })!;
+      const body = asEmail(ladder);
+      expect(body.startsWith(ladder)).toBe(true);
+      expect(body).toContain(OPT_OUT);
+      expect(body.endsWith(SIGNATURE)).toBe(true);
+      expect(body.split("joshuasenining.dev").length - 1).toBe(1);
+      expect(verifyMessage(body, ["website"])).toEqual([]);
+    }
   });
 
   it("adds nothing a draft already has: the link, the way out, the signature, the AI offer", () => {

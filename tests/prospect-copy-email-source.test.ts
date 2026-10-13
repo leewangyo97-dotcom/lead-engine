@@ -74,6 +74,12 @@ describe("the message route", () => {
   });
 });
 
+describe("composeContact", () => {
+  it("wraps an email follow-up in what every email carries", () => {
+    expect(LOG).toContain('channel === "email" && ladder ? asEmail(ladder) : ladder');
+  });
+});
+
 describe("recordCopiedEmail", () => {
   const record = body(LOG, "export async function recordCopiedEmail(");
 

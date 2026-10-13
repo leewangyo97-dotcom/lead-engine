@@ -4,7 +4,7 @@ import { outreach, prospects, suppressions } from "../db/schema";
 import { rootDomain } from "./normalize";
 import { chooseChannel, type Channel, type ContactOption } from "./contact";
 import { toLastContact, type LastContact } from "./contact-status";
-import { draftEmail, firstEmail } from "./email-message";
+import { asEmail, draftEmail, firstEmail } from "./email-message";
 import { messageFor } from "./follow-up-message";
 import { MAX_STEP } from "../followups";
 import { keyOf, releasable, type Identifier } from "./undecline";
@@ -414,15 +414,18 @@ export async function composeContact(
         ? draftEmail(place, draft.body)
         : firstEmail(place)
       : null;
-  const text =
-    email?.body ??
-    messageFor({
-      step,
-      draftBody: draft?.body,
-      name: place.name,
-      category: place.category,
-      hasWebsite: Boolean(place.website),
-    });
+  const ladder = email
+    ? undefined
+    : messageFor({
+        step,
+        draftBody: draft?.body,
+        name: place.name,
+        category: place.category,
+        hasWebsite: Boolean(place.website),
+      });
+  // A follow-up by email carries what every email does: the link, the way out,
+  // the signature. WhatsApp keeps the bare ladder text.
+  const text = email?.body ?? (channel === "email" && ladder ? asEmail(ladder) : ladder);
   const subject =
     channel === "whatsapp"
       ? `WhatsApp to ${place.name}`

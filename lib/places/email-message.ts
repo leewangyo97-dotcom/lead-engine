@@ -179,12 +179,28 @@ const join = (...paragraphs: string[]): string => paragraphs.join("\n\n");
  */
 export function draftEmail(place: Pick<EmailPlace, "name" | "category">, draft: string): Email {
   const text = draft.trim();
-  const parts = [text];
-  if (!text.includes("joshuasenining.dev")) parts.push(PORTFOLIO);
-  if (!text.includes(OPT_OUT)) parts.push(OPT_OUT);
-  if (!text.includes("Joshua Senining")) parts.push(SIGNATURE);
-  if (!/\bAI\b/.test(text)) parts.push(`P.S. ${toolsLine(place.category)}`);
-  return { subject: `A quick idea for ${place.name.trim()}`, body: join(...parts) };
+  const body = asEmail(text);
+  return {
+    subject: `A quick idea for ${place.name.trim()}`,
+    body: /\bAI\b/.test(text) ? body : join(body, `P.S. ${toolsLine(place.category)}`),
+  };
+}
+
+/**
+ * What every email carries, added only where the text lacks it: the portfolio
+ * link once, the way out, the signature.
+ *
+ * For accepted drafts, and for the ladder's follow-ups. Those are written for
+ * both channels, and they went out by email bare until the verifier caught it
+ * on 13 Oct: "every email" had meant every first email.
+ */
+export function asEmail(text: string): string {
+  const body = text.trim();
+  const parts = [body];
+  if (!body.includes("joshuasenining.dev")) parts.push(PORTFOLIO);
+  if (!body.includes(OPT_OUT)) parts.push(OPT_OUT);
+  if (!body.includes("Joshua Senining")) parts.push(SIGNATURE);
+  return join(...parts);
 }
 
 export function firstEmail(place: EmailPlace): Email {
@@ -289,8 +305,9 @@ export function firstEmail(place: EmailPlace): Email {
       tools,
       PROOF,
       // "Free" once per email: the offer above already says it.
-      `Would you like the check? I'll send a short, plain-English list of what could ` +
-        `help — yours to keep either way.`,
+      // Not "the check": to a restaurant that is the bill.
+      `Would you like me to do that check? I'll send a short, plain-English list of ` +
+        `what could help — yours to keep either way.`,
       OPT_OUT,
       SIGNATURE,
     ),
