@@ -62,8 +62,8 @@ opens a page that is unambiguously the message.
 
 ### 3. Code — real, and none of it changes the outcome
 
-- **Copy email** (13 Oct) on every `/prospects` row: plain-English `firstEmail`, or an accepted
-  draft signed. Copying writes nothing; its "I sent it" records the send (`recordCopiedEmail`).
+- **Copy email** (13 Oct) on every `/prospects` row: plain-English `firstEmail` + an AI-tools offer
+  (PROFILE services). Copying writes nothing; its "I sent it" records the send (`recordCopiedEmail`).
 - Enrichment backlog cleared (27 Sept). Exit 1073807364 = killed with the idle session: rerun.
 - `pnpm lh --limit=N` as enrichment reaches rows. **1,597 measured, backlog cleared 7 Oct.** The
   cap is 150 per process and not negotiable — see below. A refusal is now
