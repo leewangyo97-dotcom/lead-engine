@@ -82,7 +82,9 @@ export function followUpMessage({
   // with what you have now" is an invitation; "your site is dated" is an opinion
   // this project has no way to support.
   const offer = hasWebsite
-    ? `I'd mock up one page — ${shows} — so you can put it beside what you have now`
+    ? // "Put together", not "mock up": the words of the trade stay out of an
+      // owner's inbox, as in the first emails (verifier, 13 Oct).
+      `I'd put together one page — ${shows} — so you can put it beside what you have now`
     : `one page showing ${shows}`;
 
   if (step === 1) {
