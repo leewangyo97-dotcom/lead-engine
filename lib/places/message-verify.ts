@@ -139,9 +139,11 @@ const RULES: Rule[] = [
   },
   {
     // Nothing is agreed before a reply, so no message may name a price, a date
-    // or a guarantee. "Free" stays allowed: the offers are free.
+    // or a guarantee. "Free" stays allowed: the offers are free. A deadline is a
+    // promise of delivery ("ready this week"), so "happy to jump on a call this
+    // week" is left alone.
     pattern:
-      /(\$ ?\d|₱ ?\d|\b(?:php|usd|aud) ?\d|\b\d+ ?(?:dollars|pesos|bucks)\b|\bguarantee\w*|\bwithin (?:a|one|two|three|\d+) (?:hours?|days?|weeks?)\b|\bin (?:24|48|72) hours\b|\bby (?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|tomorrow)\b)/i,
+      /(\$ ?\d|₱ ?\d|\b(?:php|usd|aud) ?\d|\b\d+ ?(?:dollars|pesos|bucks)\b|\bguarantee\w*|\bwithin (?:a|one|two|three|\d+) (?:hours?|days?|weeks?)\b|\b(?:ready|done|live|finished|delivered|launched|built)\b[^.!?]{0,40}?\b(?:in (?:a|one|two|three|\d+) (?:hours?|days?|weeks?)|(?:this|next) week|tomorrow|by (?:monday|tuesday|wednesday|thursday|friday|saturday|sunday))\b)/i,
     never: true,
     reason: "names a price, a deadline or a guarantee, and nothing is agreed before they reply",
   },
@@ -161,13 +163,21 @@ const RULES: Rule[] = [
  */
 const AI_TOOL = /\b(?:AI[- ]?(?:tools?|assistants?|chat ?bots?|automation|agents?|systems?|powered)|chat ?bots?)\b/i;
 const AI_JOB = /\b(?:questions?|bookings?|books?|appointments?|enquir\w*|inquir\w*|quotes?|orders?|reservations?|visits?)\b/i;
-const AI_OVERREACH = /\b(?:diagnos\w*|x-?rays?|prescri\w*|medical advice|legal advice|tax advice|predicts?|learns? from)\b/i;
+// Training and learning are named because PROFILE disqualifies them outright:
+// the AI work is AI-assisted development, never models trained on anything.
+const AI_OVERREACH = /\b(?:diagnos\w*|x-?rays?|prescri\w*|advice|predict\w*|learn\w*|train\w*|fine-?tun\w*)\b/i;
 
 function aiViolations(message: string): MessageViolation[] {
   return message
     .split(/(?<=[.!?])\s+/)
-    .filter((sentence) => AI_TOOL.test(sentence))
-    .filter((s) => !/\bassistant\b/i.test(s) || !AI_JOB.test(s) || AI_OVERREACH.test(s))
+    .filter((s) =>
+      AI_TOOL.test(s)
+        ? !/\bassistant\b/i.test(s) || !AI_JOB.test(s) || AI_OVERREACH.test(s)
+        : // "An assistant that learns from your bookings" says AI without the
+          // word. Only the overreach is held against it, so a sentence about
+          // their own dental assistant passes.
+          /\bassistants?\b/i.test(s) && AI_OVERREACH.test(s),
+    )
     .map((sentence) => ({
       quote: sentence.trim().slice(0, 120),
       reason:

@@ -249,6 +249,14 @@ describe("verifyMessage, for messages Claude writes unattended", () => {
     expect(ok("I can build an AI chatbot that handles your marketing.", ["website"])).toBe(false);
     expect(ok("I can set up an AI assistant that reads your X-rays and answers questions.", ["website"])).toBe(false);
     expect(ok("An AI system that learns from your data could book more patients.", ["website"])).toBe(false);
+    expect(ok("An AI assistant trained on your records answers questions.", ["website"])).toBe(false);
+    expect(ok("An AI assistant that answers questions and gives advice.", ["website"])).toBe(false);
+  });
+
+  it("reads an assistant offered without the word AI, and leaves their own staff alone", () => {
+    expect(ok("An assistant that learns from your bookings could fill gaps.", ["website"])).toBe(false);
+    expect(ok("An assistant predicting busy days would help.", ["website"])).toBe(false);
+    expect(ok("Your assistant would answer the phone less often.", ["website"])).toBe(true);
   });
 
   it("holds a stated size to the measurement, within a megabyte", () => {
@@ -275,6 +283,9 @@ describe("verifyMessage, for messages Claude writes unattended", () => {
   it("refuses prices, deadlines and guarantees, and allows free", () => {
     expect(ok("A new site is $500.", ["no_website"])).toBe(false);
     expect(ok("I can have it live within a week.", ["no_website"])).toBe(false);
+    expect(ok("I can have it ready this week.", ["no_website"])).toBe(false);
+    expect(ok("It would be done in two days.", ["no_website"])).toBe(false);
+    expect(ok("Someone can decide in a minute.", ["no_website"])).toBe(true);
     expect(ok("Guaranteed more bookings.", ["no_website"])).toBe(false);
     expect(ok("A free sample, no cost and no obligation.", ["no_website"])).toBe(true);
   });

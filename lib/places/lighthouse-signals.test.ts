@@ -346,7 +346,9 @@ suite("siteFindings", () => {
 
   it("shows the same facts the message signals are allowed to state", () => {
     const out = siteFindings(heavy, "https://theroofingguy.co/");
-    expect(out).toEqual(["10 MB page", "40 low contrast", "26 unsized images"]);
+    // 11, not 10: decimal megabytes since 13 Oct, the same number the email
+    // states (`measuredMegabytes`). The page is 10.5 MB to Lighthouse's KiB.
+    expect(out).toEqual(["11 MB page", "40 low contrast", "26 unsized images"]);
   });
 
   it("shows nothing for a site nobody has measured", () => {

@@ -327,7 +327,9 @@ export function siteFindings(signals: unknown, website: string | null | undefine
 
   const out: string[] = [];
   if (lh.totalBytes >= HEAVY_PAGE_BYTES) {
-    out.push(`${Math.round(lh.totalBytes / 1_048_576)} MB page`);
+    // The same megabytes the message states, or the row says 15 where the
+    // email says 16 about the same page.
+    out.push(`${measuredMegabytes(website, signals)} MB page`);
   }
   if (lh.contrastFailures >= CONTRAST_FAILURE_FLOOR) out.push(`${lh.contrastFailures} low contrast`);
   if (lh.unsizedImages >= UNSIZED_IMAGE_FLOOR) out.push(`${lh.unsizedImages} unsized images`);
