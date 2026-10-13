@@ -89,6 +89,44 @@ export function nounFor(category: string): string {
   return NOUN[category] ?? "business";
 }
 
+/**
+ * What an assistant would do for this kind of business, finishing "answers common
+ * questions and ...". Worded per kind: "books appointments" is right for a dentist
+ * and wrong for a restaurant.
+ */
+const TASK: Record<string, string> = {
+  restaurants: "takes table bookings",
+  cafes: "takes table bookings",
+  hotels: "takes room bookings",
+  foodProducers: "passes the rest on to you",
+  pharmacies: "passes the rest on to you",
+  contractors: "collects quote requests",
+  trades: "collects quote requests",
+  autoRepair: "books service appointments",
+  realEstate: "books property visits",
+  eventServices: "takes event bookings",
+  childcare: "books visits for parents",
+  // Schools take the default: the category holds driving schools too, where
+  // "visits for parents" read wrong on 13 Oct.
+  gyms: "books trial classes",
+};
+
+export function taskFor(category: string): string {
+  return TASK[category] ?? "books appointments";
+}
+
+/**
+ * The one line that offers more than the website. Asked for on 13 Oct, "AI
+ * automation and so on". It is an offer and never past work: PROFILE lists it
+ * under services, not under anything shipped.
+ */
+export function toolsLine(category: string): string {
+  return (
+    `I can also set up simple AI tools that save you time, like an assistant that ` +
+    `answers common questions and ${taskFor(category)}, day or night.`
+  );
+}
+
 type Finding =
   | { kind: "heavy"; megabytes: number }
   | { kind: "contrast" }
@@ -120,13 +158,15 @@ const join = (...paragraphs: string[]): string => paragraphs.join("\n\n");
  * short enough for WhatsApp, which needs no sign-off; an email does, and the
  * signature carries the portfolio link — the one piece of proof an owner can
  * check in a click. Copying Otaku-Yaki's on 13 Oct gave a bare paragraph with
- * neither.
+ * neither. The AI offer every first email carries rides after it as a P.S., so
+ * the accepted text itself is not touched.
  */
-export function draftEmail(place: Pick<EmailPlace, "name">, draft: string): Email {
+export function draftEmail(place: Pick<EmailPlace, "name" | "category">, draft: string): Email {
   const text = draft.trim();
+  const signed = text.includes("joshuasenining.dev") ? text : join(text, SIGNATURE);
   return {
     subject: `A quick idea for ${place.name.trim()}`,
-    body: text.includes("joshuasenining.dev") ? text : join(text, SIGNATURE),
+    body: text.includes("AI tools") ? signed : join(signed, `P.S. ${toolsLine(place.category)}`),
   };
 }
 
@@ -135,6 +175,7 @@ export function firstEmail(place: EmailPlace): Email {
   const noun = nounFor(place.category);
   const where = place.city ? ` in ${place.city}` : "";
   const greeting = `Hi ${name},`;
+  const tools = toolsLine(place.category);
 
   if (!place.website) {
     return {
@@ -142,14 +183,14 @@ export function firstEmail(place: EmailPlace): Email {
       body: join(
         greeting,
         `I couldn't find a website for ${name}, only your map listing. People often ` +
-          `check Google before they call or visit, so some may pick the next ${noun} ` +
-          `instead.`,
+          `check Google before they call or visit, so some may pick the next ${noun}.`,
         `For example: one simple page with photos, your services and prices, and a big ` +
           `"Message us" button, so someone looking for a ${noun}${where} can decide in a ` +
           `minute, even late at night.`,
+        tools,
         PROOF,
-        `Would a free sample of that page for ${name} be useful? Just reply "yes" and I'll ` +
-          `send it — no cost, no obligation.`,
+        `Would a free sample of that page be useful? Just reply "yes" and I'll send it — ` +
+          `no cost, no obligation.`,
         SIGNATURE,
       ),
     };
@@ -171,6 +212,7 @@ export function firstEmail(place: EmailPlace): Email {
           `few seconds often give up and pick another ${noun}.`,
         `For example: I'd make the same page lighter, so it opens faster, keeping your ` +
           `design as it is.`,
+        tools,
         PROOF,
         offer,
         SIGNATURE,
@@ -188,6 +230,7 @@ export function firstEmail(place: EmailPlace): Email {
           `leave instead of getting in touch.`,
         `For example: changing the text or background colour so the two stand apart makes ` +
           `the whole page easier to read for everyone.`,
+        tools,
         PROOF,
         offer,
         SIGNATURE,
@@ -204,7 +247,8 @@ export function firstEmail(place: EmailPlace): Email {
           `images don't hold their space, so the text below them moves. People lose their ` +
           `place, or tap the wrong thing.`,
         `For example: giving each image a fixed size keeps everything still while the page ` +
-          `loads. It's a small fix that makes the site feel much more solid.`,
+          `loads.`,
+        tools,
         PROOF,
         offer,
         SIGNATURE,
@@ -222,9 +266,10 @@ export function firstEmail(place: EmailPlace): Email {
         `offer ${name} a free check of it instead.`,
       `For example: how many clicks it takes someone to book or message you, and whether ` +
         `your contact details are easy to find.`,
+      tools,
       PROOF,
-      `Would you like that? I'll send a short, plain-English list of what could help — ` +
-        `free, and yours to keep either way.`,
+      `Would you like the free check? I'll send a short, plain-English list of what ` +
+        `could help — yours to keep either way.`,
       SIGNATURE,
     ),
   };

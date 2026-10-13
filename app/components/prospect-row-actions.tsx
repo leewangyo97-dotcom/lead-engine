@@ -27,6 +27,50 @@ function gmailCompose({ to, subject }: Copied): string {
   return `https://mail.google.com/mail/?${query}`;
 }
 
+/**
+ * A copy icon beside one value in the copied-email panel, which becomes a tick
+ * for a moment once it worked. Copying it replaces the email on the clipboard;
+ * "copy the email again" puts it back. Where the browser refuses the clipboard,
+ * one click on the value beside it selects all of it for Ctrl+C.
+ */
+function CopyIcon({ text, label }: { text: string; label: string }) {
+  const [done, setDone] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={async () => {
+        if (!(await toClipboard(text))) return;
+        setDone(true);
+        setTimeout(() => setDone(false), 1500);
+      }}
+      aria-label={done ? `${label} copied` : `Copy ${label}`}
+      title={done ? "Copied" : `Copy ${label}`}
+      className="inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-xs text-muted hover:bg-hovered hover:text-primary"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        width="14"
+        height="14"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        {done ? (
+          <path d="M20 6 9 17l-5-5" />
+        ) : (
+          <>
+            <rect x="9" y="9" width="13" height="13" rx="2" />
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+          </>
+        )}
+      </svg>
+    </button>
+  );
+}
+
 interface Props {
   id: string;
   email: string | null;
@@ -239,14 +283,23 @@ export function ProspectRowActions({ id, email, phoneE164, overridden }: Props) 
               className="w-full rounded-xs border border-rule bg-surface p-2 text-body-sm text-primary"
             />
           )}
-          <span className="text-caption text-muted">
-            Subject: <span className="text-secondary">{copied.subject}</span>
+          {/* In the order Gmail asks for them: address, then subject. */}
+          {copied.to && (
+            <span className="flex items-start gap-2 text-caption text-muted">
+              <span>
+                To: <span className="select-all font-mono text-data-sm text-secondary">{copied.to}</span>
+              </span>
+              <CopyIcon text={copied.to} label="email address" />
+            </span>
+          )}
+          <span className="flex items-start gap-2 text-caption text-muted">
+            <span>
+              Subject: <span className="select-all text-secondary">{copied.subject}</span>
+            </span>
+            <CopyIcon text={copied.subject} label="subject" />
           </span>
           {copied.to ? (
             <>
-              <span className="text-caption text-muted">
-                To: <span className="font-mono text-data-sm text-secondary">{copied.to}</span>
-              </span>
               <a
                 href={gmailCompose(copied)}
                 target="_blank"

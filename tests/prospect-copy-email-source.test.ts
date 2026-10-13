@@ -43,6 +43,11 @@ describe("Copy email", () => {
     expect(ROW).toContain("I sent it — start the follow-up clock");
   });
 
+  it("puts a copy icon beside the address and the subject", () => {
+    expect(ROW).toContain('<CopyIcon text={copied.to} label="email address" />');
+    expect(ROW).toContain('<CopyIcon text={copied.subject} label="subject" />');
+  });
+
   it("shows the text when the browser refuses the clipboard, rather than failing quietly", () => {
     expect(ROW).toMatch(/!copied\.onClipboard && \(\s*<textarea/);
   });

@@ -70,6 +70,20 @@ Education: B.S. Information Technology, Bulacan State University, 2016–2021.
 - **AI tooling:** Claude Code, OpenAI API, Gemini, Ollama — builds custom agents,
   skills and MCP servers to automate dev and QA workflows
 
+## Services for local businesses — what an email may offer
+
+Added 13 Oct 2026 on Joshua's word ("we can offer AI automation and so on"),
+with the rest from the services on joshuasenining.dev. These are **offers, never
+past work**: no email may say he has built any of them for a business before.
+
+- **Websites and web systems** — a simple site, online booking, enquiry forms
+- **Mobile apps** — Android, or cross-platform with Flutter / React Native
+- **Fixing slow or broken sites and apps** — portfolio: "Performance rescue"
+- **Ongoing maintenance** — portfolio: "Releases & maintenance"
+- **AI automation** — e.g. an assistant that answers common customer questions
+  and takes bookings, built on the OpenAI / Gemini APIs listed under AI tooling.
+  Not yet on the portfolio's service list, which names only "AI-assisted delivery".
+
 ## Positioning — decided, do not drift
 
 **Lead with mobile.** Seven years, Kotlin primary, with named consumer apps

@@ -871,3 +871,14 @@ the target. No code follows from this, but the question is closed and should not
 be reopened as an implicit assumption — the Austin trades and the Cebu food
 trade are both in scope, and `chooseChannel` and `SHOWS` already treat them as
 different markets rather than one.
+
+## Local-business emails offer AI automation (13 October)
+
+Joshua asked for the first email to offer services that help the business,
+"AI automation and so on", based on his portfolio. The portfolio's only AI
+service is "AI-assisted delivery" (agents for dev teams), and PROFILE had no
+customer-facing AI work. So the offer was added to PROFILE under "Services for
+local businesses" on his word, framed as an offer and never as past work.
+`firstEmail` carries one line of it, an assistant that answers common questions
+and takes bookings, worded per business kind. Recommended to him: list AI
+automation on the portfolio too, because the email links there.

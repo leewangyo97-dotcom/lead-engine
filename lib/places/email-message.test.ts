@@ -1,6 +1,16 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { draftEmail, firstEmail, findingOf, nounFor, PROOF, SIGNATURE, type EmailPlace } from "./email-message";
+import {
+  draftEmail,
+  findingOf,
+  firstEmail,
+  nounFor,
+  PROOF,
+  SIGNATURE,
+  taskFor,
+  toolsLine,
+  type EmailPlace,
+} from "./email-message";
 import { signalKeys } from "./enhance";
 import { verifyMessage } from "./message-verify";
 
@@ -70,9 +80,10 @@ describe("firstEmail", () => {
       const { subject, body } = firstEmail(p);
       expect(subject.length).toBeLessThan(60);
       expect(body.startsWith(`Hi ${p.name},`)).toBe(true);
-      // Five short paragraphs plus the signature — a pitch, not a letter.
-      expect(body.split("\n\n").length).toBe(6);
-      expect(body.split(/\s+/).length).toBeLessThan(160);
+      // Six short paragraphs plus the signature — a pitch, not a letter.
+      // The sixth paragraph (13 Oct) offers AI tools, so the cap rose from 160 to 170.
+      expect(body.split("\n\n").length).toBe(7);
+      expect(body.split(/\s+/).length).toBeLessThan(170);
     });
   }
 
@@ -124,17 +135,35 @@ describe("firstEmail", () => {
     }
   });
 
-  it("sends an accepted draft word for word, signed so the portfolio link goes with it", () => {
+  it("sends an accepted draft word for word, signed, with the AI offer as a P.S.", () => {
     const text = "Hi Otaku-Yaki Restaurant — I couldn't find a website for you. Want me to?";
-    const { subject, body } = draftEmail({ name: "Otaku-Yaki Restaurant" }, `${text}\n`);
-    expect(body).toBe(`${text}\n\n${SIGNATURE}`);
+    const place = { name: "Otaku-Yaki Restaurant", category: "restaurants" };
+    const { subject, body } = draftEmail(place, `${text}\n`);
+    expect(body).toBe(`${text}\n\n${SIGNATURE}\n\nP.S. ${toolsLine("restaurants")}`);
     expect(body).toContain("joshuasenining.dev");
     expect(subject).toBe("A quick idea for Otaku-Yaki Restaurant");
   });
 
-  it("does not sign a draft twice", () => {
+  it("does not sign a draft twice, or offer the AI tools twice", () => {
     const signed = `Hi there.\n\n${SIGNATURE}`;
-    expect(draftEmail({ name: "X" }, signed).body).toBe(signed);
+    expect(draftEmail({ name: "X", category: "cafes" }, signed).body).toBe(
+      `${signed}\n\nP.S. ${toolsLine("cafes")}`,
+    );
+    const offered = `Hi there. ${toolsLine("cafes")}\n\n${SIGNATURE}`;
+    expect(draftEmail({ name: "X", category: "cafes" }, offered).body).toBe(offered);
+  });
+
+  it("offers AI tools in every variant, worded for the kind of business", () => {
+    for (const [, p] of VARIANTS) expect(firstEmail(p).body).toContain(toolsLine(p.category));
+    expect(toolsLine("dentists")).toContain("books appointments");
+    expect(toolsLine("restaurants")).toContain("takes table bookings");
+    expect(taskFor("somethingNew")).toBe("books appointments");
+  });
+
+  it("offers the AI tools as a service, never as work already done", () => {
+    // PROFILE lists AI automation under services, not shipped work.
+    expect(toolsLine("clinics")).toMatch(/^I can also set up/);
+    expect(toolsLine("clinics")).not.toMatch(/I've built|I built|clients|businesses like yours/i);
   });
 
   it("calls a business by its kind, and falls back to 'business'", () => {
