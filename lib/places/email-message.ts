@@ -217,8 +217,10 @@ export function firstEmail(place: EmailPlace): Email {
         greeting,
         `I couldn't find a website for ${name}, only your map listing. People often ` +
           `check Google before they call or visit, so some may pick the next ${noun}.`,
+        // Two sentences, not one of 37 words: the readability test holds every
+        // sentence to 30 (13 Oct).
         `For example: one simple page with photos, your services and prices, and a big ` +
-          `"Message us" button, so someone looking for a ${noun}${where} can decide in a ` +
+          `"Message us" button. Someone looking for a ${noun}${where} could then decide in a ` +
           `minute, even late at night.`,
         tools,
         PROOF,

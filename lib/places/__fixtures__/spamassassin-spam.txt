@@ -1,0 +1,98 @@
+Oct 13 13:45:55.640 [1] warn: config: created user preferences file: /root/.spamassassin/user_prefs
+Received: from localhost by c8a11d318fbc
+	with SpamAssassin (version 4.0.1);
+	Tue, 13 Oct 2026 13:45:56 +0000
+From: Joshua Senining <sender@gmail.com>
+To: owner@example-dental.com.au
+Subject: FREE!!! GUARANTEED RESULTS - ACT NOW!!!
+Date: Tue, 13 Oct 2026 02:00:00 +0000
+Message-Id: <CAJ3x0ampleId0001@mail.gmail.com>
+X-Spam-Checker-Version: SpamAssassin 4.0.1 (2024-03-25) on c8a11d318fbc
+X-Spam-Flag: YES
+X-Spam-Level: ******
+X-Spam-Status: Yes, score=6.1 required=5.0 tests=ACT_NOW_CAPS,DEAR_FRIEND,
+	DRUGS_ERECTILE,FORGED_GMAIL_RCVD,FREEMAIL_FROM,NO_RECEIVED,NO_RELAYS,
+	SUBJ_ALL_CAPS autolearn=no autolearn_force=no version=4.0.1
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="----------=_6ACE3614.DC457F29"
+
+This is a multi-part message in MIME format.
+
+------------=_6ACE3614.DC457F29
+Content-Type: text/plain; charset=UTF-8
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+
+Spam detection software, running on the system "c8a11d318fbc",
+has identified this incoming email as possible spam.  The original
+message has been attached to this so you can view it or label
+similar future email.  If you have any questions, see
+the administrator of that system for details.
+
+Content preview:  Dear Friend, CLICK HERE to get 100% FREE website!!! Earn $$$
+   guaranteed, no risk, limited time offer. Act now! Winner! Cash bonus! Viagra!
+   Lowest price!!! Unsubscribe here. http://bit.ly/abc http://bit.ly/def 
+
+Content analysis details:   (6.1 points, 5.0 required)
+
+ pts rule name              description
+---- ---------------------- --------------------------------------------------
+-0.0 NO_RECEIVED            Informational: message has no Received headers
+-0.0 NO_RELAYS              Informational: message was not relayed via SMTP
+ 1.0 FORGED_GMAIL_RCVD      'From' gmail.com does not match 'Received' headers
+ 0.5 SUBJ_ALL_CAPS          Subject is all capitals
+ 0.0 FREEMAIL_FROM          Sender email is commonly abused enduser mail provider
+                            [sender(at)gmail.com]
+ 2.7 DEAR_FRIEND            BODY: Dear Friend? That's not very dear!
+ 0.1 ACT_NOW_CAPS           BODY: Talks about 'acting now' with capitals
+ 1.8 DRUGS_ERECTILE         Refers to an erectile drug
+
+
+
+------------=_6ACE3614.DC457F29
+Content-Type: message/rfc822; x-spam-type=original
+Content-Description: original message before SpamAssassin
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+
+From: Joshua Senining <sender@gmail.com>
+To: owner@example-dental.com.au
+Subject: FREE!!! GUARANTEED RESULTS - ACT NOW!!!
+Date: Tue, 13 Oct 2026 02:00:00 +0000
+Message-ID: <CAJ3x0ampleId0001@mail.gmail.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+
+Dear Friend,
+
+CLICK HERE to get 100% FREE website!!! Earn $$$ guaranteed, no risk, limited time offer. Act now! Winner! Cash bonus! Viagra! Lowest price!!! Unsubscribe here.
+
+http://bit.ly/abc http://bit.ly/def
+
+------------=_6ACE3614.DC457F29--
+
+Spam detection software, running on the system "c8a11d318fbc",
+has identified this incoming email as possible spam.  The original
+message has been attached to this so you can view it or label
+similar future email.  If you have any questions, see
+the administrator of that system for details.
+
+Content preview:  Dear Friend, CLICK HERE to get 100% FREE website!!! Earn $$$
+   guaranteed, no risk, limited time offer. Act now! Winner! Cash bonus! Viagra!
+   Lowest price!!! Unsubscribe here. http://bit.ly/abc http://bit.ly/def 
+
+Content analysis details:   (6.1 points, 5.0 required)
+
+ pts rule name              description
+---- ---------------------- --------------------------------------------------
+-0.0 NO_RECEIVED            Informational: message has no Received headers
+-0.0 NO_RELAYS              Informational: message was not relayed via SMTP
+ 1.0 FORGED_GMAIL_RCVD      'From' gmail.com does not match 'Received' headers
+ 0.5 SUBJ_ALL_CAPS          Subject is all capitals
+ 0.0 FREEMAIL_FROM          Sender email is commonly abused enduser mail provider
+                            [sender(at)gmail.com]
+ 2.7 DEAR_FRIEND            BODY: Dear Friend? That's not very dear!
+ 0.1 ACT_NOW_CAPS           BODY: Talks about 'acting now' with capitals
+ 1.8 DRUGS_ERECTILE         Refers to an erectile drug
+

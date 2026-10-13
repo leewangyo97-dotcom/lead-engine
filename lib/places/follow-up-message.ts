@@ -84,7 +84,7 @@ export function followUpMessage({
   const offer = hasWebsite
     ? // "Put together", not "mock up": the words of the trade stay out of an
       // owner's inbox, as in the first emails (verifier, 13 Oct).
-      `I'd put together one page — ${shows} — so you can put it beside what you have now`
+      `I'd put together one page — ${shows} — to set beside what you have now`
     : `one page showing ${shows}`;
 
   if (step === 1) {

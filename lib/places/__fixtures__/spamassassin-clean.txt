@@ -1,0 +1,55 @@
+X-Spam-Checker-Version: SpamAssassin 4.0.1 (2024-03-25) on f9044dc924a8
+X-Spam-Level: 
+X-Spam-Status: No, score=1.0 required=5.0 tests=FORGED_GMAIL_RCVD,
+	FREEMAIL_FROM,NO_RECEIVED,NO_RELAYS autolearn=no autolearn_force=no
+	version=4.0.1
+From: Joshua Senining <sender@gmail.com>
+To: owner@example-dental.com.au
+Subject: A simple website for Bay Dental Studio?
+Date: Tue, 13 Oct 2026 02:00:00 +0000
+Message-ID: <CAJ3x0ampleId0001@mail.gmail.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+
+Hi Bay Dental Studio,
+
+I couldn't find a website for Bay Dental Studio, only your map listing. People often check Google before they call or visit, so some may pick the next dentist.
+
+For example: one simple page with photos, your services and prices, and a big "Message us" button. Someone looking for a dentist in Sydney could then decide in a minute, even late at night.
+
+I can also set up simple AI tools that save you time, like an assistant that answers common questions and books appointments, day or night.
+
+I'm Joshua, a web and app developer in the Philippines. I've worked on websites like ThredUp and ShopGoodwill and apps like Jollibee and JoyRide — you can see my work at joshuasenining.dev.
+
+Would a free sample of that page be useful? Just reply "yes" and I'll send it.
+
+Not interested? Reply "no" and I won't email you again.
+
+—
+Joshua Senining
+Web and app developer · the Philippines
+WhatsApp +63 915 858 7388
+Spam detection software, running on the system "f9044dc924a8",
+has NOT identified this incoming email as spam.  The original
+message has been attached to this so you can view it or label
+similar future email.  If you have any questions, see
+the administrator of that system for details.
+
+Content preview:  Hi Bay Dental Studio, I couldn't find a website for Bay Dental
+   Studio, only your map listing. People often check Google before they call
+   or visit, so some may pick the next dentist. For example: one simple page
+   with photos, your services and prices, and a big "Message us" button. Someone
+   looking for a dentist in Sydney could then decide in a minute, even late
+  at night. 
+
+Content analysis details:   (1.0 points, 5.0 required)
+
+ pts rule name              description
+---- ---------------------- --------------------------------------------------
+-0.0 NO_RECEIVED            Informational: message has no Received headers
+ 0.0 FREEMAIL_FROM          Sender email is commonly abused enduser mail provider
+                            [sender(at)gmail.com]
+ 1.0 FORGED_GMAIL_RCVD      'From' gmail.com does not match 'Received' headers
+-0.0 NO_RELAYS              Informational: message was not relayed via SMTP
+

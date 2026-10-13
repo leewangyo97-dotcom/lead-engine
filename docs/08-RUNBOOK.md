@@ -354,6 +354,35 @@ It processes every queued search in order and prints found/new/dupes for each.
 Expect minutes per country and the odd Overpass 504 — that is load, not a
 fault; run it again.
 
+## Will this email go to spam? `pnpm spam:check`
+
+Scores every kind of email the app writes with SpamAssassin, the open-source
+spam filter: the five first-email variants, an enhanced draft, and both
+follow-ups. It needs Docker Desktop running. The first run builds
+`tools/spamassassin` in about a minute.
+
+```bash
+pnpm spam:check
+```
+
+It fails at 2.5 points. SpamAssassin files mail as spam at 5, and the margin
+is deliberate: Gmail weighs what SpamAssassin cannot see, chiefly the sender's
+reputation and whether people reply. On 13 Oct every email scored 0.0. A
+deliberately spammy one ("Dear Friend", all-caps subject) scored 5.1, so the
+check does fail when it should. `FORGED_GMAIL_RCVD` (+1.0) is reported but not
+counted. It fires because a test message lacks the headers Gmail's servers add
+to a real send.
+
+Run it after any change to `lib/places/email-message.ts` or
+`follow-up-message.ts`. Readability is guarded in the ordinary test run
+(`readability.test.ts`): grade 8 or below, and no sentence over 35 words, for
+every business kind.
+
+**What it cannot tell you:** whether Gmail trusts your account. That comes from
+sending: 10–20 new emails a day, spread out, to small owner-run businesses, and
+clicking "they said no" whenever someone replies no. For a real end-to-end
+score, send one email to the address mail-tester.com gives you.
+
 ## One click: Enhance and Run now (GitHub Actions)
 
 Two buttons on `/prospects` start GitHub Actions runs instead of asking for a
