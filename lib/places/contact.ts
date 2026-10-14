@@ -1,5 +1,6 @@
 import { publicDomain, publicReason } from "./public-institution";
 import { buildWhatsAppLink, isWhatsAppCapable } from "./phone";
+import { mistypedEmail, mistypedReason } from "./email-typo";
 
 /**
  * Choosing how to reach a prospect, and what the first message says.
@@ -189,11 +190,14 @@ export function chooseChannel(
           }
       : { channel: "whatsapp", available: false, reason: "no phone number" };
 
+  const mistyped = mistypedEmail(place.email);
   const email: ContactOption = !place.email
     ? { channel: "email", available: false, reason: "no email address" }
     : place.emailBounced
       ? { channel: "email", available: false, reason: BOUNCED_REASON }
-      : {
+      : mistyped
+        ? { channel: "email", available: false, reason: mistypedReason(mistyped) }
+        : {
           channel: "email",
           available: true,
           href: `mailto:${place.email}?subject=${encodeURIComponent(

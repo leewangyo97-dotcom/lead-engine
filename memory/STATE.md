@@ -75,6 +75,7 @@ opens a page that is unambiguously the message.
   Waits on `GITHUB_DISPATCH_TOKEN` (one click) and `SEC_USER_AGENT` (repo secret, his contact).
 - **Owner-addressed emails** (15 Oct): prospect emails greet the discovered owner, to their own
   verified address if any (`recipient.ts`); follow-ups stay on the first address. 1 owner in 8.
+  Mistyped addresses (`.xom`) are refused (`email-typo.ts`); fix them by hand.
 - The Neon CLI here is signed in; `pnpm test:integration` runs on a scratch branch.
 
 ### Deliberately not doing — recorded so it is not re-proposed

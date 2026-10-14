@@ -2,6 +2,7 @@ import type { SiteSignals } from "./extract";
 import { isWhatsAppCapable } from "./phone";
 import { publicDomain } from "./public-institution";
 import { emailUnconfirmed } from "./contact";
+import { mistypedEmail } from "./email-typo";
 
 /**
  * Scoring a prospect: how worth contacting they are, and why.
@@ -84,7 +85,9 @@ export function scoreProspect(place: ScorableProspect): ScoreResult {
 
   // A confirmed address outranks one the map listing alone holds, and a
   // bounced one counts for nothing.
-  if (place.email && !place.emailBounced) {
+  // A mistyped address (email-typo.ts) bounces like a bounced one: no email at all.
+  const usableEmail = !!place.email && !place.emailBounced && !mistypedEmail(place.email);
+  if (usableEmail) {
     if (emailUnconfirmed(place)) reasons.emailUnconfirmed = WEIGHTS.emailUnconfirmed;
     else reasons.email = WEIGHTS.email;
   }
@@ -116,7 +119,7 @@ export function scoreProspect(place: ScorableProspect): ScoreResult {
   // must never outrank one that can actually be messaged today. Someone who
   // asked not to be contacted is the same case for a stronger reason: they are
   // reachable and must not be reached.
-  const reachable = !!(number || (place.email && !place.emailBounced));
+  const reachable = !!(number || usableEmail);
   const allowed = place.status !== "do_not_contact" && !publicDomain(place.email);
   const tier =
     !reachable || !allowed ? "cold" : score >= HOT_AT ? "hot" : score >= WARM_AT ? "warm" : "cold";

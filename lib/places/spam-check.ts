@@ -1,4 +1,4 @@
-import { asEmail, draftEmail, firstEmail, type Email, type EmailPlace } from "./email-message";
+import { asEmail, draftEmail, firstEmail, possessive, type Email, type EmailPlace } from "./email-message";
 import { messageFor } from "./follow-up-message";
 
 /**
@@ -32,7 +32,7 @@ export function spamSamples(): { label: string; email: Email }[] {
     siteSignals: null,
   };
   const followUp = (step: number): Email => ({
-    subject: `Re: A quick idea for ${place.name}'s website`,
+    subject: `Re: A quick idea for ${possessive(place.name)} website`,
     body: asEmail(
       messageFor({ step, name: place.name, category: place.category, hasWebsite: true }) ?? "",
     ),

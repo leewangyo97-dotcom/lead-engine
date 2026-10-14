@@ -972,3 +972,17 @@ used. An owner marked Do not contact on /people blocks their address, and a
 send moves them from New to Contacted. Only the greeting changes in the text;
 scores still count the business address. First run, top 8 prospects: 1 owner
 found, 0 personal addresses — small local sites rarely name anyone.
+
+## Owner addressing, after the verifier; mistyped addresses refused (15 October)
+
+The verifier refused the first owner-addressing build on four counts, all
+fixed the same day: a record with no website names no owner (a name read off
+a site beside "I couldn't find a website" contradicts itself); a sequence that
+began on WhatsApp keeps its email follow-ups on the business; `greetingName`
+keeps surname particles ("Dr. Dela Cruz") and gives no greeting when the
+surname could be a credential ("BDSc" unknown → none); a person marked Not
+interested on /people stops the follow-ups, since that status lists no
+address. Separately, an address whose ending does not exist (IANA list, the
+`tlds` package) or is a known free-mail slip is refused, never corrected: a
+corrected address is a guess. One in 4,422 on file (We Love Trees, ".xom").
+Subjects say "We Love Trees' website", not "Trees's".

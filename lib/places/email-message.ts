@@ -240,10 +240,16 @@ export function abVariant(id: string | undefined): Variant {
   return hash % 2 === 0 ? "a" : "b";
 }
 
+/** "Bay Dental's", but "We Love Trees'": a name ending in s takes the apostrophe alone. */
+export const possessive = (name: string) => (/s$/i.test(name.trim()) ? `${name.trim()}'` : `${name.trim()}'s`);
+
 const SUBJECT: Record<"demo" | "no-website" | "site", Record<Variant, (name: string) => string>> = {
   demo: { a: (n) => `I made a website demo for ${n}`, b: (n) => `A website demo for ${n}` },
   "no-website": { a: (n) => `A simple website for ${n}?`, b: (n) => `Quick question for ${n}` },
-  site: { a: (n) => `A quick idea for ${n}'s website`, b: (n) => `Quick question about ${n}'s website` },
+  site: {
+    a: (n) => `A quick idea for ${possessive(n)} website`,
+    b: (n) => `Quick question about ${possessive(n)} website`,
+  },
 };
 
 /**

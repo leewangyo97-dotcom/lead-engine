@@ -18,6 +18,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   if (!composed.ok) {
     return Response.json({ error: composed.blocked }, { status: 409 });
   }
+  if (!composed.option.available) {
+    // The same refusal the Email button gives: no address, a bounced one, a mistyped one.
+    return Response.json({ error: composed.option.reason ?? "no email address" }, { status: 409 });
+  }
   const to = composed.place.email;
   return Response.json({
     subject: composed.subject,
