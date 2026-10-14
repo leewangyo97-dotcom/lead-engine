@@ -921,3 +921,13 @@ Vercel Authentication, which no prospect could pass. The first email links the
 demo in place of the "free sample" offer and the portfolio link, keeping one
 link. Subjects split per prospect by a hash of its id, recorded as the angle
 `/review` already groups by. Prospects stay in their half across follow-ups.
+
+## Bounces block one address; map-listing emails count for less (14 October)
+
+Three bounces in one morning, all OpenStreetMap addresses. "It bounced" records
+the address in `suppressions` under its own kind, `bounced`, which
+`findSuppression` skips, so phone and WhatsApp stay open where "they said no"
+would close everything. Keyed by address, it survives refreshes. Emails seen on
+the business's own site score 20 and map-only ones 8, with an "unconfirmed"
+warning, rather than being hidden: some still work, and Joshua decides.
+Rescored the same day, and hot fell from 94 to 56.

@@ -139,7 +139,7 @@ Working copy `C:\dev\lead-engine`; `F:\lead-engine` is corrupt, awaiting chkdsk.
   reopened when one appears, or its site is never read
 - Overpass 504s daily: load, not a bug, so retry. Neon autosuspends at 5 min idle; use the HTTP driver
 - **Every email is guarded:** `pnpm spam:check` (SpamAssassin in Docker, 0.0 of 2.5) and grade ≤ 8
-- **Demo pages + A/B subjects** (14 Oct): Make demo → gh-pages; set DEMO_BASE_URL to a custom domain first
+- **Demo pages + A/B subjects** (14 Oct): Make demo → gh-pages; set DEMO_BASE_URL to a custom domain first · **it bounced** blocks one address; map-only emails score 8
 - Phases 1–3 contain **zero** model calls. Keep it that way.
 - `contentHash` stability is the single biggest cost lever — its test is not optional
 - The preview pane sometimes stops applying streamed updates. Check with curl
