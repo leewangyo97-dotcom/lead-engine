@@ -24,6 +24,25 @@ import { describe, expect, it } from "vitest";
  */
 const SOURCE = readFileSync("app/components/prospect-contact.tsx", "utf8");
 
+describe("they said no", () => {
+  /** The body of `name`, up to the next function in the component. */
+  const fn = (name: string) => {
+    const start = SOURCE.indexOf(`async function ${name}(`);
+    expect(start).toBeGreaterThan(-1);
+    const end = SOURCE.indexOf("\n  async function ", start + 1);
+    return SOURCE.slice(start, end === -1 ? undefined : end);
+  };
+
+  // 14 Oct: "yes" saved the decline and looked like it did nothing. The row
+  // changed only when the refresh of a 200-row page came back, seconds later,
+  // and in the meantime the same "yes / cancel" was on screen again.
+  it("shows the decline the moment the server confirms it, before the refresh", () => {
+    expect(fn("markDeclined")).toMatch(/setDeclinedNow\(true\);[\s\S]*router\.refresh\(\)/);
+    expect(fn("undecline")).toMatch(/setDeclinedNow\(false\);[\s\S]*router\.refresh\(\)/);
+    expect(SOURCE).toContain("if (isDeclined) {");
+  });
+});
+
 /** The body of `async function open(...)`, up to the next top-level function. */
 function openBody(): string {
   const start = SOURCE.indexOf("async function open(");

@@ -487,6 +487,7 @@ export default async function Prospects({
                             id={p.id}
                             email={p.email}
                             lastContact={p.lastContact}
+                            declined={p.declined}
                             phoneE164={p.phoneE164}
                             overridden={p.overridden}
                           />

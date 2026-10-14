@@ -78,6 +78,8 @@ interface Props {
   id: string;
   email: string | null;
   lastContact: LastContact | null;
+  /** On the do-not-contact list: no email to copy, and the server would refuse one. */
+  declined?: boolean;
   phoneE164: string | null;
   overridden: string[];
 }
@@ -90,7 +92,14 @@ interface Props {
  * page transition to fix one field is enough friction that the field stays
  * wrong.
  */
-export function ProspectRowActions({ id, email, phoneE164, overridden, lastContact }: Props) {
+export function ProspectRowActions({
+  id,
+  email,
+  phoneE164,
+  overridden,
+  lastContact,
+  declined = false,
+}: Props) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState<"refresh" | "save" | "copy" | null>(null);
@@ -261,15 +270,17 @@ export function ProspectRowActions({ id, email, phoneE164, overridden, lastConta
         >
           Edit
         </button>
-        <button
-          type="button"
-          onClick={copyEmail}
-          disabled={busy !== null}
-          title="Copy a short, plain-English email for this business, ready to paste into Gmail"
-          className="rounded-xs border border-rule px-3 py-1 text-body-sm text-secondary hover:bg-hovered disabled:opacity-50"
-        >
-          {busy === "copy" ? "Copying…" : "Copy email"}
-        </button>
+        {!declined && (
+          <button
+            type="button"
+            onClick={copyEmail}
+            disabled={busy !== null}
+            title="Copy a short, plain-English email for this business, ready to paste into Gmail"
+            className="rounded-xs border border-rule px-3 py-1 text-body-sm text-secondary hover:bg-hovered disabled:opacity-50"
+          >
+            {busy === "copy" ? "Copying…" : "Copy email"}
+          </button>
+        )}
       </div>
       {copied && (
         <div

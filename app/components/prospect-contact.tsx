@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 interface Props {
@@ -37,6 +37,17 @@ export function ProspectContact({ id, whatsapp, email, contacted, declined, stat
     gmailError?: string;
   } | null>(null);
   const [marked, setMarked] = useState(false);
+  // What the click just did, shown at once rather than after the refresh.
+  //
+  // "yes" saved the decline and then appeared to do nothing (14 Oct): the row
+  // only changed when router.refresh() came back, which on a 200-row search page
+  // takes seconds. Meanwhile the busy state had cleared and the same "yes /
+  // cancel" was on screen again. The saved answer now shows the moment the
+  // server confirms it, and the refresh catches up behind it.
+  const [declinedNow, setDeclinedNow] = useState<boolean | null>(null);
+  const isDeclined = declinedNow ?? declined;
+  // Once the page's own data agrees, it takes over again.
+  useEffect(() => setDeclinedNow(null), [declined]);
 
   async function markDeclined() {
     setBusy("decline");
@@ -44,7 +55,11 @@ export function ProspectContact({ id, whatsapp, email, contacted, declined, stat
     try {
       const res = await fetch(`/api/prospects/${id}/decline`, { method: "POST" });
       if (!res.ok) setError("could not record that");
-      else router.refresh();
+      else {
+        setDeclinedNow(true);
+        setConfirming(false);
+        router.refresh();
+      }
     } catch {
       setError("could not reach the server");
     } finally {
@@ -132,6 +147,7 @@ export function ProspectContact({ id, whatsapp, email, contacted, declined, stat
             "declined business shares them.",
         );
       }
+      setDeclinedNow(false);
       router.refresh();
     } catch {
       setError("could not reach the server");
@@ -140,7 +156,7 @@ export function ProspectContact({ id, whatsapp, email, contacted, declined, stat
     }
   }
 
-  if (declined) {
+  if (isDeclined) {
     return (
       <span className="flex flex-col items-start gap-1">
         <span className="flex items-center gap-2">
@@ -244,7 +260,7 @@ export function ProspectContact({ id, whatsapp, email, contacted, declined, stat
 
       {confirming ? (
         <span className="flex items-center gap-2 text-caption">
-          <span className="text-muted">Add their number, email and domain to the list?</span>
+          <span className="text-muted">Add them to the do-not-contact list?</span>
           <button
             type="button"
             onClick={markDeclined}
