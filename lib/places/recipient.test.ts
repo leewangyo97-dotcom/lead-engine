@@ -28,6 +28,22 @@ describe("greetingName", () => {
     expect(greetingName("Dr. Raj Patel DMD")).toBe("Dr. Patel");
   });
 
+  it("keeps surname particles with the surname (verifier, 15 Oct)", () => {
+    expect(greetingName("Dr. Maria Dela Cruz")).toBe("Dr. Dela Cruz");
+    expect(greetingName("Dr. Maria de la Cruz")).toBe("Dr. de la Cruz");
+    expect(greetingName("Dr. Hans van der Berg")).toBe("Dr. van der Berg");
+    expect(greetingName("Dr. De Souza")).toBe("Dr. De Souza");
+  });
+
+  it("never puts a credential or a shouted word after Dr.", () => {
+    // Known credentials are dropped; an unknown one leaves no safe surname.
+    expect(greetingName("Dr. Jane Smith DPM")).toBe("Dr. Smith");
+    expect(greetingName("Dr. Jane Smith BDSc")).toBe("Dr. Smith");
+    expect(greetingName("Dr. Jane Smith MSc")).toBeNull();
+    expect(greetingName("Dr. Jane Smith FRCPC")).toBeNull();
+    expect(greetingName("Dr. JANE SMITH")).toBeNull();
+  });
+
   it("drops credentials after the name", () => {
     expect(greetingName("Jane Smith, CPA")).toBe("Jane");
   });
@@ -164,5 +180,25 @@ describe("where the recipient is used", () => {
 
   it("refuses an owner's address that is on the do-not-contact list", () => {
     expect(log).toContain("const listed = await addressListed(to.email);");
+  });
+
+  it("names no owner on a record with no website, where the email says none was found", () => {
+    expect(log).toContain("const owner = place.website ? (owners.get(prospectId) ?? null) : null;");
+    expect(readFileSync("lib/places/prospect-queries.ts", "utf8")).toContain(
+      "owner: r.website ? (owners.get(r.id) ?? null) : null,",
+    );
+  });
+
+  it("keeps a sequence begun on WhatsApp with the business", () => {
+    expect(log).toContain(
+      "const started = earlier.get(prospectId) ?? (previous ? { toAddress: null, personId: null } : null);",
+    );
+    expect(readFileSync("lib/places/prospect-queries.ts", "utf8")).toContain(
+      "earlier: earlier.get(r.id) ?? (contacts.has(r.id) ? { toAddress: null, personId: null } : null),",
+    );
+  });
+
+  it("stops the follow-ups when the person said no on /people", () => {
+    expect(log).toContain("const closed = await personClosed(started.personId);");
   });
 });

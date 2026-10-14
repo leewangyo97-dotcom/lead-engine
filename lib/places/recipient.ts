@@ -45,16 +45,22 @@ const CLOSED = ["not_interested", "do_not_contact"];
 const DOCTOR = /^(dr|doctor)\.?$/i;
 const HONORIFIC = /^(mr|mrs|ms|miss|mx|sir|dame|atty|engr|eng|prof)\.?$/i;
 const CREDENTIAL =
-  /^(jr|sr|ii|iii|iv|phd|md|dds|dmd|do|od|dvm|bvsc|rn|np|cpa|esq|mba|bds|mbbs|frcs|facs|cfp|jd|llb)\.?$/i;
+  /^(jr|sr|ii|iii|iv|phd|md|dds|dmd|do|od|dvm|bvsc|bdsc|dpm|dc|dpt|pt|pharmd|mds|fracds|rn|np|cpa|esq|mba|bds|mbbs|frcs|facs|cfp|jd|llb)\.?$/i;
+// Particles that belong to the surname after them: "Dela Cruz", "van der Berg".
+const PARTICLE = /^(de|dela|del|della|der|den|van|von|di|da|dos|das|du|le|la|ten|ter|bin|binti)$/i;
 // A capitalised word of two letters or more: not an initial, not a stray symbol.
 const WORD = /^\p{Lu}[\p{L}'’-]+$/u;
+// Opens with two capitals: an unknown credential ("BDSc", "FRACDS") or a
+// surname in capitals, and either way not a word to put after "Dr.".
+const SHOUTED = /^\p{Lu}{2}/u;
 const tidy = (word: string) => (word === word.toUpperCase() ? word[0] + word.slice(1).toLowerCase() : word);
 
 /**
- * How to open an email to someone: "Jane" for Jane Smith, "Dr. Smith" for
- * Dr. Jane Smith, DDS. Null when the name gives no safe answer (one word, an
- * initial, lower case), and the email then greets the business as before: a
- * wrong name in the first word is worse than no name.
+ * How to open an email to someone: "Jane" for Jane Smith, "Dr. Dela Cruz" for
+ * Dr. Maria Dela Cruz, DDS. Null when the name gives no safe answer (one word,
+ * an initial, lower case, a surname that may be a credential), and the email
+ * then greets the business as before: a wrong name in the first word is worse
+ * than no name.
  */
 export function greetingName(full: string): string | null {
   const words = full
@@ -65,8 +71,13 @@ export function greetingName(full: string): string | null {
   const doctor = words.length > 0 && DOCTOR.test(words[0]);
   const rest = words.filter((w, i) => !(i === 0 && doctor) && !HONORIFIC.test(w) && !CREDENTIAL.test(w));
   if (doctor) {
-    const last = rest[rest.length - 1];
-    return last && WORD.test(last) ? `Dr. ${tidy(last)}` : null;
+    let i = rest.length - 1;
+    const last = rest[i];
+    if (!last || !WORD.test(last) || SHOUTED.test(last)) return null;
+    // Walk back over particles. A given name is not one, so the walk stops
+    // there; "Dr. De Souza", with no given name, keeps its whole surname.
+    while (i > 0 && PARTICLE.test(rest[i - 1])) i--;
+    return `Dr. ${rest.slice(i).join(" ")}`;
   }
   return rest.length >= 2 && WORD.test(rest[0]) ? tidy(rest[0]) : null;
 }
@@ -209,4 +220,16 @@ export async function markPersonContacted(personId: string | null | undefined, n
     .update(people)
     .set({ status: "contacted", updatedAt: now })
     .where(and(eq(people.id, personId), eq(people.status, "new")));
+}
+
+/**
+ * Whether the person a sequence started with has said no on /people. "Do not
+ * contact" also lists their address; "Not interested" lists nothing, so the
+ * status itself is the check.
+ */
+export async function personClosed(personId: string): Promise<string | null> {
+  const [row] = await getDb().select({ status: people.status }).from(people).where(eq(people.id, personId)).limit(1);
+  if (row?.status === "not_interested") return "they said they are not interested (Decision-makers)";
+  if (row?.status === "do_not_contact") return "marked do not contact (Decision-makers)";
+  return null;
 }

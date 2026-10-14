@@ -16,6 +16,7 @@ import { cleanEmail } from "../sources/email";
 import {
   addressListed,
   addressTo,
+  personClosed,
   earlierEmailsFor,
   markPersonContacted,
   ownersFor,
@@ -360,33 +361,6 @@ export async function composeContact(
   const publicBody = publicDomain(place.email);
   if (publicBody) return { ok: false, blocked: publicReason(publicBody) };
 
-  // Who an email goes to: the owner discovery found, or the business itself.
-  const [owners, earlier] = await Promise.all([ownersFor([prospectId]), earlierEmailsFor([prospectId])]);
-  const recipient = pickRecipient({
-    business: { email: place.email, emailConfidence: place.emailConfidence },
-    owner: owners.get(prospectId) ?? null,
-    earlier: earlier.get(prospectId) ?? null,
-  });
-  const to = { ...place, email: recipient.email, emailConfidence: recipient.emailConfidence };
-
-  const hit = await findSuppression(prospectId);
-  const emailBounced = isBouncedIn(await bouncedSet([to.email]), to.email);
-  if (channel === "email" && emailBounced) return { ok: false, blocked: BOUNCED_REASON };
-  if (hit) {
-    return {
-      ok: false,
-      blocked: `on the do-not-contact list (${hit.kind}${hit.reason ? `: ${hit.reason}` : ""})`,
-    };
-  }
-  // An owner's own address is checked too: "do not contact" on /people may
-  // have listed it after the first email went to them.
-  if (channel === "email" && to.email && to.email.toLowerCase() !== place.email?.toLowerCase()) {
-    const listed = await addressListed(to.email);
-    if (listed) {
-      return { ok: false, blocked: `on the do-not-contact list (email${listed.reason ? `: ${listed.reason}` : ""})` };
-    }
-  }
-
   // An enhanced message that a person accepted wins over the generated one.
   // Ignoring it would mean the review step changed nothing, which is worse than
   // not offering the review at all.
@@ -410,6 +384,46 @@ export async function composeContact(
     .where(and(eq(outreach.prospectId, prospectId), gte(outreach.step, 0)))
     .orderBy(desc(outreach.step))
     .limit(1);
+
+  // Who an email goes to: the owner discovery found, or the business itself.
+  const [owners, earlier] = await Promise.all([ownersFor([prospectId]), earlierEmailsFor([prospectId])]);
+  // An owner was read off the business's own website, so a record with no
+  // website names nobody: "I couldn't find a website" beside a name taken from
+  // one contradicts itself (verifier, 15 Oct).
+  const owner = place.website ? (owners.get(prospectId) ?? null) : null;
+  // A sequence that began on WhatsApp went to the business, so its email
+  // follow-ups do too: "following up" to an owner never written to is untrue.
+  const started = earlier.get(prospectId) ?? (previous ? { toAddress: null, personId: null } : null);
+  const recipient = pickRecipient({
+    business: { email: place.email, emailConfidence: place.emailConfidence },
+    owner,
+    earlier: started,
+  });
+  const to = { ...place, email: recipient.email, emailConfidence: recipient.emailConfidence };
+
+  const hit = await findSuppression(prospectId);
+  const emailBounced = isBouncedIn(await bouncedSet([to.email]), to.email);
+  if (channel === "email" && emailBounced) return { ok: false, blocked: BOUNCED_REASON };
+  if (hit) {
+    return {
+      ok: false,
+      blocked: `on the do-not-contact list (${hit.kind}${hit.reason ? `: ${hit.reason}` : ""})`,
+    };
+  }
+  // An owner's own address is checked too: "do not contact" on /people may
+  // have listed it after the first email went to them.
+  if (channel === "email" && to.email && to.email.toLowerCase() !== place.email?.toLowerCase()) {
+    const listed = await addressListed(to.email);
+    if (listed) {
+      return { ok: false, blocked: `on the do-not-contact list (email${listed.reason ? `: ${listed.reason}` : ""})` };
+    }
+  }
+  // The person the sequence started with said no on /people: no follow-up,
+  // to them or to the business they run.
+  if (channel === "email" && started?.personId) {
+    const closed = await personClosed(started.personId);
+    if (closed) return { ok: false, blocked: closed };
+  }
 
   // Clicking again reopens the same message; it does not send a new one.
   //

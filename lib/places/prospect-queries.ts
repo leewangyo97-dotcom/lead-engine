@@ -245,8 +245,10 @@ async function queryProspects(
       r.id,
       pickRecipient({
         business: { email: r.email, emailConfidence: r.emailConfidence },
-        owner: owners.get(r.id) ?? null,
-        earlier: earlier.get(r.id) ?? null,
+        // The same two rules as composeContact: no website, no owner; a
+        // sequence begun on WhatsApp stays with the business.
+        owner: r.website ? (owners.get(r.id) ?? null) : null,
+        earlier: earlier.get(r.id) ?? (contacts.has(r.id) ? { toAddress: null, personId: null } : null),
       }),
     ]),
   );
@@ -256,7 +258,7 @@ async function queryProspects(
     const recipient = recipients.get(r.id)!;
     const to = { ...r, email: recipient.email, emailConfidence: recipient.emailConfidence };
     const emailBounced = isBouncedIn(bounced, to.email);
-    const owner = owners.get(r.id);
+    const owner = r.website ? owners.get(r.id) : undefined;
     const plan = chooseChannel({ ...to, emailBounced });
     // What `pnpm lh` measured, reduced to labels here rather than shipping the
     // whole jsonb blob to the browser for it to re-derive.
