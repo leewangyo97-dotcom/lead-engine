@@ -997,3 +997,16 @@ follow-up whose earlier email went to an address that is not the business's,
 with nobody behind it any more (a deleted person), is refused. `pnpm
 test:owners` checks all of it through the real code on a scratch branch: unit
 tests had pinned source lines, which the verifier rightly said prove less.
+
+## Verifier approved owner addressing; discovery runs on weeknights (15 October)
+
+The verifier approved owner-addressed emails on its third read, after the
+fixes above and samples generated through `composeContact`. Particles al, el
+and st were added after it, at its suggestion ("Dr. Al Hassan").
+
+Discovery now also runs from `discover.yml` on a schedule, 20:47 UTC on
+weeknights, half an hour after nightly.yml, and takes the next 25 prospects
+by score that have a website. Not inside nightly.yml: that job has a 15-minute
+budget and discovery reads sites at one request a second. The seed query now
+excludes companies already discovered; before, it re-read the same top 100
+every time and would have found nothing new after four nights.

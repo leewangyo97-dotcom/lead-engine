@@ -49,7 +49,7 @@ const CREDENTIAL =
 // Particles that belong to the surname after them: "Dela Cruz", "Delos Santos",
 // "De Los Santos", "San Pedro", "van der Berg". Common in Cebu and Austin alike.
 const PARTICLE =
-  /^(de|dela|delos|delas|del|della|der|den|los|las|san|santa|van|von|di|da|dos|das|du|le|la|ten|ter|bin|binti)$/i;
+  /^(de|dela|delos|delas|del|della|der|den|los|las|san|santa|st\.?|al|el|van|von|di|da|dos|das|du|le|la|ten|ter|bin|binti)$/i;
 // A capitalised word of two letters or more: not an initial, not a stray symbol.
 const WORD = /^\p{Lu}[\p{L}'’-]+$/u;
 // Opens with two capitals: an unknown credential ("BDSc", "FRACDS") or a
