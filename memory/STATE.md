@@ -82,8 +82,8 @@ the nightly (42 min against 15). Wappalyzer (no licence). Any send path (rule 2)
 
 ## Live state
 
-**10,069 prospects** · 2,540 reachable · 33 MB of 512 · 20 hot · 0 awaiting
-enrichment · 855 measured by `pnpm lh`. Page weight, low contrast and unsized
+**23,301 prospects** (14 Oct) · 94 hot · 2,903 public bodies (.gov/.edu/NHS) score 0 and
+cannot be contacted (`public-institution.ts`) · 1,597 measured by `pnpm lh`. Page weight, low contrast and unsized
 images now print under the site link in the `/prospects` SITE column. The
 `Australia [schools]` search was deleted 11 Sept: 13,134 rows, 57% of the table,
 0 outreach attached, and 6,711 of the then-8,870 backlog. Exported to

@@ -897,3 +897,16 @@ website holds one fine-grained GitHub token (Actions only, this repo only).
 Without it, both buttons fall back to the commands. Rejected: an Anthropic API
 key, a separate bill he declined; a local watcher polling Neon, which keeps
 compute awake against the 100 CU-hour budget.
+
+## Public bodies are not prospects (14 October)
+
+Angurugu Health Centre (nt.gov.au) bounced the first email: "551 5.7.1 Suspect
+Spam". It was no exception. 2,903 of the 4,422 prospects with an email were
+government, school or public health addresses, 2,231 of them NSW public schools
+(det.nsw.edu.au). They do not hire a freelancer from a cold message, their
+gateways block one, and each block counts against the Gmail account that sends
+everything else. So `publicDomain` (.gov, .edu, .mil, NHS, k12) takes every
+channel away, everywhere a send passes (`chooseChannel`, `composeContact`,
+Enhance), and scores them 0, out of the queue. Joshua agreed. By email domain
+only: ".org" proves nothing, and the category "schools" holds private schools
+too.
