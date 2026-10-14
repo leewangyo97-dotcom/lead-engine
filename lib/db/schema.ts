@@ -349,3 +349,111 @@ export const runs = pgTable("runs", {
 export type Lead = typeof leads.$inferSelect;
 export type NewLead = typeof leads.$inferInsert;
 export type Run = typeof runs.$inferSelect;
+
+/*
+ * Decision-makers (/people), added 14 Oct.
+ *
+ * People at companies: owners, founders, C-level, VPs and directors, found on
+ * public business sources and kept with where each fact came from. Separate
+ * from `prospects`, which are businesses found on the map. A company may start
+ * as one of those, or as a lead's company, or as a domain typed in.
+ *
+ * The do-not-contact list is the existing `suppressions` table, not a second
+ * one. A person marked "do not contact" adds their address there, so every
+ * export and every send path refuses it the same way.
+ */
+export const companies = pgTable(
+  "companies",
+  {
+    id: text("id").primaryKey().$defaultFn(createId),
+    name: text("name").notNull(),
+    /** Lower-case registrable domain. Null for a registry company with no site known yet. */
+    domain: text("domain"),
+    industry: text("industry"),
+    /** "1-10" | "11-50" | "51-200" | "201-1000" | "1000+", when a source says. */
+    sizeBand: text("size_band"),
+    location: text("location"),
+    countryCode: text("country_code"),
+    /** What says they need software work: outdated site, no app, hiring, funding, stack. */
+    signals: jsonb("signals").$type<Record<string, unknown>>(),
+    /** Where the company came from: "prospect" | "lead" | "manual". */
+    origin: text("origin").notNull(),
+    originId: text("origin_id"),
+    lastDiscoveredAt: timestamp("last_discovered_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("companies_domain_idx").on(t.domain)],
+);
+
+export const people = pgTable(
+  "people",
+  {
+    id: text("id").primaryKey().$defaultFn(createId),
+    companyId: text("company_id")
+      .notNull()
+      .references(() => companies.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    title: text("title"),
+    /** "c_level" | "founder_owner" | "vp" | "director" | "other". */
+    seniority: text("seniority").notNull().default("other"),
+    email: text("email"),
+    /**
+     * "verified": published by the company itself. "guessed": built from the
+     * company's email pattern, research only, never copied or sent. "unknown".
+     */
+    emailStatus: text("email_status").notNull().default("unknown"),
+    phone: text("phone"),
+    /** A link only. LinkedIn is never fetched. */
+    linkedinUrl: text("linkedin_url"),
+    score: integer("score"),
+    scoreReasons: jsonb("score_reasons").$type<Record<string, number>>(),
+    /** new → contacted → replied → qualified | not_interested | do_not_contact. */
+    status: text("status").notNull().default("new"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("people_company_name_idx").on(t.companyId, t.name),
+    index("people_score_idx").on(t.score),
+  ],
+);
+
+/** Every fact about a person or company, and where it was read. */
+export const peopleSources = pgTable(
+  "people_sources",
+  {
+    id: text("id").primaryKey().$defaultFn(createId),
+    personId: text("person_id").references(() => people.id, { onDelete: "cascade" }),
+    companyId: text("company_id").references(() => companies.id, { onDelete: "cascade" }),
+    /** "name" | "title" | "email" | "phone" | "linkedinUrl" | "industry" | "signals" | … */
+    field: text("field").notNull(),
+    value: text("value"),
+    sourceUrl: text("source_url"),
+    /** "website" | "email_pattern" | "edgar" | "github" | "manual". */
+    sourceType: text("source_type").notNull(),
+    fetchedAt: timestamp("fetched_at").notNull().defaultNow(),
+  },
+  (t) => [index("people_sources_person_idx").on(t.personId)],
+);
+
+/** One discovery run, started from /people, with its progress for the page. */
+export const discoveryJobs = pgTable("discovery_jobs", {
+  id: text("id").primaryKey().$defaultFn(createId),
+  /** "companies": discover the listed company ids. */
+  kind: text("kind").notNull(),
+  input: jsonb("input").$type<{ companyIds: string[] }>().notNull(),
+  /** "queued" | "running" | "done" | "failed". */
+  status: text("status").notNull().default("queued"),
+  progress: integer("progress").notNull().default(0),
+  total: integer("total").notNull().default(0),
+  /** Counts only. The repository is public, and so are its Actions logs. */
+  message: text("message"),
+  startedAt: timestamp("started_at"),
+  finishedAt: timestamp("finished_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export type Company = typeof companies.$inferSelect;
+export type Person = typeof people.$inferSelect;
