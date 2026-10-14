@@ -5,6 +5,7 @@ import { buildEnhancePrompt } from "@/lib/places/enhance";
 import { firstMessage } from "@/lib/places/contact";
 import { DRAFT_STEP } from "@/lib/places/outreach-log";
 import { dispatchConfigured, dispatchWorkflow, latestRun } from "@/lib/github/dispatch";
+import { publicDomain, publicReason } from "@/lib/places/public-institution";
 
 const WORKFLOW = "enhance.yml";
 /** The run title `enhance.yml` gives itself, which is how a run is found again. */
@@ -54,7 +55,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const [place] = await getDb()
-    .select({ id: prospects.id, status: prospects.status })
+    .select({ id: prospects.id, status: prospects.status, email: prospects.email })
     .from(prospects)
     .where(eq(prospects.id, id))
     .limit(1);
@@ -62,6 +63,8 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   if (place.status === "do_not_contact") {
     return Response.json({ error: "marked do-not-contact" }, { status: 409 });
   }
+  const publicBody = publicDomain(place.email);
+  if (publicBody) return Response.json({ error: publicReason(publicBody) }, { status: 409 });
 
   const started = await dispatchWorkflow(WORKFLOW, { prospect_id: id });
   if (!started.ok) return Response.json({ error: started.error }, { status: 503 });

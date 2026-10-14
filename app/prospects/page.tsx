@@ -487,7 +487,7 @@ export default async function Prospects({
                             id={p.id}
                             email={p.email}
                             lastContact={p.lastContact}
-                            declined={p.declined}
+                            uncontactable={p.declined || p.publicBody !== null}
                             phoneE164={p.phoneE164}
                             overridden={p.overridden}
                           />

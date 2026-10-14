@@ -78,8 +78,8 @@ interface Props {
   id: string;
   email: string | null;
   lastContact: LastContact | null;
-  /** On the do-not-contact list: no email to copy, and the server would refuse one. */
-  declined?: boolean;
+  /** Do-not-contact, or a public body: no email to copy, and the server would refuse one. */
+  uncontactable?: boolean;
   phoneE164: string | null;
   overridden: string[];
 }
@@ -98,7 +98,7 @@ export function ProspectRowActions({
   phoneE164,
   overridden,
   lastContact,
-  declined = false,
+  uncontactable = false,
 }: Props) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
@@ -270,7 +270,7 @@ export function ProspectRowActions({
         >
           Edit
         </button>
-        {!declined && (
+        {!uncontactable && (
           <button
             type="button"
             onClick={copyEmail}

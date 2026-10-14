@@ -1,3 +1,4 @@
+import { publicDomain, publicReason } from "./public-institution";
 import { buildWhatsAppLink, isWhatsAppCapable } from "./phone";
 
 /**
@@ -127,6 +128,18 @@ export function chooseChannel(
   compose?: { subject: string; body: string },
 ): ContactPlan {
   const text = message ?? firstMessage(place);
+
+  // A public body is not a prospect on any channel (see public-institution.ts).
+  const publicBody = publicDomain(place.email);
+  if (publicBody) {
+    const reason = publicReason(publicBody);
+    return {
+      preferred: null,
+      whatsapp: { channel: "whatsapp", available: false, reason },
+      email: { channel: "email", available: false, reason },
+      message: text,
+    };
+  }
 
   // A number the business published for WhatsApp beats our classifier.
   //

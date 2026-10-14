@@ -1,5 +1,6 @@
 import type { SiteSignals } from "./extract";
 import { isWhatsAppCapable } from "./phone";
+import { publicDomain } from "./public-institution";
 
 /**
  * Scoring a prospect: how worth contacting they are, and why.
@@ -90,6 +91,11 @@ export function scoreProspect(place: ScorableProspect): ScoreResult {
   if (place.city) reasons.hasCity = WEIGHTS.hasCity;
   if (place.category) reasons.knownCategory = WEIGHTS.knownCategory;
 
+  // A public body cancels everything above it, and the reason says so on hover.
+  if (publicDomain(place.email)) {
+    reasons.publicInstitution = -Object.values(reasons).reduce((sum, n) => sum + n, 0);
+  }
+
   const raw = Object.values(reasons).reduce((sum, n) => sum + n, 0);
   const score = Math.max(0, Math.min(100, raw));
 
@@ -99,7 +105,7 @@ export function scoreProspect(place: ScorableProspect): ScoreResult {
   // asked not to be contacted is the same case for a stronger reason: they are
   // reachable and must not be reached.
   const reachable = !!(number || place.email);
-  const allowed = place.status !== "do_not_contact";
+  const allowed = place.status !== "do_not_contact" && !publicDomain(place.email);
   const tier =
     !reachable || !allowed ? "cold" : score >= HOT_AT ? "hot" : score >= WARM_AT ? "warm" : "cold";
 

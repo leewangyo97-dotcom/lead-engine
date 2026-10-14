@@ -2,6 +2,7 @@ import { and, desc, eq, gte, inArray, isNull, isNotNull, ne } from "drizzle-orm"
 import { getDb } from "../db";
 import { outreach, prospects, suppressions } from "../db/schema";
 import { rootDomain } from "./normalize";
+import { publicDomain, publicReason } from "./public-institution";
 import { chooseChannel, type Channel, type ContactOption } from "./contact";
 import { toLastContact, type LastContact } from "./contact-status";
 import { asEmail, draftEmail, firstEmail } from "./email-message";
@@ -338,6 +339,9 @@ export async function composeContact(
   if (place.status === "do_not_contact") {
     return { ok: false, blocked: "marked do-not-contact" };
   }
+
+  const publicBody = publicDomain(place.email);
+  if (publicBody) return { ok: false, blocked: publicReason(publicBody) };
 
   const hit = await findSuppression(prospectId);
   if (hit) {
