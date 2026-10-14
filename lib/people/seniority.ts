@@ -24,7 +24,7 @@ const BANDS: [Seniority, RegExp][] = [
   ],
   [
     "c_level",
-    /\b(ceo|cto|coo|cfo|cio|cmo|cpo|chief\b|president(?! of)|managing director|general manager)\b/i,
+    /\b(ceo|cto|coo|cfo|cio|cmo|cpo|chief\b|president(?! of)|managing director|general manager|executive officer)\b/i,
   ],
   ["vp", /\b(vp|svp|evp|vice[- ]president|head of)\b/i],
   ["director", /\bdirector\b/i],
