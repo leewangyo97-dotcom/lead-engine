@@ -205,6 +205,12 @@ neon branches delete integration --project-id <id>
 It truncates tables, so it refuses to run against the database in `DATABASE_URL`.
 It spawns the real scripts rather than reimplementing them.
 
+`pnpm test:owners` does the same for owner addressing on `/prospects`
+(`scripts/owner-check.ts`): who an email goes to, its greeting, follow-ups,
+"Not interested", deletion, WhatsApp-first sequences and mistyped addresses,
+through the real code. It adds and removes its own rows and creates no Gmail
+draft. Same scratch-branch rule, with `INTEGRATION_DATABASE_URL`.
+
 ## Definition of done
 
 `pnpm typecheck`, `pnpm test` and `pnpm build` pass, the migration applies to a

@@ -33,6 +33,9 @@ describe("greetingName", () => {
     expect(greetingName("Dr. Maria de la Cruz")).toBe("Dr. de la Cruz");
     expect(greetingName("Dr. Hans van der Berg")).toBe("Dr. van der Berg");
     expect(greetingName("Dr. De Souza")).toBe("Dr. De Souza");
+    expect(greetingName("Dr. Maria Delos Santos")).toBe("Dr. Delos Santos");
+    expect(greetingName("Dr. Maria De Los Santos")).toBe("Dr. De Los Santos");
+    expect(greetingName("Dr. Juan San Pedro")).toBe("Dr. San Pedro");
   });
 
   it("never puts a credential or a shouted word after Dr.", () => {

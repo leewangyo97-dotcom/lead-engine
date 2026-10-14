@@ -316,8 +316,13 @@ export type ComposedContact =
       ok: true;
       /** The prospect, with `email` resolved to where this email goes (recipient.ts). */
       place: typeof prospects.$inferSelect;
-      /** The owner it greets and is recorded against, or null for the business. */
+      /** The owner it greets, or null when it greets the business. */
       person: Owner | null;
+      /**
+       * Who the sequence is with, recorded on the row. Kept when the greeting
+       * falls back to the business, so a later "no" on /people still stops it.
+       */
+      personId: string | null;
       draft: { id: string; body: string | null; angle: string | null } | undefined;
       step: number;
       reopening: boolean;
@@ -424,6 +429,20 @@ export async function composeContact(
     const closed = await personClosed(started.personId);
     if (closed) return { ok: false, blocked: closed };
   }
+  // The sequence went to an address that is not the business's, and nobody is
+  // behind it any more: the person was deleted on /people (an erasure), or the
+  // business's address changed. Either way, not one to keep writing to.
+  if (
+    channel === "email" &&
+    started?.toAddress &&
+    !started.personId &&
+    started.toAddress.toLowerCase() !== place.email?.toLowerCase()
+  ) {
+    return {
+      ok: false,
+      blocked: "the earlier email went to an address no longer on file (a deleted person, or a changed address)",
+    };
+  }
 
   // Clicking again reopens the same message; it does not send a new one.
   //
@@ -508,6 +527,7 @@ export async function composeContact(
     ok: true,
     place: to,
     person: channel === "email" ? recipient.person : null,
+    personId: channel === "email" ? (recipient.person?.personId ?? started?.personId ?? null) : null,
     draft,
     step,
     reopening,
@@ -534,11 +554,10 @@ export async function logContact(
   const db = getDb();
   const composed = await composeContact(prospectId, channel, now);
   if (!composed.ok) return composed;
-  const { place, person, draft, step, reopening, awaiting, angle, subject, body, option } = composed;
+  const { place, personId, draft, step, reopening, awaiting, angle, subject, body, option } = composed;
   // Recorded on the row, so a follow-up goes to the same place and a bounce
   // blocks the address that bounced.
   const toAddress = channel === "email" && place.email ? (cleanEmail(place.email) ?? place.email) : null;
-  const personId = person?.personId ?? null;
 
   if (!option.available || !option.href) {
     return { ok: false, blocked: option.reason ?? "channel unavailable" };
@@ -694,10 +713,9 @@ export async function recordCopiedEmail(
 ): Promise<{ ok: boolean; outreachId?: string; alreadySent?: boolean; error?: string }> {
   const composed = await composeContact(prospectId, "email", now);
   if (!composed.ok) return { ok: false, error: composed.blocked };
-  const { place, person, draft, step, reopening, awaiting, angle, subject, body, option } = composed;
+  const { place, personId, draft, step, reopening, awaiting, angle, subject, body, option } = composed;
   if (!option.available) return { ok: false, error: option.reason ?? "no email address" };
   const toAddress = place.email ? (cleanEmail(place.email) ?? place.email) : null;
-  const personId = person?.personId ?? null;
 
   const db = getDb();
   if (reopening) {

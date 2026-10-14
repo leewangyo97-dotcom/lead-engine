@@ -81,6 +81,9 @@ describe("possessive", () => {
     expect(possessive("SMILES")).toBe("SMILES'");
     expect(possessive("Bay Dental")).toBe("Bay Dental's");
     expect(possessive("Joe's Pizza ")).toBe("Joe's Pizza's");
+    // Already possessive (verifier, 15 Oct): "Joe's website", not "Joe's' website".
+    expect(possessive("Joe's")).toBe("Joe's");
+    expect(possessive("Mario’s")).toBe("Mario’s");
   });
 
   it("is what the website subject lines use", () => {

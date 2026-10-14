@@ -46,8 +46,10 @@ const DOCTOR = /^(dr|doctor)\.?$/i;
 const HONORIFIC = /^(mr|mrs|ms|miss|mx|sir|dame|atty|engr|eng|prof)\.?$/i;
 const CREDENTIAL =
   /^(jr|sr|ii|iii|iv|phd|md|dds|dmd|do|od|dvm|bvsc|bdsc|dpm|dc|dpt|pt|pharmd|mds|fracds|rn|np|cpa|esq|mba|bds|mbbs|frcs|facs|cfp|jd|llb)\.?$/i;
-// Particles that belong to the surname after them: "Dela Cruz", "van der Berg".
-const PARTICLE = /^(de|dela|del|della|der|den|van|von|di|da|dos|das|du|le|la|ten|ter|bin|binti)$/i;
+// Particles that belong to the surname after them: "Dela Cruz", "Delos Santos",
+// "De Los Santos", "San Pedro", "van der Berg". Common in Cebu and Austin alike.
+const PARTICLE =
+  /^(de|dela|delos|delas|del|della|der|den|los|las|san|santa|van|von|di|da|dos|das|du|le|la|ten|ter|bin|binti)$/i;
 // A capitalised word of two letters or more: not an initial, not a stray symbol.
 const WORD = /^\p{Lu}[\p{L}'’-]+$/u;
 // Opens with two capitals: an unknown credential ("BDSc", "FRACDS") or a

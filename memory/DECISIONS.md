@@ -986,3 +986,14 @@ address. Separately, an address whose ending does not exist (IANA list, the
 `tlds` package) or is a known free-mail slip is refused, never corrected: a
 corrected address is a guess. One in 4,422 on file (We Love Trees, ".xom").
 Subjects say "We Love Trees' website", not "Trees's".
+
+## Owner addressing, second verifier round (15 October)
+
+Two more fixes: "Joe's" stays "Joe's website", not "Joe's' website"; surname
+particles include delos, delas, los, las, san and santa ("Dr. Delos Santos").
+A row now keeps the person a sequence is with even when its greeting falls
+back to the business, so a later "Not interested" still stops it; and a
+follow-up whose earlier email went to an address that is not the business's,
+with nobody behind it any more (a deleted person), is refused. `pnpm
+test:owners` checks all of it through the real code on a scratch branch: unit
+tests had pinned source lines, which the verifier rightly said prove less.
