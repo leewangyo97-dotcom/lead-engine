@@ -29,6 +29,8 @@ export interface FollowUpInput {
    * exists: the verifier caught "I'd build it first" after a demo, 14 Oct.
    */
   demoUrl?: string | null;
+  /** Whether the first message linked the demo (its angle starts "demo"). */
+  demoSeen?: boolean;
   /** 1 for the day-4 message, 2 for the day-11 one. */
   step: number;
   category?: string | null;
@@ -77,6 +79,7 @@ export function followUpMessage({
   category,
   hasWebsite = false,
   demoUrl,
+  demoSeen = false,
 }: FollowUpInput): string {
   if (step < 1 || step > MAX_STEP) {
     throw new Error(`no follow-up for step ${step}; the ladder runs 1 to ${MAX_STEP}`);
@@ -88,12 +91,17 @@ export function followUpMessage({
   // The link sits on its own line, with no full stop after it, which a mail
   // app could read as part of the address.
   if (demoUrl) {
+    // "Still up" presumes they saw it, which is untrue for anyone whose first
+    // message went out before demos existed. They are told about it instead.
+    const demo = demoSeen
+      ? step === 1
+        ? "The demo page I made for you is still up, and it takes a minute to look at:"
+        : "The demo page stays up for now, if you want a look:"
+      : "I've since made a one-page demo for you, from the details on your map listing:";
     return step === 1
-      ? `Hi ${business} — following up on my earlier message. The demo page I made for you ` +
-          `is still up, and it takes a minute to look at:\n${demoUrl}\n` +
+      ? `Hi ${business} — following up on my earlier message. ${demo}\n${demoUrl}\n` +
           `Worth a look, or shall I leave it?`
-      : `Hi ${business} — last note from me, I won't keep messaging. The demo page stays up ` +
-          `for now, if you want another look:\n${demoUrl}\n` +
+      : `Hi ${business} — last note from me, I won't keep messaging. ${demo}\n${demoUrl}\n` +
           `If you'd rather not, no problem at all — good luck with the business.`;
   }
 
@@ -146,6 +154,7 @@ export function messageFor(input: {
   category?: string | null;
   hasWebsite?: boolean;
   demoUrl?: string | null;
+  demoSeen?: boolean;
 }): string | undefined {
   if (input.step === 0) return input.draftBody ?? undefined;
   return followUpMessage({
@@ -154,6 +163,7 @@ export function messageFor(input: {
     category: input.category,
     hasWebsite: input.hasWebsite,
     demoUrl: input.demoUrl,
+    demoSeen: input.demoSeen,
   });
 }
 

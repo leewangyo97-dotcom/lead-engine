@@ -298,13 +298,23 @@ describe("follow-ups after a demo", () => {
 
   it("point back to the demo, on its own line, as the email's one link", () => {
     for (const step of [1, 2]) {
-      const ladder = messageFor({ step, name: "Bay Dental Studio", category: "dentists", demoUrl: url })!;
-      const body = asEmail(ladder);
-      expect(body).toContain(`\n${url}\n`);
-      expect(body.match(/https?:\/\/\S+/g)).toEqual([url]);
-      // The verifier, 14 Oct: no offer to build what already exists.
-      expect(ladder).not.toMatch(/build|put together/i);
-      expect(verifyMessage(body, ["no_website"])).toEqual([]);
+      for (const demoSeen of [true, false]) {
+        const ladder = messageFor({ step, name: "Bay Dental Studio", category: "dentists", demoUrl: url, demoSeen })!;
+        const body = asEmail(ladder);
+        expect(body).toContain(`\n${url}\n`);
+        expect(body.match(/https?:\/\/\S+/g)).toEqual([url]);
+        // The verifier, 14 Oct: no offer to build what already exists.
+        expect(ladder).not.toMatch(/build|put together|another look/i);
+        expect(verifyMessage(body, ["no_website"])).toEqual([]);
+      }
     }
+  });
+
+  it("says 'still up' only to someone whose first message linked it", () => {
+    const seen = messageFor({ step: 1, name: "X", demoUrl: url, demoSeen: true })!;
+    const unseen = messageFor({ step: 1, name: "X", demoUrl: url, demoSeen: false })!;
+    expect(seen).toContain("still up");
+    expect(unseen).not.toMatch(/still up|stays up/);
+    expect(unseen).toContain("I've since made a one-page demo for you");
   });
 });
