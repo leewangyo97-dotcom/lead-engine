@@ -81,3 +81,46 @@ describe("the Enhance panel", () => {
     expect(PANEL).toMatch(/if \(isRunning\(loaded\.run\)\)/);
   });
 });
+
+describe("demo.yml", () => {
+  const DEMO = readFileSync(".github/workflows/demo.yml", "utf8");
+  const DEMO_ROUTE = readFileSync("app/api/prospects/[id]/demo/route.ts", "utf8");
+  const LOG = readFileSync("lib/places/outreach-log.ts", "utf8");
+
+  it("is found again by the title the route looks for", () => {
+    expect(DEMO).toContain("run-name: Demo ${{ inputs.prospect_id }}");
+    expect(DEMO_ROUTE).toContain("`Demo ${id}`");
+  });
+
+  it("never pastes the input into a shell script", () => {
+    for (const line of DEMO.split("\n").filter((l) => /^\s+run:/.test(l))) {
+      expect(line).not.toContain("${{");
+    }
+    expect(DEMO).toContain('pnpm -s demo:publish --id="$PROSPECT_ID"');
+  });
+
+  it("may write only what Pages serves, and runs one publish at a time", () => {
+    expect(DEMO).toMatch(/permissions:\s*\n\s*contents: write\s*\n/);
+    expect(DEMO).toMatch(/concurrency:\s*\n\s*group: demo\s*\n\s*cancel-in-progress: false/);
+  });
+
+  it("refuses a business that cannot have a demo before starting a run", () => {
+    const post = DEMO_ROUTE.slice(DEMO_ROUTE.indexOf("export async function POST("));
+    expect(post.indexOf("demoIneligible(place)")).toBeGreaterThan(-1);
+    expect(post.indexOf("demoIneligible(place)")).toBeLessThan(post.indexOf("dispatchWorkflow("));
+  });
+
+  it("links the published demo from the first email", () => {
+    expect(LOG).toContain("firstEmail({ ...place, demoUrl: publishedDemoUrl(place) })");
+  });
+});
+
+describe("demo:publish", () => {
+  const SCRIPT = readFileSync("scripts/demo-publish.ts", "utf8");
+
+  it("records a demo only once its page loads, never on the push alone", () => {
+    const main = SCRIPT.slice(SCRIPT.indexOf("async function main("));
+    expect(main.indexOf("waitUntilLive(url)")).toBeGreaterThan(-1);
+    expect(main.indexOf("waitUntilLive(url)")).toBeLessThan(main.indexOf("demoPublishedAt: new Date()"));
+  });
+});

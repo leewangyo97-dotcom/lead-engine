@@ -51,7 +51,8 @@
     "prospects:refresh": "tsx scripts/refresh-prospects.ts",
     "enhance:prompt": "tsx scripts/enhance-prompt.ts",
     "claude:unwrap": "tsx scripts/claude-unwrap.ts",
-    "spam:check": "tsx scripts/spam-check.ts"
+    "spam:check": "tsx scripts/spam-check.ts",
+    "demo:publish": "tsx scripts/demo-publish.ts"
   },
   "dependencies": {
     "@neon/config": "^1.1.0",

@@ -16,3 +16,6 @@ coverage/
 # OAuth client downloads from Google Cloud. Never commit these.
 client_secret_*.json
 .next-gate/
+
+# gh-pages worktree for demo pages (scripts/demo-publish.ts)
+.demo-site/

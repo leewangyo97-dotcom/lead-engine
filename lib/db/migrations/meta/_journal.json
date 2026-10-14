@@ -57,6 +57,13 @@
       "when": 1788968775107,
       "tag": "0007_worthless_shiver_man",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791948165296,
+      "tag": "0008_ambitious_pyro",
+      "breakpoints": true
     }
   ]
 }

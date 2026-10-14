@@ -1,0 +1,53 @@
+name: demo
+
+# Started by the Demo button on /prospects (lib/github/dispatch.ts). The title
+# carries the prospect id, which is how the button finds this run again.
+run-name: Demo ${{ inputs.prospect_id }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      prospect_id:
+        description: Prospect to publish a demo page for
+        required: true
+        type: string
+
+# One publish at a time: each one commits to the same gh-pages branch.
+concurrency:
+  group: demo
+  cancel-in-progress: false
+
+# Write, because the page is pushed to the gh-pages branch that GitHub Pages
+# serves. Nothing else in this repository is touched.
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Commit as the Actions bot
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      # The input reaches the shell as an environment variable, never pasted into
+      # the script, so no id can be read as a command.
+      - name: Publish the demo
+        run: pnpm -s demo:publish --id="$PROSPECT_ID"
+        env:
+          PROSPECT_ID: ${{ inputs.prospect_id }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}

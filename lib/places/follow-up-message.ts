@@ -23,6 +23,12 @@ import { LADDER_DAYS, MAX_STEP } from "../followups";
  */
 export interface FollowUpInput {
   name: string;
+  /**
+   * Their published demo page, when the first message linked one (lib/demo).
+   * The follow-ups then point back to it rather than offer to build what already
+   * exists: the verifier caught "I'd build it first" after a demo, 14 Oct.
+   */
+  demoUrl?: string | null;
   /** 1 for the day-4 message, 2 for the day-11 one. */
   step: number;
   category?: string | null;
@@ -70,6 +76,7 @@ export function followUpMessage({
   step,
   category,
   hasWebsite = false,
+  demoUrl,
 }: FollowUpInput): string {
   if (step < 1 || step > MAX_STEP) {
     throw new Error(`no follow-up for step ${step}; the ladder runs 1 to ${MAX_STEP}`);
@@ -77,6 +84,18 @@ export function followUpMessage({
 
   const shows = (category && SHOWS[category]) || DEFAULT_SHOWS;
   const business = name.trim();
+
+  // The link sits on its own line, with no full stop after it, which a mail
+  // app could read as part of the address.
+  if (demoUrl) {
+    return step === 1
+      ? `Hi ${business} — following up on my earlier message. The demo page I made for you ` +
+          `is still up, and it takes a minute to look at:\n${demoUrl}\n` +
+          `Worth a look, or shall I leave it?`
+      : `Hi ${business} — last note from me, I won't keep messaging. The demo page stays up ` +
+          `for now, if you want another look:\n${demoUrl}\n` +
+          `If you'd rather not, no problem at all — good luck with the business.`;
+  }
 
   // What is on offer, said without judging what they already have. "Compare it
   // with what you have now" is an invitation; "your site is dated" is an opinion
@@ -126,6 +145,7 @@ export function messageFor(input: {
   name: string;
   category?: string | null;
   hasWebsite?: boolean;
+  demoUrl?: string | null;
 }): string | undefined {
   if (input.step === 0) return input.draftBody ?? undefined;
   return followUpMessage({
@@ -133,6 +153,7 @@ export function messageFor(input: {
     step: input.step,
     category: input.category,
     hasWebsite: input.hasWebsite,
+    demoUrl: input.demoUrl,
   });
 }
 

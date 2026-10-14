@@ -5,6 +5,7 @@ import { rootDomain } from "./normalize";
 import { publicDomain, publicReason } from "./public-institution";
 import { chooseChannel, type Channel, type ContactOption } from "./contact";
 import { toLastContact, type LastContact } from "./contact-status";
+import { publishedDemoUrl } from "../demo/url";
 import { asEmail, draftEmail, firstEmail } from "./email-message";
 import { messageFor } from "./follow-up-message";
 import { MAX_STEP } from "../followups";
@@ -312,6 +313,8 @@ export type ComposedContact =
       awaiting: { id: string; gmailDraftId: string | null } | undefined;
       /** When the latest real contact was marked sent, or null. */
       lastSentAt: Date | null;
+      /** What /review groups replies by; follow-ups keep the first message's. */
+      angle: string;
       subject: string;
       body: string;
       option: ContactOption;
@@ -368,6 +371,7 @@ export async function composeContact(
       step: outreach.step,
       sentAt: outreach.sentAt,
       gmailDraftId: outreach.gmailDraftId,
+      angle: outreach.angle,
     })
     .from(outreach)
     .where(and(eq(outreach.prospectId, prospectId), gte(outreach.step, 0)))
@@ -416,7 +420,7 @@ export async function composeContact(
     channel === "email" && step === 0
       ? draft?.body
         ? draftEmail(place, draft.body)
-        : firstEmail(place)
+        : firstEmail({ ...place, demoUrl: publishedDemoUrl(place) })
       : null;
   const ladder = email
     ? undefined
@@ -426,6 +430,7 @@ export async function composeContact(
         name: place.name,
         category: place.category,
         hasWebsite: Boolean(place.website),
+        demoUrl: publishedDemoUrl(place),
       });
   // A follow-up by email carries what every email does: the link, the way out,
   // the signature. WhatsApp keeps the bare ladder text.
@@ -441,7 +446,13 @@ export async function composeContact(
   const plan = chooseChannel(place, body, channel === "email" ? { subject, body } : undefined);
   const option = channel === "whatsapp" ? plan.whatsapp : plan.email;
   const lastSentAt = previous?.sentAt ?? null;
-  return { ok: true, place, draft, step, reopening, awaiting, lastSentAt, subject, body, option };
+  // The subject test is per prospect, so a follow-up stays in its first message's half.
+  const angle =
+    email?.angle ??
+    (step > 0 ? previous?.angle : null) ??
+    draft?.angle ??
+    (place.website ? "site-improvement" : "no-website");
+  return { ok: true, place, draft, step, reopening, awaiting, lastSentAt, angle, subject, body, option };
 }
 
 /**
@@ -458,7 +469,7 @@ export async function logContact(
   const db = getDb();
   const composed = await composeContact(prospectId, channel, now);
   if (!composed.ok) return composed;
-  const { place, draft, step, reopening, awaiting, subject, body, option } = composed;
+  const { place, draft, step, reopening, awaiting, angle, subject, body, option } = composed;
 
   if (!option.available || !option.href) {
     return { ok: false, blocked: option.reason ?? "channel unavailable" };
@@ -519,7 +530,7 @@ export async function logContact(
       // about to press the button themselves and nothing here will see it.
       sentAt: outcome.countsAsSent ? now() : null,
       gmailDraftId: gmail.id ?? null,
-      angle: draft?.angle ?? (place.website ? "site-improvement" : "no-website"),
+      angle,
     })
     .returning({ id: outreach.id });
 
@@ -610,7 +621,7 @@ export async function recordCopiedEmail(
 ): Promise<{ ok: boolean; outreachId?: string; alreadySent?: boolean; error?: string }> {
   const composed = await composeContact(prospectId, "email", now);
   if (!composed.ok) return { ok: false, error: composed.blocked };
-  const { place, draft, step, reopening, awaiting, subject, body, option } = composed;
+  const { place, draft, step, reopening, awaiting, angle, subject, body, option } = composed;
   if (!option.available) return { ok: false, error: option.reason ?? "no email address" };
 
   const db = getDb();
@@ -633,7 +644,7 @@ export async function recordCopiedEmail(
       body,
       sentAt: now(),
       gmailDraftId: null,
-      angle: draft?.angle ?? (place.website ? "site-improvement" : "no-website"),
+      angle,
     })
     .returning({ id: outreach.id });
 

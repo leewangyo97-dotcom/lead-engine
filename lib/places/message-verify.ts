@@ -204,9 +204,12 @@ export function verifyMessage(
 ): MessageViolation[] {
   const present = new Set(signals);
   const violations: MessageViolation[] = [];
+  // A link is an address, not a claim. The demo email's https:// link tripped
+  // the security rule on 14 Oct, as if it said something about their site.
+  const text = message.replace(/https?:\/\/\S+/g, " ");
 
   for (const rule of RULES) {
-    const match = message.match(rule.pattern);
+    const match = text.match(rule.pattern);
     if (!match) continue;
 
     if (rule.never || !rule.requires?.some((s) => present.has(s))) {
@@ -214,5 +217,5 @@ export function verifyMessage(
     }
   }
 
-  return [...violations, ...aiViolations(message), ...sizeViolations(message, facts.megabytes)];
+  return [...violations, ...aiViolations(text), ...sizeViolations(text, facts.megabytes)];
 }

@@ -29,16 +29,22 @@ import {
  * what their customers think; the checker refuses all four.
  */
 export interface EmailPlace {
+  /** Decides the prospect's half of the subject-line test (`abVariant`). */
+  id?: string;
   name: string;
   category: string;
   city: string | null;
   website: string | null;
   siteSignals: unknown;
+  /** Their published demo page (lib/demo), when one exists. */
+  demoUrl?: string | null;
 }
 
 export interface Email {
   subject: string;
   body: string;
+  /** What /review groups replies by: the email's kind and its subject variant. */
+  angle?: string;
 }
 
 export const SIGNATURE = [
@@ -207,22 +213,93 @@ export function draftEmail(place: Pick<EmailPlace, "name" | "category">, draft: 
 export function asEmail(text: string): string {
   const body = text.trim();
   const parts = [body];
-  if (!body.includes("joshuasenining.dev")) parts.push(PORTFOLIO);
+  // One link per email: a follow-up that links the demo needs no portfolio line.
+  if (!/joshuasenining\.dev|https?:\/\//.test(body)) parts.push(PORTFOLIO);
   if (!body.includes(OPT_OUT)) parts.push(OPT_OUT);
   if (!body.includes("Joshua Senining")) parts.push(SIGNATURE);
   return join(...parts);
 }
 
+/**
+ * The subject-line test (14 Oct).
+ *
+ * Forty-eight first messages and no reply could be the pitch, the market or
+ * the sample size, and only data separates them. Every prospect is fixed in one
+ * half by its id, so a copy, a reopen and its follow-ups carry the same
+ * variant. The variant is recorded as the send's angle, and /review counts
+ * replies per angle once outcomes are logged (five sends each before it
+ * reports). The subjects are honest either way: each names the business and
+ * nothing the email does not deliver.
+ */
+export type Variant = "a" | "b";
+
+export function abVariant(id: string | undefined): Variant {
+  if (!id) return "a";
+  let hash = 0;
+  for (const char of id) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  return hash % 2 === 0 ? "a" : "b";
+}
+
+const SUBJECT: Record<"demo" | "no-website" | "site", Record<Variant, (name: string) => string>> = {
+  demo: { a: (n) => `I made a website demo for ${n}`, b: (n) => `A website demo for ${n}` },
+  "no-website": { a: (n) => `A simple website for ${n}?`, b: (n) => `Quick question for ${n}` },
+  site: { a: (n) => `A quick idea for ${n}'s website`, b: (n) => `Quick question about ${n}'s website` },
+};
+
+/**
+ * PROOF without the link, for the email that links the demo instead. One link
+ * per email (13 Oct), and the demo page itself links the portfolio, so the
+ * portfolio is a click away either way.
+ */
+export const PROOF_NO_LINK =
+  "I'm Joshua, a web and app developer in the Philippines. I've worked on websites " +
+  "like ThredUp and ShopGoodwill and apps like Jollibee and JoyRide.";
+
 export function firstEmail(place: EmailPlace): Email {
+  const variant = abVariant(place.id);
+  const tagged = (kind: string, email: Email): Email => ({ ...email, angle: `${kind}/subject-${variant}` });
+  return place.website
+    ? siteEmail(place, variant, tagged)
+    : place.demoUrl
+      ? tagged("demo", demoEmail(place, place.demoUrl, variant))
+      : tagged("no-website", noWebsiteEmail(place, variant));
+}
+
+/** "Show, don't tell": the page is already made, so the email only asks them to look. */
+function demoEmail(place: EmailPlace, url: string, variant: Variant): Email {
+  const name = place.name.trim();
+  const noun = nounFor(place.category);
+  const where = place.city ? ` in ${place.city}` : "";
+  return {
+    subject: SUBJECT.demo[variant](name),
+    body: join(
+      `Hi ${name},`,
+      `I couldn't find a website for ${name}, only your map listing. People often ` +
+        `check Google before they call or visit, so some may pick the next ${noun}.`,
+      `So I made you a free one-page demo, from the details on your map listing: ${url}`,
+      // "See your details", not "find you": the demo is noindex, so nobody finds it
+      // by searching (verifier, 14 Oct).
+      `The spaces for your photos, services and prices are ready to fill. Someone looking ` +
+        `for ${withArticle(noun)}${where} could then see your details and get in touch in a minute.`,
+      toolsLine(place.category),
+      PROOF_NO_LINK,
+      // The demo was free and going live is not: say so before they say yes.
+      `Want me to put it live for you, with your own photos and prices? Just reply "yes" ` +
+        `and I'll tell you the cost first.`,
+      OPT_OUT,
+      SIGNATURE,
+    ),
+  };
+}
+
+function noWebsiteEmail(place: EmailPlace, variant: Variant): Email {
   const name = place.name.trim();
   const noun = nounFor(place.category);
   const where = place.city ? ` in ${place.city}` : "";
   const greeting = `Hi ${name},`;
   const tools = toolsLine(place.category);
-
-  if (!place.website) {
-    return {
-      subject: `A simple website for ${name}?`,
+  return {
+      subject: SUBJECT["no-website"][variant](name),
       body: join(
         greeting,
         `I couldn't find a website for ${name}, only your map listing. People often ` +
@@ -239,16 +316,25 @@ export function firstEmail(place: EmailPlace): Email {
         SIGNATURE,
       ),
     };
-  }
+}
 
+function siteEmail(
+  place: EmailPlace,
+  variant: Variant,
+  tagged: (kind: string, email: Email) => Email,
+): Email {
+  const name = place.name.trim();
+  const noun = nounFor(place.category);
+  const greeting = `Hi ${name},`;
+  const tools = toolsLine(place.category);
   const finding = findingOf(place);
-  const subject = `A quick idea for ${name}'s website`;
+  const subject = SUBJECT.site[variant](name);
   const offer =
     `Want me to send you a short list of what I'd fix first? It's free, and you can ` +
     `keep it either way.`;
 
   if (finding?.kind === "heavy") {
-    return {
+    return tagged("heavy", {
       subject,
       body: join(
         greeting,
@@ -263,11 +349,11 @@ export function firstEmail(place: EmailPlace): Email {
         OPT_OUT,
         SIGNATURE,
       ),
-    };
+    });
   }
 
   if (finding?.kind === "contrast") {
-    return {
+    return tagged("contrast", {
       subject,
       body: join(
         greeting,
@@ -282,11 +368,11 @@ export function firstEmail(place: EmailPlace): Email {
         OPT_OUT,
         SIGNATURE,
       ),
-    };
+    });
   }
 
   if (finding?.kind === "unsized") {
-    return {
+    return tagged("unsized", {
       subject,
       body: join(
         greeting,
@@ -301,12 +387,12 @@ export function firstEmail(place: EmailPlace): Email {
         OPT_OUT,
         SIGNATURE,
       ),
-    };
+    });
   }
 
   // A site nobody has measured, or one that measured fine: no claim about it at
   // all, only an offer — "I had a look" would be untrue, and the owner would know.
-  return {
+  return tagged("unmeasured", {
     subject,
     body: join(
       greeting,
@@ -323,5 +409,5 @@ export function firstEmail(place: EmailPlace): Email {
       OPT_OUT,
       SIGNATURE,
     ),
-  };
+  });
 }

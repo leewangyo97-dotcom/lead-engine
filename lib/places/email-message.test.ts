@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
+  abVariant,
   asEmail,
   draftEmail,
   findingOf,
@@ -8,6 +9,7 @@ import {
   nounFor,
   OPT_OUT,
   PROOF,
+  PROOF_NO_LINK,
   SIGNATURE,
   taskFor,
   toolsLine,
@@ -221,5 +223,88 @@ describe("firstEmail", () => {
   it("calls a business by its kind, and falls back to 'business'", () => {
     expect(nounFor("medicalSpecialists")).toBe("specialist");
     expect(nounFor("somethingNew")).toBe("business");
+  });
+});
+
+describe("the demo email", () => {
+  const url = "https://demo.joshuasenining.dev/bay-dental-studio-ab12cd/";
+  const demo = firstEmail(place({ website: null, demoUrl: url }));
+
+  it("links the demo, and nothing else", () => {
+    // One link per email (13 Oct): the demo page links the portfolio itself.
+    expect(demo.body.match(/https?:\/\/\S+/g)).toEqual([url]);
+    expect(demo.body.split("joshuasenining.dev").length - 1).toBe(1);
+    expect(demo.body).toContain(PROOF_NO_LINK);
+    expect(demo.body).toContain(OPT_OUT);
+    expect(demo.body.endsWith(SIGNATURE)).toBe(true);
+  });
+
+  it("claims nothing it cannot back", () => {
+    expect(verifyMessage(demo.body, ["no_website", "email"])).toEqual([]);
+  });
+
+  it("is only for a business with no website", () => {
+    expect(firstEmail(place({ demoUrl: url })).body).not.toContain(url);
+  });
+});
+
+describe("the subject-line test", () => {
+  const ids = Array.from({ length: 400 }, (_, i) => `p${(i * 7919).toString(36)}x${i}`);
+  const inA = ids.find((id) => abVariant(id) === "a")!;
+  const inB = ids.find((id) => abVariant(id) === "b")!;
+
+  it("puts each prospect in one half, for good", () => {
+    for (const id of ids.slice(0, 20)) expect(abVariant(id)).toBe(abVariant(id));
+    expect(abVariant(undefined)).toBe("a");
+  });
+
+  it("splits prospects roughly in half", () => {
+    const a = ids.filter((id) => abVariant(id) === "a").length / ids.length;
+    expect(a).toBeGreaterThan(0.4);
+    expect(a).toBeLessThan(0.6);
+  });
+
+  it("records the kind and the half, which is what /review groups by", () => {
+    expect(firstEmail(place({ id: inA, website: null })).angle).toBe("no-website/subject-a");
+    expect(firstEmail(place({ id: inB, website: null })).angle).toBe("no-website/subject-b");
+    expect(firstEmail(place({ id: inB, website: null, demoUrl: "https://d.dev/x/" })).angle).toBe("demo/subject-b");
+    expect(firstEmail(place({ id: inA, siteSignals: measured({ totalBytes: 8_400_000 }) })).angle).toBe(
+      "heavy/subject-a",
+    );
+    expect(firstEmail(place({ id: inB })).angle).toBe("unmeasured/subject-b");
+  });
+
+  it("gives both halves an honest subject, for every kind", () => {
+    for (const id of [inA, inB]) {
+      for (const p of [
+        place({ id, website: null }),
+        place({ id, website: null, demoUrl: "https://d.dev/x/" }),
+        place({ id }),
+      ]) {
+        const { subject } = firstEmail(p);
+        expect(subject).toContain(p.name);
+        expect(subject.length).toBeLessThan(60);
+        expect(subject).not.toMatch(/free|re:|fwd:|urgent|!/i);
+      }
+    }
+    expect(firstEmail(place({ id: inA, website: null })).subject).not.toBe(
+      firstEmail(place({ id: inB, website: null })).subject,
+    );
+  });
+});
+
+describe("follow-ups after a demo", () => {
+  const url = "https://demo.joshuasenining.dev/bay-dental-studio-ab12cd/";
+
+  it("point back to the demo, on its own line, as the email's one link", () => {
+    for (const step of [1, 2]) {
+      const ladder = messageFor({ step, name: "Bay Dental Studio", category: "dentists", demoUrl: url })!;
+      const body = asEmail(ladder);
+      expect(body).toContain(`\n${url}\n`);
+      expect(body.match(/https?:\/\/\S+/g)).toEqual([url]);
+      // The verifier, 14 Oct: no offer to build what already exists.
+      expect(ladder).not.toMatch(/build|put together/i);
+      expect(verifyMessage(body, ["no_website"])).toEqual([]);
+    }
   });
 });

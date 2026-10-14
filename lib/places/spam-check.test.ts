@@ -66,6 +66,7 @@ describe("spamSamples", () => {
     const samples = spamSamples();
     expect(samples.map((s) => s.label)).toEqual([
       "no website",
+      "demo",
       "heavy page",
       "hard to read",
       "page jumps",

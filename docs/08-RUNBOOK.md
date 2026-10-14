@@ -354,6 +354,44 @@ It processes every queued search in order and prints found/new/dupes for each.
 Expect minutes per country and the odd Overpass 504 — that is load, not a
 fault; run it again.
 
+## Demo pages: "show, don't tell"
+
+For a business with no website, **Make demo** on its row publishes a one-page
+demo website built from its public map listing: name, kind of business, town,
+address, phone and email, and nothing else. Services, prices and photos are
+labelled placeholders. A banner says it is a demo, not their website, and the
+page asks search engines not to index it. **preview** shows it first, without
+publishing anything. Once it is live, **Copy email** links the demo instead of
+offering a sample.
+
+The page goes to this repository's `gh-pages` branch, which GitHub Pages
+serves at `https://leewangyo97-dotcom.github.io/lead-engine/<slug>/`. Pages was
+switched on by the first push on 14 Oct, and the sample at
+`/bay-dental-studio-sample-sample/` returned 200.
+
+```bash
+pnpm demo:publish --id=<prospect id>
+```
+
+The button runs the same command on GitHub Actions (`demo.yml`) once
+`GITHUB_DISPATCH_TOKEN` is set (see "One click" below). Until then it shows the
+command. `--sample` publishes a made-up business to check the pipeline, and
+`--dry` renders into `.demo-site` without pushing.
+
+**Use your own domain before sending many.** The default address shows
+"lead-engine", which tells an owner how they were found. Add a DNS CNAME
+`demo` → `leewangyo97-dotcom.github.io`, set `demo.joshuasenining.dev` as the
+custom domain under the repo's Settings → Pages, then set
+`DEMO_BASE_URL=https://demo.joshuasenining.dev` in Vercel and `.env.local`.
+
+## The subject-line test
+
+Every first email has an A or a B subject. Each prospect is fixed in one half
+by its id, and its follow-ups stay with it. The half is recorded as the send's
+angle (`no-website/subject-a`, `demo/subject-b`, …), and `/review` shows
+replies per angle once five sends of each have outcomes logged. Click
+**replied**, **won** or **lost** on every answer, or the test learns nothing.
+
 ## Will this email go to spam? `pnpm spam:check`
 
 Scores every kind of email the app writes with SpamAssassin, the open-source

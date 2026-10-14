@@ -2,6 +2,7 @@ import { Shell } from "@/app/components/shell";
 import { ProspectSearchForm } from "@/app/components/prospect-search-form";
 import { ProspectContact } from "@/app/components/prospect-contact";
 import { ProspectEnhance } from "@/app/components/prospect-enhance";
+import { ProspectDemo } from "@/app/components/prospect-demo";
 import { RunSearchesButton } from "@/app/components/run-searches-button";
 import {
   ProspectRowActions,
@@ -382,6 +383,9 @@ export default async function Prospects({
                     </div>
                     <div className="mt-3">
                       <ProspectEnhance id={p.id} name={p.name} />
+                      <div className="mt-2">
+                        <ProspectDemo id={p.id} demoUrl={p.demoUrl} eligible={p.demoEligible} />
+                      </div>
                     </div>
                   </li>
                 ))}
@@ -493,6 +497,9 @@ export default async function Prospects({
                           />
                           <div className="mt-2">
                             <ProspectEnhance id={p.id} name={p.name} />
+                            <div className="mt-2">
+                              <ProspectDemo id={p.id} demoUrl={p.demoUrl} eligible={p.demoEligible} />
+                            </div>
                           </div>
                         </td>
                       </tr>

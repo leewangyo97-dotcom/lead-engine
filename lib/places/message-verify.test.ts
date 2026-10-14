@@ -290,3 +290,12 @@ describe("verifyMessage, for messages Claude writes unattended", () => {
     expect(ok("A free sample, no cost and no obligation.", ["no_website"])).toBe(true);
   });
 });
+
+describe("verifyMessage and links", () => {
+  it("reads a link as an address, not as a claim about their site", () => {
+    const withLink = "I made you a demo: https://demo.joshuasenining.dev/bay-dental-studio-ab12cd/";
+    expect(verifyMessage(withLink, ["no_website"])).toEqual([]);
+    // The claim itself is still caught.
+    expect(verifyMessage("Your site is not secure.", ["website"])).toHaveLength(1);
+  });
+});

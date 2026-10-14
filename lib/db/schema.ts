@@ -279,6 +279,15 @@ export const prospects = pgTable(
      */
     manualOverrides: jsonb("manual_overrides").$type<Record<string, unknown>>(),
 
+    /**
+     * The one-page demo made for a business with no website (lib/demo). The slug
+     * is the page's path on the demo site. It is set only once the page has been
+     * published, because the first email links to it, and a link to a page that
+     * is not there is worse than no link at all.
+     */
+    demoSlug: text("demo_slug"),
+    demoPublishedAt: timestamp("demo_published_at"),
+
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },

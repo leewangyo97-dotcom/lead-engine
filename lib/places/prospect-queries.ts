@@ -8,6 +8,8 @@ import { isScoreProvisional, scoreProspect } from "./score";
 import { siteFindings } from "./lighthouse-signals";
 import { lastContacts } from "./outreach-log";
 import { publicDomain } from "./public-institution";
+import { demoIneligible } from "../demo/render";
+import { publishedDemoUrl } from "../demo/url";
 import type { LastContact } from "./contact-status";
 
 export interface ProspectRow {
@@ -34,6 +36,9 @@ export interface ProspectRow {
   declined: boolean;
   /** A government, school or public health domain: not a prospect (public-institution.ts). */
   publicBody: string | null;
+  /** The published demo page, or null; and whether one could be made (lib/demo). */
+  demoUrl: string | null;
+  demoEligible: boolean;
   status: string;
   tier: "hot" | "warm" | "cold";
   /** Why the score is what it is, largest contribution first. */
@@ -195,6 +200,8 @@ async function queryProspects(
       scoreReasons: prospects.scoreReasons,
       siteSignals: prospects.siteSignals,
       manualOverrides: prospects.manualOverrides,
+      demoSlug: prospects.demoSlug,
+      demoPublishedAt: prospects.demoPublishedAt,
     })
     .from(prospects)
     .where(where)
@@ -248,6 +255,8 @@ async function queryProspects(
       lastContact: contacts.get(r.id) ?? null,
       declined: r.status === "do_not_contact",
       publicBody: publicDomain(r.email),
+      demoUrl: publishedDemoUrl(r),
+      demoEligible: demoIneligible(r) === null,
     };
   });
 }

@@ -153,6 +153,8 @@ To a local business owner (the `/prospects` funnel), the same block in plain wor
 `lib/places/email-message.ts`. Two more rules there since 13 Oct, both for the
 spam folder. The portfolio link appears once, in the body, and the signature does
 not repeat it. Every email ends with a way out: *Not interested? Reply "no" and I
-won't email you again.* At most one "free", and never "no obligation". Proof there is shipped work only (ThredUp,
+won't email you again.* At most one "free", and never "no obligation". When a
+demo page exists (lib/demo, 14 Oct), the email links the demo instead of the
+portfolio, which keeps it to one link. The demo page links the portfolio. Proof there is shipped work only (ThredUp,
 ShopGoodwill, Jollibee, JoyRide): Majar Funeral Service is his own project, never a
 client's website.

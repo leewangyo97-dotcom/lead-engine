@@ -39,6 +39,14 @@ export function spamSamples(): { label: string; email: Email }[] {
   });
   return [
     { label: "no website", email: firstEmail({ ...place, website: null }) },
+    {
+      label: "demo",
+      email: firstEmail({
+        ...place,
+        website: null,
+        demoUrl: "https://demo.joshuasenining.dev/bay-dental-studio-ab12cd/",
+      }),
+    },
     { label: "heavy page", email: firstEmail({ ...place, siteSignals: reading({ totalBytes: 8_400_000 }) }) },
     { label: "hard to read", email: firstEmail({ ...place, siteSignals: reading({ contrastFailures: 21 }) }) },
     { label: "page jumps", email: firstEmail({ ...place, siteSignals: reading({ unsizedImages: 28 }) }) },
