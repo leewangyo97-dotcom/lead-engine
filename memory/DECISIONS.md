@@ -1010,3 +1010,13 @@ by score that have a website. Not inside nightly.yml: that job has a 15-minute
 budget and discovery reads sites at one request a second. The seed query now
 excludes companies already discovered; before, it re-read the same top 100
 every time and would have found nothing new after four nights.
+
+## /replies before founder drafts for job leads (15 October)
+
+Next on the list was drafting to founders at job-lead companies. Checked
+first: 4 leads qualify (score 60+ with a company email); 390 are parked, 260
+disqualified, 3 ever sent. Not worth building yet. Built `/replies` instead,
+which STATE calls the project: every business messaged, oldest first, with a
+link to the Gmail search or WhatsApp chat where an answer would be, and
+Replied / Won / Lost on the row. 68 messaged, 0 answers marked; /review can
+only learn from what is marked.

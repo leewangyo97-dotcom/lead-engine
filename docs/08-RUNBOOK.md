@@ -1314,3 +1314,14 @@ mark them Do not contact first if they also must never be collected again.
 **A guessed address looks right.** It is still a guess built from the
 company's pattern. It is never exported or copied: confirm it on a public page,
 and the next discovery run records it as verified if the site publishes it.
+
+## Marking answers: `/replies`
+
+The app holds `gmail.compose`, which cannot read the mailbox, and has no
+WhatsApp API, so it never learns of an answer by itself. `/replies` lists
+every business a message went to (marked sent), oldest first. For each, "Check
+Gmail" opens a search for mail from the address the email went to, and "Open
+the WhatsApp chat" opens the chat. Mark Replied, Won or Lost; undo puts it back.
+A row that says nobody answered needs nothing: no answer is the default.
+Someone who answered "no, stop" belongs under "they said no" on `/prospects`,
+which also blocks their number and address.

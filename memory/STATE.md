@@ -40,7 +40,7 @@ opens a page that is unambiguously the message.
   numbers, all Austin. Nothing here knows — `sentAt` records the click, only
   WhatsApp has the ticks, and one tick means it never arrived. If those six
   failed the real sample is 18, not 24. Each has a working email.
-- **Log every outcome** — `no_reply | reply | call | won`. Zero exist.
+- **Mark every answer on `/replies`** (15 Oct): 68 messaged, one click to Gmail/WhatsApp. 0 marked.
 
 ### 2. Decisions only Joshua can make
 

@@ -57,6 +57,8 @@ const ICON: Record<string, ReactNode> = {
   // No Figma counterpart: a bar chart for the weekly review, drawn to the same
   // 24px box and stroke weight as the rest.
   review: <path d="M3 3v18h18M18.7 8l-5.1 5.2-2.8-2.7L7 14.3" />,
+  // No Figma counterpart: an arrow turning back, for Replies, on the same 24px box.
+  reply: <path d="M9 14 4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />,
   // No Figma counterpart: two people, for Decision-makers, on the same 24px box.
   people: (
     <>
@@ -122,6 +124,7 @@ const NAV = [
   { href: "/prospects", label: "Find prospects", icon: "search" },
   { href: "/people", label: "Decision-makers", icon: "people" },
   { href: "/followups", label: "Follow-ups", icon: "calendar" },
+  { href: "/replies", label: "Replies", icon: "reply" },
   { href: "/rejected", label: "All leads", icon: "list" },
   // Not in the Figma sidebar, which lists four. The screen exists and dropping
   // its only entry point to match a mock would be a regression.
