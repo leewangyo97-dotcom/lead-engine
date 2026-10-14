@@ -1,5 +1,6 @@
 import { composeContact, recordCopiedEmail } from "@/lib/places/outreach-log";
 import { cleanEmail } from "@/lib/sources/email";
+import { emailUnconfirmed } from "@/lib/places/contact";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     subject: composed.subject,
     body: composed.body,
     to: to ? (cleanEmail(to) ?? to) : null,
+    // Only in the map listing, never seen on their site: say so before the paste.
+    unconfirmed: emailUnconfirmed(composed.place),
     // The copy is the message already marked sent, inside the reopen window, so
     // the panel shows when instead of offering "I sent it" a second time.
     alreadySent:

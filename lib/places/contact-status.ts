@@ -43,11 +43,23 @@ export function dayLabel(iso: string): string {
 }
 
 /** What the row says about its latest contact, or null when there has been none. */
-export function contactStatus(last: LastContact | null): { sent: boolean; text: string } | null {
+export function contactStatus(
+  last: LastContact | null,
+  /**
+   * False when nothing can carry a follow-up: do-not-contact, a public body, or
+   * a bounced email with no WhatsApp. A due date there would promise a message
+   * that will never go (Alyangula, 14 Oct).
+   */
+  canFollowUp = true,
+): { sent: boolean; text: string } | null {
   if (!last) return null;
   const what =
     last.step === 0 ? (last.channel === "whatsapp" ? "WhatsApp" : "Email") : `Follow-up ${last.step}`;
   if (!last.sentAt) return { sent: false, text: `${what} not marked sent yet` };
-  const next = last.nextDueAt ? ` · follow-up due ${dayLabel(last.nextDueAt)}` : " · sequence finished";
+  const next = !canFollowUp
+    ? " · no follow-ups"
+    : last.nextDueAt
+      ? ` · follow-up due ${dayLabel(last.nextDueAt)}`
+      : " · sequence finished";
   return { sent: true, text: `✓ ${what} sent ${dayLabel(last.sentAt)}${next}` };
 }

@@ -3,7 +3,8 @@ import { getDb } from "../db";
 import { outreach, prospects, suppressions } from "../db/schema";
 import { rootDomain } from "./normalize";
 import { publicDomain, publicReason } from "./public-institution";
-import { chooseChannel, type Channel, type ContactOption } from "./contact";
+import { BOUNCED_REASON, chooseChannel, type Channel, type ContactOption } from "./contact";
+import { BOUNCED, bouncedSet, isBouncedIn } from "./bounce";
 import { toLastContact, type LastContact } from "./contact-status";
 import { publishedDemoUrl } from "../demo/url";
 import { asEmail, draftEmail, firstEmail } from "./email-message";
@@ -71,7 +72,8 @@ export async function findSuppression(prospectId: string): Promise<SuppressionHi
   const [hit] = await db
     .select({ kind: suppressions.kind, value: suppressions.value, reason: suppressions.reason })
     .from(suppressions)
-    .where(inArray(suppressions.value, values))
+    // A bounce blocks one address on one channel (bounce.ts), not the business.
+    .where(and(inArray(suppressions.value, values), ne(suppressions.kind, BOUNCED)))
     .limit(1);
 
   return hit ?? null;
@@ -347,6 +349,8 @@ export async function composeContact(
   if (publicBody) return { ok: false, blocked: publicReason(publicBody) };
 
   const hit = await findSuppression(prospectId);
+  const emailBounced = isBouncedIn(await bouncedSet([place.email]), place.email);
+  if (channel === "email" && emailBounced) return { ok: false, blocked: BOUNCED_REASON };
   if (hit) {
     return {
       ok: false,
@@ -444,8 +448,8 @@ export async function composeContact(
 
   // Resolved through the plan, which falls back to the first message when the
   // ladder has nothing to say; the email link then carries that same text.
-  const body = chooseChannel(place, text).message;
-  const plan = chooseChannel(place, body, channel === "email" ? { subject, body } : undefined);
+  const body = chooseChannel({ ...place, emailBounced }, text).message;
+  const plan = chooseChannel({ ...place, emailBounced }, body, channel === "email" ? { subject, body } : undefined);
   const option = channel === "whatsapp" ? plan.whatsapp : plan.email;
   const lastSentAt = previous?.sentAt ?? null;
   // The subject test is per prospect, so a follow-up stays in its first message's half.

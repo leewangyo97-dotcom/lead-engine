@@ -1,13 +1,14 @@
 import { and, desc, eq, isNotNull, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "../db";
 import { prospects, searches } from "../db/schema";
-import { chooseChannel, type ContactOption } from "./contact";
+import { chooseChannel, emailUnconfirmed, type ContactOption } from "./contact";
 import { dedupeByPhone } from "./dedupe-queue";
 import type { QueueFilter } from "./queue-filter";
 import { isScoreProvisional, scoreProspect } from "./score";
 import { siteFindings } from "./lighthouse-signals";
 import { lastContacts } from "./outreach-log";
 import { publicDomain } from "./public-institution";
+import { bouncedSet, isBouncedIn } from "./bounce";
 import { demoIneligible } from "../demo/render";
 import { publishedDemoUrl } from "../demo/url";
 import type { LastContact } from "./contact-status";
@@ -36,6 +37,9 @@ export interface ProspectRow {
   declined: boolean;
   /** A government, school or public health domain: not a prospect (public-institution.ts). */
   publicBody: string | null;
+  /** The address bounced (bounce.ts); and whether it came only from the map listing. */
+  emailBounced: boolean;
+  emailUnconfirmed: boolean;
   /** The published demo page, or null; and whether one could be made (lib/demo). */
   demoUrl: string | null;
   demoEligible: boolean;
@@ -187,6 +191,7 @@ async function queryProspects(
       city: prospects.city,
       website: prospects.website,
       email: prospects.email,
+      emailConfidence: prospects.emailConfidence,
       phoneE164: prospects.phoneE164,
       whatsappE164: prospects.whatsappE164,
       // Needed by `chooseChannel`, which offers email first in countries where a
@@ -226,16 +231,20 @@ async function queryProspects(
     .offset(offset);
 
   // One query for the contact history rather than one per row.
-  const contacts = await lastContacts(rows.map((r) => r.id));
+  const [contacts, bounced] = await Promise.all([
+    lastContacts(rows.map((r) => r.id)),
+    bouncedSet(rows.map((r) => r.email)),
+  ]);
 
   return rows.map(({ manualOverrides, siteSignals, scoreReasons, ...r }) => {
-    const plan = chooseChannel(r);
+    const emailBounced = isBouncedIn(bounced, r.email);
+    const plan = chooseChannel({ ...r, emailBounced });
     // What `pnpm lh` measured, reduced to labels here rather than shipping the
     // whole jsonb blob to the browser for it to re-derive.
     const findings = siteFindings(siteSignals, r.website);
     // Scored here as well as by the script so a freshly found prospect is not
     // shown blank until someone remembers to run `pnpm prospects:score`.
-    const live = scoreProspect({ ...r, siteSignals });
+    const live = scoreProspect({ ...r, siteSignals, emailBounced });
     return {
       ...r,
       score: r.score ?? live.score,
@@ -255,6 +264,8 @@ async function queryProspects(
       lastContact: contacts.get(r.id) ?? null,
       declined: r.status === "do_not_contact",
       publicBody: publicDomain(r.email),
+      emailBounced,
+      emailUnconfirmed: emailUnconfirmed(r),
       demoUrl: publishedDemoUrl(r),
       demoEligible: demoIneligible(r) === null,
     };

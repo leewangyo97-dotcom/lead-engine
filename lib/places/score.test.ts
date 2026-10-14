@@ -63,6 +63,8 @@ describe("scoreProspect", () => {
       ...bare,
       whatsappE164: "+639171234567",
       email: "hi@vet.ph",
+      // Found on their own site: a map-listing address scores less (14 Oct).
+      emailConfidence: "mailto",
       city: "Cebu City",
       category: "veterinary",
       website: "http://vet.ph",
@@ -139,5 +141,23 @@ describe("isScoreProvisional", () => {
         enrichmentStatus: "no_contact_found",
       }),
     ).toBe(false);
+  });
+});
+
+describe("scoreProspect and where the email came from", () => {
+  const withEmail = (over: object) => scoreProspect({ name: "X", email: "hi@x.com.au", ...over });
+
+  it("trusts an address from their own site over one only the map holds", () => {
+    expect(withEmail({ emailConfidence: "mailto" }).reasons.email).toBe(20);
+    expect(withEmail({ emailConfidence: "text" }).reasons.email).toBe(20);
+    expect(withEmail({ emailConfidence: "osm" }).reasons.emailUnconfirmed).toBe(8);
+    expect(withEmail({}).reasons.emailUnconfirmed).toBe(8);
+  });
+
+  it("counts a bounced address for nothing, and not as a way to reach them", () => {
+    const bounced = withEmail({ emailConfidence: "mailto", emailBounced: true });
+    expect(bounced.reasons.email).toBeUndefined();
+    expect(bounced.reasons.emailUnconfirmed).toBeUndefined();
+    expect(bounced.tier).toBe("cold");
   });
 });

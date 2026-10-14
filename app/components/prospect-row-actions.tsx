@@ -13,6 +13,8 @@ interface Copied {
   onClipboard: boolean;
   /** When this same message was already marked sent (ISO), or null. */
   alreadySent: string | null;
+  /** The address is only in the map listing, so it may bounce. */
+  unconfirmed?: boolean;
 }
 
 async function toClipboard(text: string): Promise<boolean> {
@@ -80,6 +82,8 @@ interface Props {
   lastContact: LastContact | null;
   /** Do-not-contact, or a public body: no email to copy, and the server would refuse one. */
   uncontactable?: boolean;
+  /** Whether any channel could still carry a follow-up (see contactStatus). */
+  canFollowUp?: boolean;
   phoneE164: string | null;
   overridden: string[];
 }
@@ -99,6 +103,7 @@ export function ProspectRowActions({
   overridden,
   lastContact,
   uncontactable = false,
+  canFollowUp = true,
 }: Props) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
@@ -107,7 +112,7 @@ export function ProspectRowActions({
   const [sent, setSent] = useState<"no" | "saving" | "yes">("no");
   // From the server, so it survives a reload: whether "I sent it" was clicked,
   // when, and when the next follow-up falls due.
-  const status = contactStatus(lastContact);
+  const status = contactStatus(lastContact, canFollowUp);
   const [note, setNote] = useState<string | null>(null);
   const [draft, setDraft] = useState({ email: email ?? "", phoneE164: phoneE164 ?? "" });
 
@@ -308,6 +313,12 @@ export function ProspectRowActions({
                 To: <span className="select-all font-mono text-data-sm text-secondary">{copied.to}</span>
               </span>
               <CopyIcon text={copied.to} label="email address" />
+            </span>
+          )}
+          {copied.to && copied.unconfirmed && (
+            <span className="text-caption text-hold">
+              Unconfirmed: this address is only in their map listing, not on a website of theirs,
+              so it may bounce. If it does, click "it bounced" on the row.
             </span>
           )}
           <span className="flex items-start gap-2 text-caption text-muted">

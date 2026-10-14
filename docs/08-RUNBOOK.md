@@ -384,6 +384,22 @@ command. `--sample` publishes a made-up business to check the pipeline, and
 custom domain under the repo's Settings → Pages, then set
 `DEMO_BASE_URL=https://demo.joshuasenining.dev` in Vercel and `.env.local`.
 
+## An email bounced
+
+Click **it bounced** under the row's Email button. It blocks that one address on
+the email channel only (`lib/places/bounce.ts`). Phone and WhatsApp stay open,
+any email follow-up is refused instead of bouncing again, and the address stops
+counting toward the score. **undo** reverses it. A refresh that finds the same
+dead address keeps it blocked, and a new address found later is not.
+
+Prevention is the email's source. An address seen on the business's own website
+("mailto" or "text") is one they use. One only the map listing holds ("osm") may
+be years old: 3,541 of 4,422 on 14 Oct, and every bounce that morning was one.
+Those rows say *unconfirmed: from the map listing…* by the Email button and in
+the Copy email panel, and they score 8 for email instead of 20, so they sink in
+the queue. Gmail trusts an account less once more than about 2% of its mail
+bounces.
+
 ## The subject-line test
 
 Every first email has an A or a B subject. Each prospect is fixed in one half

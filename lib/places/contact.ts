@@ -21,7 +21,23 @@ export interface ContactablePlace {
   phoneE164?: string | null;
   whatsappE164?: string | null;
   website?: string | null;
+  /** Where the address came from: "mailto" or "text" on their own site, "osm" from the map. */
+  emailConfidence?: string | null;
+  /** The address bounced (lib/places/bounce.ts): no email, but phone and WhatsApp stay. */
+  emailBounced?: boolean;
 }
+
+/**
+ * An address seen on the business's own website is one they use. One that is
+ * only in the map listing may be years old. All three bounces on 14 Oct were
+ * map-listing addresses (3,541 of the 4,422 on file).
+ */
+export function emailUnconfirmed(place: { email?: string | null; emailConfidence?: string | null }): boolean {
+  return !!place.email && place.emailConfidence !== "mailto" && place.emailConfidence !== "text";
+}
+
+export const UNCONFIRMED_NOTE = "unconfirmed: from the map listing, not their website, so it may bounce";
+export const BOUNCED_REASON = "this address bounced";
 
 /**
  * Where a cold message to a business goes by email, not WhatsApp.
@@ -64,6 +80,8 @@ export interface ContactOption {
    * pretending to know more.
    */
   confidence?: "confirmed" | "likely";
+  /** A caveat worth reading before using an available channel. */
+  note?: string;
 }
 
 export interface ContactPlan {
@@ -171,15 +189,18 @@ export function chooseChannel(
           }
       : { channel: "whatsapp", available: false, reason: "no phone number" };
 
-  const email: ContactOption = place.email
-    ? {
-        channel: "email",
-        available: true,
-        href: `mailto:${place.email}?subject=${encodeURIComponent(
-          compose?.subject ?? `A quick idea for ${place.name}`,
-        )}&body=${encodeURIComponent(compose?.body ?? text)}`,
-      }
-    : { channel: "email", available: false, reason: "no email address" };
+  const email: ContactOption = !place.email
+    ? { channel: "email", available: false, reason: "no email address" }
+    : place.emailBounced
+      ? { channel: "email", available: false, reason: BOUNCED_REASON }
+      : {
+          channel: "email",
+          available: true,
+          href: `mailto:${place.email}?subject=${encodeURIComponent(
+            compose?.subject ?? `A quick idea for ${place.name}`,
+          )}&body=${encodeURIComponent(compose?.body ?? text)}`,
+          ...(emailUnconfirmed(place) ? { note: UNCONFIRMED_NOTE } : {}),
+        };
 
   /*
    * A guess defers to a certainty in email-first countries.

@@ -6,9 +6,11 @@ import { useRouter } from "next/navigation";
 interface Props {
   id: string;
   whatsapp: { available: boolean; reason?: string; confidence?: "confirmed" | "likely" };
-  email: { available: boolean; reason?: string };
+  email: { available: boolean; reason?: string; note?: string };
   contacted: boolean;
   declined: boolean;
+  /** The address bounced (lib/places/bounce.ts): email is closed, phone stays open. */
+  emailBounced?: boolean;
   /** The prospect's own status: with no events table, it is the whole record. */
   status: string;
 }
@@ -20,7 +22,15 @@ interface Props {
  * logged is exactly what is opened. It also lets the server refuse: a prospect
  * on the do-not-contact list must not be reachable by clicking faster.
  */
-export function ProspectContact({ id, whatsapp, email, contacted, declined, status }: Props) {
+export function ProspectContact({
+  id,
+  whatsapp,
+  email,
+  contacted,
+  declined,
+  status,
+  emailBounced = false,
+}: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -46,8 +56,32 @@ export function ProspectContact({ id, whatsapp, email, contacted, declined, stat
   // server confirms it, and the refresh catches up behind it.
   const [declinedNow, setDeclinedNow] = useState<boolean | null>(null);
   const isDeclined = declinedNow ?? declined;
+  // The same at-once answer for "it bounced", for the same reason.
+  const [bouncedNow, setBouncedNow] = useState<boolean | null>(null);
+  const isBounced = bouncedNow ?? emailBounced;
+  const emailOk = email.available && !isBounced;
   // Once the page's own data agrees, it takes over again.
   useEffect(() => setDeclinedNow(null), [declined]);
+
+  /**
+   * "It bounced": the address is dead, the business may not be. Blocks this
+   * address on email only (bounce.ts), so an email follow-up is refused instead
+   * of bouncing again, and WhatsApp stays open. Undoable, so no confirmation.
+   */
+  async function setBounced(bounced: boolean) {
+    setBusy("bounce");
+    setError(null);
+    try {
+      const res = await fetch(`/api/prospects/${id}/bounced`, { method: bounced ? "POST" : "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) setBouncedNow(bounced);
+      else setError(data.error ?? "could not record that");
+    } catch {
+      setError("could not reach the server");
+    } finally {
+      setBusy(null);
+    }
+  }
 
   async function markDeclined() {
     setBusy("decline");
@@ -253,13 +287,42 @@ export function ProspectContact({ id, whatsapp, email, contacted, declined, stat
         <button
           type="button"
           onClick={() => open("email")}
-          disabled={!email.available || busy !== null}
-          title={email.available ? "Open a draft email" : email.reason}
+          disabled={!emailOk || busy !== null}
+          title={emailOk ? "Open a draft email" : isBounced ? "this address bounced" : email.reason}
           className="rounded-xs border border-rule px-3 py-1 text-body-sm text-secondary hover:bg-hovered disabled:cursor-not-allowed disabled:text-faint disabled:hover:bg-transparent"
         >
           {busy === "email" ? "Opening…" : "Email"}
         </button>
       </div>
+
+      {isBounced ? (
+        <span className="flex items-center gap-2 text-caption">
+          <span className="text-hold">email bounced: phone still open</span>
+          <button
+            type="button"
+            onClick={() => setBounced(false)}
+            disabled={busy !== null}
+            className="text-secondary underline underline-offset-2 hover:text-primary disabled:opacity-50"
+          >
+            {busy === "bounce" ? "undoing…" : "undo"}
+          </button>
+        </span>
+      ) : (
+        emailOk && (
+          <span className="flex flex-wrap items-center gap-2 text-caption">
+            {email.note && <span className="text-faint">{email.note}</span>}
+            <button
+              type="button"
+              onClick={() => setBounced(true)}
+              disabled={busy !== null}
+              title="The email came back undeliverable: block this address, keep the phone"
+              className="text-faint underline underline-offset-2 hover:text-secondary disabled:opacity-50"
+            >
+              {busy === "bounce" ? "saving…" : "it bounced"}
+            </button>
+          </span>
+        )
+      )}
 
       {confirming ? (
         <span className="flex items-center gap-2 text-caption">

@@ -4,6 +4,7 @@ import { loadLocalEnv } from "../lib/env";
 import { chunk } from "../lib/chunk";
 import { prospects } from "../lib/db/schema";
 import { scoreProspect } from "../lib/places/score";
+import { allBounced, isBouncedIn } from "../lib/places/bounce";
 
 /**
  * Scores prospects.
@@ -28,9 +29,11 @@ async function main() {
     return;
   }
 
+  // A bounced address counts for nothing (bounce.ts). One query for all of them.
+  const bounced = await allBounced();
   const tiers = { hot: 0, warm: 0, cold: 0 };
   const scored = rows.map((row) => {
-    const { score, reasons, tier } = scoreProspect(row);
+    const { score, reasons, tier } = scoreProspect({ ...row, emailBounced: isBouncedIn(bounced, row.email) });
     tiers[tier]++;
     return { id: row.id, score, reasons };
   });

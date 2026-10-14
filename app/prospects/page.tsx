@@ -378,6 +378,7 @@ export default async function Prospects({
                         email={p.emailChannel}
                         contacted={p.contacted}
                         declined={p.declined}
+                        emailBounced={p.emailBounced}
                         status={p.status}
                       />
                     </div>
@@ -454,6 +455,7 @@ export default async function Prospects({
                             email={p.emailChannel}
                             contacted={p.contacted}
                             declined={p.declined}
+                            emailBounced={p.emailBounced}
                             status={p.status}
                           />
                         </td>
@@ -491,7 +493,8 @@ export default async function Prospects({
                             id={p.id}
                             email={p.email}
                             lastContact={p.lastContact}
-                            uncontactable={p.declined || p.publicBody !== null}
+                            uncontactable={p.declined || p.publicBody !== null || p.emailBounced}
+                            canFollowUp={!p.declined && (p.emailChannel.available || p.whatsapp.available)}
                             phoneE164={p.phoneE164}
                             overridden={p.overridden}
                           />

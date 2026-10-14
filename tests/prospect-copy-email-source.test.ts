@@ -45,7 +45,7 @@ describe("Copy email", () => {
 
   it("remembers a send across a reload: the row says it, and the panel stops offering it", () => {
     // 13 Oct: marked sent, reloaded, and "I sent it" was offered again.
-    expect(ROW).toContain("const status = contactStatus(lastContact);");
+    expect(ROW).toContain("const status = contactStatus(lastContact, canFollowUp);");
     expect(ROW).toMatch(/copied\.alreadySent \? \(/);
     expect(body(ROUTE, "export async function GET(")).toMatch(
       /alreadySent:\s*composed\.reopening && !composed\.awaiting && composed\.lastSentAt/,

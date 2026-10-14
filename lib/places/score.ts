@@ -1,6 +1,7 @@
 import type { SiteSignals } from "./extract";
 import { isWhatsAppCapable } from "./phone";
 import { publicDomain } from "./public-institution";
+import { emailUnconfirmed } from "./contact";
 
 /**
  * Scoring a prospect: how worth contacting they are, and why.
@@ -20,6 +21,10 @@ export interface ScorableProspect {
   city?: string | null;
   website?: string | null;
   email?: string | null;
+  /** "mailto" or "text" when found on their own site; "osm" when only on the map. */
+  emailConfidence?: string | null;
+  /** The address bounced: worth nothing (lib/places/bounce.ts). */
+  emailBounced?: boolean;
   phoneE164?: string | null;
   whatsappE164?: string | null;
   enrichmentStatus?: string | null;
@@ -43,6 +48,8 @@ export const WEIGHTS = {
   whatsappPublished: 30,
   mobileNumber: 25,
   email: 20,
+  /** An address only the map listing holds: all three bounces on 14 Oct were these. */
+  emailUnconfirmed: 8,
   landlineOnly: 5,
 
   /** The pitch is building websites, so not having one is the opening. */
@@ -75,7 +82,12 @@ export function scoreProspect(place: ScorableProspect): ScoreResult {
     reasons.landlineOnly = WEIGHTS.landlineOnly;
   }
 
-  if (place.email) reasons.email = WEIGHTS.email;
+  // A confirmed address outranks one the map listing alone holds, and a
+  // bounced one counts for nothing.
+  if (place.email && !place.emailBounced) {
+    if (emailUnconfirmed(place)) reasons.emailUnconfirmed = WEIGHTS.emailUnconfirmed;
+    else reasons.email = WEIGHTS.email;
+  }
 
   if (!place.website) {
     reasons.noWebsite = WEIGHTS.noWebsite;
@@ -104,7 +116,7 @@ export function scoreProspect(place: ScorableProspect): ScoreResult {
   // must never outrank one that can actually be messaged today. Someone who
   // asked not to be contacted is the same case for a stronger reason: they are
   // reachable and must not be reached.
-  const reachable = !!(number || place.email);
+  const reachable = !!(number || (place.email && !place.emailBounced));
   const allowed = place.status !== "do_not_contact" && !publicDomain(place.email);
   const tier =
     !reachable || !allowed ? "cold" : score >= HOT_AT ? "hot" : score >= WARM_AT ? "warm" : "cold";

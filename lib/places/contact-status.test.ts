@@ -59,3 +59,11 @@ describe("dayLabel", () => {
     expect(dayLabel("2026-10-12T17:30:00.000Z")).toBe("13 Oct");
   });
 });
+
+describe("contactStatus when nothing can follow up", () => {
+  it("promises no follow-up date that will never come", () => {
+    const sent = toLastContact({ step: 0, channel: "email", sentAt: SENT });
+    expect(contactStatus(sent, false)?.text).toBe("✓ Email sent 13 Oct · no follow-ups");
+    expect(contactStatus(sent)?.text).toContain("follow-up due 17 Oct");
+  });
+});
