@@ -56,9 +56,12 @@ export function ProspectContact({ id, whatsapp, email, contacted, declined, stat
       const res = await fetch(`/api/prospects/${id}/decline`, { method: "POST" });
       if (!res.ok) setError("could not record that");
       else {
+        // No page refresh: the row already shows the answer, and refreshing
+        // re-rendered the whole 200-row page for one changed cell. On 14 Oct that
+        // read as "it loads the whole website". The rest of the page catches up
+        // on the next visit.
         setDeclinedNow(true);
         setConfirming(false);
-        router.refresh();
       }
     } catch {
       setError("could not reach the server");
@@ -147,8 +150,8 @@ export function ProspectContact({ id, whatsapp, email, contacted, declined, stat
             "declined business shares them.",
         );
       }
+      // Shown here, not by refreshing the page: see markDeclined.
       setDeclinedNow(false);
-      router.refresh();
     } catch {
       setError("could not reach the server");
     } finally {

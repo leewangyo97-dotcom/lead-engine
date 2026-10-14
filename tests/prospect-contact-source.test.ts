@@ -29,16 +29,22 @@ describe("they said no", () => {
   const fn = (name: string) => {
     const start = SOURCE.indexOf(`async function ${name}(`);
     expect(start).toBeGreaterThan(-1);
-    const end = SOURCE.indexOf("\n  async function ", start + 1);
+    // To the function's own closing brace: running on to the next function took
+    // in that one's doc comment, which quotes `router.refresh()`.
+    const end = SOURCE.indexOf("\n  }\n", start);
     return SOURCE.slice(start, end === -1 ? undefined : end);
   };
 
   // 14 Oct: "yes" saved the decline and looked like it did nothing. The row
   // changed only when the refresh of a 200-row page came back, seconds later,
   // and in the meantime the same "yes / cancel" was on screen again.
-  it("shows the decline the moment the server confirms it, before the refresh", () => {
-    expect(fn("markDeclined")).toMatch(/setDeclinedNow\(true\);[\s\S]*router\.refresh\(\)/);
-    expect(fn("undecline")).toMatch(/setDeclinedNow\(false\);[\s\S]*router\.refresh\(\)/);
+  it("shows the decline at once, without re-rendering the whole page", () => {
+    // 14 Oct, twice: first the answer waited for the refresh, then the refresh
+    // itself read as "it loads the whole website". The row answers on its own.
+    expect(fn("markDeclined")).toContain("setDeclinedNow(true);");
+    expect(fn("undecline")).toContain("setDeclinedNow(false);");
+    expect(fn("markDeclined")).not.toContain("router.refresh()");
+    expect(fn("undecline")).not.toContain("router.refresh()");
     expect(SOURCE).toContain("if (isDeclined) {");
   });
 });
