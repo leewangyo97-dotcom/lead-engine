@@ -16,6 +16,8 @@ describe("seniorityOf", () => {
     expect(seniorityOf("Co-Founder & CEO")).toBe("founder_owner");
     expect(seniorityOf("Owner")).toBe("founder_owner");
     expect(seniorityOf("Principal Dentist")).toBe("founder_owner");
+    expect(seniorityOf("Chief of Staff")).toBe("director");
+    expect(seniorityOf("Chief Operating Officer")).toBe("c_level");
     expect(seniorityOf("Chief Technology Officer")).toBe("c_level");
     expect(seniorityOf("CTO")).toBe("c_level");
     expect(seniorityOf("Managing Director")).toBe("c_level");

@@ -57,6 +57,14 @@ const ICON: Record<string, ReactNode> = {
   // No Figma counterpart: a bar chart for the weekly review, drawn to the same
   // 24px box and stroke weight as the rest.
   review: <path d="M3 3v18h18M18.7 8l-5.1 5.2-2.8-2.7L7 14.3" />,
+  // No Figma counterpart: two people, for Decision-makers, on the same 24px box.
+  people: (
+    <>
+      <circle cx="9" cy="8" r="3.25" />
+      <path d="M3 19c.6-3.2 3-5 6-5s5.4 1.8 6 5" />
+      <path d="M15.5 5.2a3.25 3.25 0 0 1 0 5.6M17.5 14.4c1.8.7 3 2.4 3.5 4.6" />
+    </>
+  ),
 };
 
 /**
@@ -112,6 +120,7 @@ function Icon({ d }: { d: keyof typeof ICON }) {
 const NAV = [
   { href: "/", label: "Inbox", icon: "inbox" },
   { href: "/prospects", label: "Find prospects", icon: "search" },
+  { href: "/people", label: "Decision-makers", icon: "people" },
   { href: "/followups", label: "Follow-ups", icon: "calendar" },
   { href: "/rejected", label: "All leads", icon: "list" },
   // Not in the Figma sidebar, which lists four. The screen exists and dropping

@@ -24,10 +24,11 @@ const BANDS: [Seniority, RegExp][] = [
   ],
   [
     "c_level",
-    /\b(ceo|cto|coo|cfo|cio|cmo|cpo|chief\b|president(?! of)|managing director|general manager|executive officer)\b/i,
+    /\b(ceo|cto|coo|cfo|cio|cmo|cpo|chief(?! of staff)\b|president(?! of)|managing director|general manager|executive officer)\b/i,
   ],
   ["vp", /\b(vp|svp|evp|vice[- ]president|head of)\b/i],
-  ["director", /\bdirector\b/i],
+  // A chief of staff runs the office, not a function: senior, not the C-suite.
+  ["director", /\b(director|chief of staff)\b/i],
 ];
 
 export function seniorityOf(title: string | null | undefined): Seniority {

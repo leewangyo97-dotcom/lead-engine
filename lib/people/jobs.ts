@@ -97,7 +97,8 @@ export async function addCompany(input: { domain: string; name?: string; country
   const [row] = await db
     .insert(companies)
     .values({
-      name: input.name?.trim() || domain.split(".")[0],
+      // "buffer.com" reads "Buffer" until a source names the company properly.
+      name: input.name?.trim() || domain.charAt(0).toUpperCase() + domain.split(".")[0].slice(1),
       domain,
       countryCode: input.countryCode?.toUpperCase() ?? null,
       origin: "manual",
