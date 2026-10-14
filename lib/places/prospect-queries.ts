@@ -9,6 +9,7 @@ import { siteFindings } from "./lighthouse-signals";
 import { lastContacts } from "./outreach-log";
 import { publicDomain } from "./public-institution";
 import { bouncedSet, isBouncedIn } from "./bounce";
+import { earlierEmailsFor, ownersFor, pickRecipient } from "./recipient";
 import { demoIneligible } from "../demo/render";
 import { publishedDemoUrl } from "../demo/url";
 import type { LastContact } from "./contact-status";
@@ -39,6 +40,11 @@ export interface ProspectRow {
   publicBody: string | null;
   /** The address bounced (bounce.ts); and whether it came only from the map listing. */
   emailBounced: boolean;
+  /**
+   * The owner or director discovery found (recipient.ts), and whether the email
+   * goes to their own address rather than the business's.
+   */
+  owner: { name: string; title: string | null; emailed: boolean } | null;
   emailUnconfirmed: boolean;
   /** The published demo page, or null; and whether one could be made (lib/demo). */
   demoUrl: string | null;
@@ -231,20 +237,34 @@ async function queryProspects(
     .offset(offset);
 
   // One query for the contact history rather than one per row.
-  const [contacts, bounced] = await Promise.all([
-    lastContacts(rows.map((r) => r.id)),
-    bouncedSet(rows.map((r) => r.email)),
-  ]);
+  const ids = rows.map((r) => r.id);
+  const [contacts, owners, earlier] = await Promise.all([lastContacts(ids), ownersFor(ids), earlierEmailsFor(ids)]);
+  // Where each row's email goes, by the rule the Email button uses (composeContact).
+  const recipients = new Map(
+    rows.map((r) => [
+      r.id,
+      pickRecipient({
+        business: { email: r.email, emailConfidence: r.emailConfidence },
+        owner: owners.get(r.id) ?? null,
+        earlier: earlier.get(r.id) ?? null,
+      }),
+    ]),
+  );
+  const bounced = await bouncedSet(rows.flatMap((r) => [r.email, recipients.get(r.id)?.email]));
 
   return rows.map(({ manualOverrides, siteSignals, scoreReasons, ...r }) => {
-    const emailBounced = isBouncedIn(bounced, r.email);
-    const plan = chooseChannel({ ...r, emailBounced });
+    const recipient = recipients.get(r.id)!;
+    const to = { ...r, email: recipient.email, emailConfidence: recipient.emailConfidence };
+    const emailBounced = isBouncedIn(bounced, to.email);
+    const owner = owners.get(r.id);
+    const plan = chooseChannel({ ...to, emailBounced });
     // What `pnpm lh` measured, reduced to labels here rather than shipping the
     // whole jsonb blob to the browser for it to re-derive.
     const findings = siteFindings(siteSignals, r.website);
     // Scored here as well as by the script so a freshly found prospect is not
     // shown blank until someone remembers to run `pnpm prospects:score`.
-    const live = scoreProspect({ ...r, siteSignals, emailBounced });
+    // Scored on the business's own address, as the nightly scorer does.
+    const live = scoreProspect({ ...r, siteSignals, emailBounced: isBouncedIn(bounced, r.email) });
     return {
       ...r,
       score: r.score ?? live.score,
@@ -265,7 +285,17 @@ async function queryProspects(
       declined: r.status === "do_not_contact",
       publicBody: publicDomain(r.email),
       emailBounced,
-      emailUnconfirmed: emailUnconfirmed(r),
+      emailUnconfirmed: emailUnconfirmed(to),
+      owner: owner
+        ? {
+            name: owner.name,
+            title: owner.title,
+            emailed:
+              recipient.person?.personId === owner.personId &&
+              !!owner.email &&
+              recipient.email?.toLowerCase() === owner.email.toLowerCase(),
+          }
+        : null,
       demoUrl: publishedDemoUrl(r),
       demoEligible: demoIneligible(r) === null,
     };

@@ -1,6 +1,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "../db";
 import { prospects, suppressions } from "../db/schema";
+import { earlierEmailsFor } from "./recipient";
 
 /**
  * Email addresses that bounced, kept in `suppressions` under their own kind.
@@ -55,17 +56,21 @@ export async function setBounced(
     .where(eq(prospects.id, prospectId))
     .limit(1);
   if (!place) return { ok: false, error: "no such prospect" };
-  if (!place.email) return { ok: false, error: "no email address on file" };
+  // The address the last email went to, which may be the owner's own rather
+  // than the one on file (recipient.ts). Rows before 14 Oct record none.
+  const sent = (await earlierEmailsFor([prospectId])).get(prospectId)?.toAddress;
+  const email = sent ?? place.email;
+  if (!email) return { ok: false, error: "no email address on file" };
 
   if (bounced) {
     await db
       .insert(suppressions)
-      .values({ kind: BOUNCED, value: key(place.email), reason: "the address bounced" })
+      .values({ kind: BOUNCED, value: key(email), reason: "the address bounced" })
       .onConflictDoNothing();
   } else {
     await db
       .delete(suppressions)
-      .where(and(eq(suppressions.kind, BOUNCED), eq(suppressions.value, key(place.email))));
+      .where(and(eq(suppressions.kind, BOUNCED), eq(suppressions.value, key(email))));
   }
-  return { ok: true, email: place.email };
+  return { ok: true, email };
 }

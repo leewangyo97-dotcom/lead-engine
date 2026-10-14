@@ -13,6 +13,15 @@ import { MAX_STEP } from "../followups";
 import { keyOf, releasable, type Identifier } from "./undecline";
 import { createDraft, getAccessToken, readCredentials } from "../gmail/client";
 import { cleanEmail } from "../sources/email";
+import {
+  addressListed,
+  addressTo,
+  earlierEmailsFor,
+  markPersonContacted,
+  ownersFor,
+  pickRecipient,
+  type Owner,
+} from "./recipient";
 
 /**
  * Recording that a prospect was contacted, and refusing when they asked not to
@@ -304,7 +313,10 @@ export type ComposedContact =
   | { ok: false; blocked: string }
   | {
       ok: true;
+      /** The prospect, with `email` resolved to where this email goes (recipient.ts). */
       place: typeof prospects.$inferSelect;
+      /** The owner it greets and is recorded against, or null for the business. */
+      person: Owner | null;
       draft: { id: string; body: string | null; angle: string | null } | undefined;
       step: number;
       reopening: boolean;
@@ -348,14 +360,31 @@ export async function composeContact(
   const publicBody = publicDomain(place.email);
   if (publicBody) return { ok: false, blocked: publicReason(publicBody) };
 
+  // Who an email goes to: the owner discovery found, or the business itself.
+  const [owners, earlier] = await Promise.all([ownersFor([prospectId]), earlierEmailsFor([prospectId])]);
+  const recipient = pickRecipient({
+    business: { email: place.email, emailConfidence: place.emailConfidence },
+    owner: owners.get(prospectId) ?? null,
+    earlier: earlier.get(prospectId) ?? null,
+  });
+  const to = { ...place, email: recipient.email, emailConfidence: recipient.emailConfidence };
+
   const hit = await findSuppression(prospectId);
-  const emailBounced = isBouncedIn(await bouncedSet([place.email]), place.email);
+  const emailBounced = isBouncedIn(await bouncedSet([to.email]), to.email);
   if (channel === "email" && emailBounced) return { ok: false, blocked: BOUNCED_REASON };
   if (hit) {
     return {
       ok: false,
       blocked: `on the do-not-contact list (${hit.kind}${hit.reason ? `: ${hit.reason}` : ""})`,
     };
+  }
+  // An owner's own address is checked too: "do not contact" on /people may
+  // have listed it after the first email went to them.
+  if (channel === "email" && to.email && to.email.toLowerCase() !== place.email?.toLowerCase()) {
+    const listed = await addressListed(to.email);
+    if (listed) {
+      return { ok: false, blocked: `on the do-not-contact list (email${listed.reason ? `: ${listed.reason}` : ""})` };
+    }
   }
 
   // An enhanced message that a person accepted wins over the generated one.
@@ -448,8 +477,11 @@ export async function composeContact(
 
   // Resolved through the plan, which falls back to the first message when the
   // ladder has nothing to say; the email link then carries that same text.
-  const body = chooseChannel({ ...place, emailBounced }, text).message;
-  const plan = chooseChannel({ ...place, emailBounced }, body, channel === "email" ? { subject, body } : undefined);
+  // An email to a known owner opens with their name: "Hi Jane," where it said
+  // "Hi Bay Dental,". The rest of the text is unchanged.
+  const message = chooseChannel({ ...to, emailBounced }, text).message;
+  const body = channel === "email" ? addressTo(message, place.name, recipient.person?.greeting) : message;
+  const plan = chooseChannel({ ...to, emailBounced }, body, channel === "email" ? { subject, body } : undefined);
   const option = channel === "whatsapp" ? plan.whatsapp : plan.email;
   const lastSentAt = previous?.sentAt ?? null;
   // The subject test is per prospect, so a follow-up stays in its first message's half.
@@ -458,7 +490,20 @@ export async function composeContact(
     (step > 0 ? previous?.angle : null) ??
     draft?.angle ??
     (place.website ? "site-improvement" : "no-website");
-  return { ok: true, place, draft, step, reopening, awaiting, lastSentAt, angle, subject, body, option };
+  return {
+    ok: true,
+    place: to,
+    person: channel === "email" ? recipient.person : null,
+    draft,
+    step,
+    reopening,
+    awaiting,
+    lastSentAt,
+    angle,
+    subject,
+    body,
+    option,
+  };
 }
 
 /**
@@ -475,7 +520,11 @@ export async function logContact(
   const db = getDb();
   const composed = await composeContact(prospectId, channel, now);
   if (!composed.ok) return composed;
-  const { place, draft, step, reopening, awaiting, angle, subject, body, option } = composed;
+  const { place, person, draft, step, reopening, awaiting, angle, subject, body, option } = composed;
+  // Recorded on the row, so a follow-up goes to the same place and a bounce
+  // blocks the address that bounced.
+  const toAddress = channel === "email" && place.email ? (cleanEmail(place.email) ?? place.email) : null;
+  const personId = person?.personId ?? null;
 
   if (!option.available || !option.href) {
     return { ok: false, blocked: option.reason ?? "channel unavailable" };
@@ -487,7 +536,7 @@ export async function logContact(
     // otherwise record a message that was never the one sent. A Gmail draft
     // keeps its text — that draft is what gets sent.
     if (channel === "email" && awaiting && !awaiting.gmailDraftId) {
-      await db.update(outreach).set({ subject, body }).where(eq(outreach.id, awaiting.id));
+      await db.update(outreach).set({ subject, body, toAddress, personId }).where(eq(outreach.id, awaiting.id));
     }
     return { ok: true, outreachId: undefined, href: option.href, reopened: true };
   }
@@ -511,7 +560,7 @@ export async function logContact(
     try {
       const token = await getAccessToken(readCredentials());
       gmail.id = await createDraft(token, {
-        to: cleanEmail(place.email) ?? place.email,
+        to: toAddress ?? place.email,
         subject,
         body,
       });
@@ -537,8 +586,11 @@ export async function logContact(
       sentAt: outcome.countsAsSent ? now() : null,
       gmailDraftId: gmail.id ?? null,
       angle,
+      toAddress,
+      personId,
     })
     .returning({ id: outreach.id });
+  if (outcome.countsAsSent) await markPersonContacted(personId, now());
 
   // The draft has become a real message; leaving it would offer the same text
   // for review again after it was already sent.
@@ -580,7 +632,7 @@ export async function markProspectSent(
   const db = getDb();
 
   const [row] = await db
-    .select({ id: outreach.id })
+    .select({ id: outreach.id, personId: outreach.personId })
     .from(outreach)
     /*
      * `step >= 0` is load-bearing, not tidiness.
@@ -605,6 +657,7 @@ export async function markProspectSent(
   if (!row) return { ok: false, error: "nothing awaiting confirmation for this prospect" };
 
   await db.update(outreach).set({ sentAt: now() }).where(eq(outreach.id, row.id));
+  await markPersonContacted(row.personId, now());
   return { ok: true, outreachId: row.id };
 }
 
@@ -627,16 +680,19 @@ export async function recordCopiedEmail(
 ): Promise<{ ok: boolean; outreachId?: string; alreadySent?: boolean; error?: string }> {
   const composed = await composeContact(prospectId, "email", now);
   if (!composed.ok) return { ok: false, error: composed.blocked };
-  const { place, draft, step, reopening, awaiting, angle, subject, body, option } = composed;
+  const { place, person, draft, step, reopening, awaiting, angle, subject, body, option } = composed;
   if (!option.available) return { ok: false, error: option.reason ?? "no email address" };
+  const toAddress = place.email ? (cleanEmail(place.email) ?? place.email) : null;
+  const personId = person?.personId ?? null;
 
   const db = getDb();
   if (reopening) {
     if (!awaiting) return { ok: true, alreadySent: true };
     await db
       .update(outreach)
-      .set({ sentAt: now(), subject, body })
+      .set({ sentAt: now(), subject, body, toAddress, personId })
       .where(eq(outreach.id, awaiting.id));
+    await markPersonContacted(personId, now());
     return { ok: true, outreachId: awaiting.id };
   }
 
@@ -651,8 +707,11 @@ export async function recordCopiedEmail(
       sentAt: now(),
       gmailDraftId: null,
       angle,
+      toAddress,
+      personId,
     })
     .returning({ id: outreach.id });
+  await markPersonContacted(personId, now());
 
   if (draft) await db.delete(outreach).where(eq(outreach.id, draft.id));
   await db

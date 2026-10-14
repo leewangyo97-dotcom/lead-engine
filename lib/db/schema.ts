@@ -1,6 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { sql } from "drizzle-orm";
 import {
+  type AnyPgColumn,
   boolean,
   check,
   index,
@@ -137,6 +138,12 @@ export const outreach = pgTable(
     createdAt: timestamp("created_at").notNull().defaultNow(),
     sentAt: timestamp("sent_at"), // set by hand when Joshua sends
     dueAt: timestamp("due_at"), // follow-up scheduling
+    // Where a prospect email went, and to whom (lib/places/recipient.ts): the
+    // owner's own address or the business's. Follow-ups go to the same place,
+    // and "it bounced" blocks this address rather than whatever is on file now.
+    // Null on rows before 14 Oct, which all went to the business address.
+    toAddress: text("to_address"),
+    personId: text("person_id").references((): AnyPgColumn => people.id, { onDelete: "set null" }),
   },
   (t) => [
     index("outreach_lead_idx").on(t.leadId),

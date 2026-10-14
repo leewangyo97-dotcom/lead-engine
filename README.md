@@ -119,6 +119,9 @@ Rules it keeps, all in code:
   and their sources; discovery can find them again, so use Do not contact to
   keep someone out.
 - People never contacted are deleted after 12 months (`pnpm retention`, nightly).
+- **Emails to local businesses greet the owner** found here ("Hi Matt,"), and go to
+  the owner's own address when they published one; follow-ups stay with the
+  first address (`lib/places/recipient.ts`).
 
 ### Providers
 

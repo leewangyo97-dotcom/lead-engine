@@ -3,7 +3,7 @@
 **Cap: 150 lines.** When it exceeds that, roll closed items into `DECISIONS.md`
 and truncate. This file is read every session; every line costs tokens repeatedly.
 
-Last updated: 2026-10-14 · Phase: **all six built. No success criterion met yet.**
+Last updated: 2026-10-15 · Phase: **all six built. No success criterion met yet.**
 
 ## The honest position
 
@@ -72,8 +72,9 @@ opens a page that is unambiguously the message.
   filling the front of every batch; `/prospects` shows "site did not load".
 - **Decision-makers `/people`** (14 Oct): founders/owners/directors from company sites, SEC Form D,
   GitHub signals; sources per fact; guessed emails research only; export checks suppressions.
-  Live: Buffer, 7 people. Waits on `GITHUB_DISPATCH_TOKEN` (one click) and `SEC_USER_AGENT`
-  (repo secret, Joshua's own contact). README "Decision-makers", RUNBOOK same.
+  Waits on `GITHUB_DISPATCH_TOKEN` (one click) and `SEC_USER_AGENT` (repo secret, his contact).
+- **Owner-addressed emails** (15 Oct): prospect emails greet the discovered owner, to their own
+  verified address if any (`recipient.ts`); follow-ups stay on the first address. 1 owner in 8.
 - The Neon CLI here is signed in; `pnpm test:integration` runs on a scratch branch.
 
 ### Deliberately not doing — recorded so it is not re-proposed

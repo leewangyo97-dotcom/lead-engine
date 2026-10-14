@@ -43,7 +43,7 @@ describe("a bounced address", () => {
   it("is scored as no email at all, tonight as well as on the page", () => {
     expect(readFileSync("scripts/score-prospects.ts", "utf8")).toContain("emailBounced: isBouncedIn(bounced, row.email)");
     expect(readFileSync("lib/places/prospect-queries.ts", "utf8")).toContain(
-      "scoreProspect({ ...r, siteSignals, emailBounced })",
+      "scoreProspect({ ...r, siteSignals, emailBounced: isBouncedIn(bounced, r.email) })",
     );
   });
 

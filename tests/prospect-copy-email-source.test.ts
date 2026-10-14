@@ -90,7 +90,7 @@ describe("recordCopiedEmail", () => {
 
   it("marks an unconfirmed Email-click row sent instead of counting a second send", () => {
     expect(record).toMatch(/if \(!awaiting\) return \{ ok: true, alreadySent: true \}/);
-    expect(record).toMatch(/set\(\{ sentAt: now\(\), subject, body \}\)/);
+    expect(record).toMatch(/set\(\{ sentAt: now\(\), subject, body, toAddress, personId \}\)/);
   });
 
   it("stamps sentAt on a new row, because the person has just said it went", () => {

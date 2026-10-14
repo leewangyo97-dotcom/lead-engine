@@ -16,6 +16,7 @@ import {
   getSearch,
   getTopProspects,
   listSearches,
+  type ProspectRow,
 } from "@/lib/places/prospect-queries";
 import { PAGE_SIZE, pageLabel, pageOf, parsePage } from "@/lib/places/paging";
 import {
@@ -57,6 +58,22 @@ function Channel({
       }`}
     >
       {label}
+    </span>
+  );
+}
+
+/**
+ * Who the email greets, found by Decision-makers (/people). The chip says when
+ * the email goes to their own address rather than the business's.
+ */
+function OwnerLine({ owner }: { owner: NonNullable<ProspectRow["owner"]> }) {
+  return (
+    <span className="mt-1 block text-caption text-muted">
+      {owner.name}
+      {owner.title ? ` · ${owner.title}` : ""}
+      {owner.emailed && (
+        <span className="ml-2 rounded-xs bg-go-tint px-2 py-1 text-label text-go">email goes to them</span>
+      )}
     </span>
   );
 }
@@ -371,6 +388,7 @@ export default async function Prospects({
                       {p.city ? ` · ${p.city}` : ""}
                       {p.phoneE164 ? ` · ${p.phoneE164}` : ""}
                     </p>
+                    {p.owner && <OwnerLine owner={p.owner} />}
                     <div className="mt-3">
                       <ProspectContact
                         id={p.id}
@@ -433,6 +451,7 @@ export default async function Prospects({
                         <td className="px-4 py-3">
                           <span className="text-primary">{p.name}</span>
                           <span className="ml-2 font-mono text-data-sm text-faint">{p.category}</span>
+                          {p.owner && <OwnerLine owner={p.owner} />}
                         </td>
                         <td className="px-4 py-3 text-muted">{p.city ?? "—"}</td>
                         <td className="px-4 py-3">

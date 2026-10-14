@@ -958,3 +958,17 @@ Closed and moved out of STATE: enrichment backlog cleared 27 Sept (exit
 `pnpm test:integration` passed 24 Sept on a scratch branch; the
 `Australia [schools]` search (13,134 rows, 0 outreach) deleted 11 Sept after an
 export to `C:\dev\lead-engine-backups`.
+
+## Emails greet the owner, and go to their own address if published (15 October)
+
+Joshua's pick after Decision-makers shipped. One rule, `lib/places/recipient.ts`:
+a first email goes to the owner's verified address when discovery found one,
+otherwise to the business, greeting the owner by name either way ("Hi Matt,",
+"Hi Dr. Smith,"); no safe name means the business greeting as before. A
+follow-up goes where the first email went, so a sequence never switches
+person midway. `outreach.to_address` and `person_id` record it, which is also
+how "it bounced" blocks the address that bounced. A guessed address is never
+used. An owner marked Do not contact on /people blocks their address, and a
+send moves them from New to Contacted. Only the greeting changes in the text;
+scores still count the business address. First run, top 8 prospects: 1 owner
+found, 0 personal addresses — small local sites rarely name anyone.
