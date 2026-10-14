@@ -1,0 +1,51 @@
+name: discover
+
+# Started by Discover on /people (lib/github/dispatch.ts). The title carries
+# the job id, which is how the page finds this run again.
+run-name: Discover ${{ inputs.job_id }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      job_id:
+        description: Discovery job to run
+        required: true
+        type: string
+
+# One discovery at a time: two would crawl the same hosts in parallel.
+concurrency:
+  group: discover
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    # 50 companies at most, a few seconds each, one request a second per host.
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # The job id reaches the shell as an environment variable, never pasted
+      # into the script. Output is counts only: these logs are public.
+      - name: Discover decision-makers
+        run: pnpm -s people:discover --job="$JOB_ID"
+        env:
+          JOB_ID: ${{ inputs.job_id }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          # Actions' own token: GitHub signals at 1,000 requests an hour.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Optional. SEC asks automated clients to say who they are.
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}

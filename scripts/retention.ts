@@ -1,8 +1,8 @@
-import { and, inArray, lt, sql } from "drizzle-orm";
+import { and, eq, inArray, lt, sql } from "drizzle-orm";
 import { getDb } from "../lib/db";
 import { loadLocalEnv } from "../lib/env";
-import { leads, outreach } from "../lib/db/schema";
-import { PRUNE_STATUSES, RETAIN_DAYS } from "../lib/retention";
+import { leads, outreach, people } from "../lib/db/schema";
+import { PEOPLE_RETAIN_DAYS, PRUNE_STATUSES, RETAIN_DAYS } from "../lib/retention";
 
 /**
  * Monthly prune. Keeps storage flat inside Neon's 0.5 GB and keeps the dashboard
@@ -54,6 +54,14 @@ async function main() {
     `retention: deleted ${deleted.length} leads with status in (${PRUNE_STATUSES.join(", ")}) older than ${RETAIN_DAYS} days` +
       (kept.length ? `, kept ${kept.length} that carry outreach history` : ""),
   );
+
+  // Decision-makers never contacted, after a year (lib/retention.ts).
+  const peopleCutoff = new Date(Date.now() - PEOPLE_RETAIN_DAYS * 86_400_000);
+  const gone = await db
+    .delete(people)
+    .where(and(eq(people.status, "new"), lt(people.createdAt, peopleCutoff)))
+    .returning({ id: people.id });
+  console.log(`retention: deleted ${gone.length} decision-makers never contacted in ${PEOPLE_RETAIN_DAYS} days`);
 }
 
 main().catch((err) => {

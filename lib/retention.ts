@@ -11,3 +11,12 @@
  */
 export const PRUNE_STATUSES = ["disqualified", "parked", "closed"] as const;
 export const RETAIN_DAYS = 45;
+
+/**
+ * Decision-makers (/people) never contacted are deleted after a year (14 Oct).
+ * Personal data kept for outreach that never happened has no purpose left,
+ * which is the test the Philippine Data Privacy Act and GDPR both apply.
+ * Anyone contacted, replied, qualified or marked do-not-contact is kept: that
+ * is the record of what was done, and a do-not-contact must outlive the person.
+ */
+export const PEOPLE_RETAIN_DAYS = 365;
