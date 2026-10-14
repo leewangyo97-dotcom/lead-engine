@@ -432,7 +432,7 @@ export async function composeContact(
         hasWebsite: Boolean(place.website),
         demoUrl: publishedDemoUrl(place),
         // Follow-ups keep the first message angle, so this says whether it linked the demo.
-        demoSeen: (previous?.angle ?? "").startsWith("demo"),
+        demoSeen: (previous?.angle ?? "").startsWith("demo/"),
       });
   // A follow-up by email carries what every email does: the link, the way out,
   // the signature. WhatsApp keeps the bare ladder text.

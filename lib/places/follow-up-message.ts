@@ -29,7 +29,7 @@ export interface FollowUpInput {
    * exists: the verifier caught "I'd build it first" after a demo, 14 Oct.
    */
   demoUrl?: string | null;
-  /** Whether the first message linked the demo (its angle starts "demo"). */
+  /** Whether the first message linked the demo (its angle starts "demo/"). */
   demoSeen?: boolean;
   /** 1 for the day-4 message, 2 for the day-11 one. */
   step: number;
