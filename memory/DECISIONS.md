@@ -931,3 +931,30 @@ would close everything. Keyed by address, it survives refreshes. Emails seen on
 the business's own site score 20 and map-only ones 8, with an "unconfirmed"
 warning, rather than being hidden: some still work, and Joshua decides.
 Rescored the same day, and hot fell from 94 to 56.
+
+## Decision-makers tab: free sources, guesses for research only (14 October)
+
+Joshua asked for a "Prospects" tab that finds decision-makers. Named
+"Decision-makers" at `/people`, because `/prospects` already means local
+businesses. His choices: core free providers only (company website, email
+pattern with an MX check, SEC EDGAR Form D, GitHub company signals); Hunter,
+Apollo, Snov and OpenCorporates left out (paid, or a token for little gain).
+A guessed address is shown and never copied, exported or sent. Jobs run on
+GitHub Actions (`discover.yml`), not Vercel: a crawl outlives a Hobby function,
+and rule 5 already puts scheduled work there. The existing `suppressions` table
+is the do-not-contact list, not a second one. People never contacted are
+deleted after 12 months. Constraints found while building: LinkedIn is never
+fetched (its terms), GitHub gives company signals only (its terms forbid
+profile data for unsolicited email), SEC refuses clients without
+`SEC_USER_AGENT`, and the Philippine SEC and DTI registries have no public
+API, so EDGAR covers US companies only. Delete erases and does not block;
+"Do not contact" blocks.
+
+## STATE rotation (14 October)
+
+Closed and moved out of STATE: enrichment backlog cleared 27 Sept (exit
+1073807364 meant the idle session was killed: rerun); lead scoring clear on
+24 Sept (17 scored, 16 parked, CyberAtlas drafted, Jawa.gg has no address);
+`pnpm test:integration` passed 24 Sept on a scratch branch; the
+`Australia [schools]` search (13,134 rows, 0 outreach) deleted 11 Sept after an
+export to `C:\dev\lead-engine-backups`.

@@ -81,6 +81,7 @@ lib/
   scoring/    hard disqualifiers and the deterministic pre-score
   model/      Zod contracts for score, draft and verify
   gmail/      drafts.create over plain fetch. No send function.
+  people/     decision-maker discovery: providers, guardrails, scoring, jobs
   db/         Drizzle schema + checked-in, forward-only migrations
 scripts/      harvest, prefilter, keepalive, retention, the apply-* pair, tokens
 memory/       PROFILE, RUBRIC, STATE, DECISIONS, PATTERNS, OUTREACH-LOG
@@ -91,6 +92,72 @@ docs/         specs, read on demand
 `CLAUDE.md` is the entry point for Claude Code. `memory/STATE.md` is what to read
 first in a new session; `memory/DECISIONS.md` records why things are the way they
 are, including the source survey explaining why there is no fourth job board.
+
+---
+
+## Decision-makers (`/people`)
+
+Finds the founders, owners and directors behind companies already in the
+system (local businesses from `/prospects`, companies from job leads) or one
+domain typed in. Discovery runs as a job on GitHub Actions (`discover.yml`);
+the page polls it and fills in as it goes. Without `GITHUB_DISPATCH_TOKEN` the
+job waits for `pnpm people:discover --queued`.
+
+Rules it keeps, all in code:
+
+- **Public business pages only.** robots.txt is honoured, one request a second
+  per host, pages cached for the run. LinkedIn is never fetched; a LinkedIn link
+  is kept only when the company's own site publishes it.
+- **Business contact details only.** Free mailboxes (gmail.com and the like)
+  are dropped, and so are public bodies (.gov, .edu, NHS, k12).
+- **Every fact has a source** in `people_sources`: field, value, page,
+  provider, date. The detail drawer shows them.
+- **A guessed email is research only.** It is shown, never copied, exported
+  or sent.
+- **Do not contact** puts the address on the shared suppression list, which
+  the export and every outreach path check first. **Delete** erases the person
+  and their sources; discovery can find them again, so use Do not contact to
+  keep someone out.
+- People never contacted are deleted after 12 months (`pnpm retention`, nightly).
+
+### Providers
+
+| Provider | Adds | Needs |
+|---|---|---|
+| `website` | people from team, about and leadership pages; company emails and phones; site signals | nothing |
+| `edgar` | officers and directors from SEC Form D filings, industry, recent funding (US only) | `SEC_USER_AGENT` |
+| `github` | company signals only: org, tech stack, recent activity. Never people: GitHub's terms forbid using profile data for unsolicited email | `GITHUB_TOKEN` |
+| `email_pattern` | one guessed address per person, learnt from verified addresses on the same domain, after an MX check | nothing |
+
+### Adding a provider
+
+1. Create `lib/people/providers/<name>.ts` exporting a `PeopleProvider`
+   (see `lib/people/providers/types.ts`):
+   - `name` is also the `sourceType` written to `people_sources`. Add it to the
+     `SourceType` union and to `SOURCE_LABEL` in `app/components/person-drawer.tsx`.
+   - `disabledReason(company, env)` returns a sentence when it cannot run
+     (missing key, wrong country) and `null` when it can. A disabled provider
+     is skipped, not failed.
+   - `run(company, soFar, ctx)` returns `Findings`. Fetch only through
+     `ctx.fetchText`, which brings robots.txt, the rate limit, the cache, a
+     timeout and a size cap. Every `Fact` carries its `sourceUrl`. `soFar` is
+     what earlier providers found.
+2. Add it to `PROVIDERS` in `lib/people/providers/index.ts`. Order matters:
+   providers that find people run before `email_pattern`, which guesses from them.
+3. Read keys from `ctx.env`, never from code. Add each one blank to
+   `.env.example`, and as a secret to `.github/workflows/discover.yml`.
+4. Test the parsing against a saved page in `lib/people/providers/providers.test.ts`;
+   tests never touch the network. Whatever a provider returns,
+   `applyGuardrails` (`lib/people/merge.ts`) still drops non-decision-makers,
+   free mailboxes and anything on the suppression list.
+
+### Environment variables
+
+| Variable | Set in | For |
+|---|---|---|
+| `GITHUB_DISPATCH_TOKEN` | `.env.local`, Vercel | the site starting `discover.yml`, `enhance.yml` and `search-run.yml`. Fine-grained, this repository only, Actions: read and write |
+| `GITHUB_TOKEN` | nothing: Actions provides it | the `github` provider. Put one in `.env.local` only to run it locally |
+| `SEC_USER_AGENT` | repository secret, `.env.local` | the `edgar` provider. SEC asks automated clients to name themselves, e.g. `Lead Engine you@example.com` |
 
 ---
 

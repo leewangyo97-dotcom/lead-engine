@@ -3,7 +3,7 @@
 **Cap: 150 lines.** When it exceeds that, roll closed items into `DECISIONS.md`
 and truncate. This file is read every session; every line costs tokens repeatedly.
 
-Last updated: 2026-10-13 · Phase: **all six built. No success criterion met yet.**
+Last updated: 2026-10-14 · Phase: **all six built. No success criterion met yet.**
 
 ## The honest position
 
@@ -66,14 +66,15 @@ opens a page that is unambiguously the message.
 
 - **Copy email** (13 Oct) on every `/prospects` row: plain-English `firstEmail` + an AI-tools offer
   (PROFILE services). Copying writes nothing; "I sent it" records it, and the row then shows sent + follow-up due.
-- Enrichment backlog cleared (27 Sept). Exit 1073807364 = killed with the idle session: rerun.
 - `pnpm lh --limit=N` as enrichment reaches rows. **1,597 measured, backlog cleared 7 Oct.** The
   cap is 150 per process and not negotiable — see below. A refusal is now
   recorded under `lighthouseRefused` and skipped for 30 days, so dead sites stop
   filling the front of every batch; `/prospects` shows "site did not load".
-- Lead scoring is clear: 17 scored 24 Sept, 16 parked, CyberAtlas (75) drafted and
-  verified on the second try, now a Gmail draft. Jawa.gg (2 Sept) has no address.
-- `pnpm test:integration` passed 24 Sept on a scratch branch; the Neon CLI here is signed in.
+- **Decision-makers `/people`** (14 Oct): founders/owners/directors from company sites, SEC Form D,
+  GitHub signals; sources per fact; guessed emails research only; export checks suppressions.
+  Live: Buffer, 7 people. Waits on `GITHUB_DISPATCH_TOKEN` (one click) and `SEC_USER_AGENT`
+  (repo secret, Joshua's own contact). README "Decision-makers", RUNBOOK same.
+- The Neon CLI here is signed in; `pnpm test:integration` runs on a scratch branch.
 
 ### Deliberately not doing — recorded so it is not re-proposed
 
@@ -84,10 +85,7 @@ the nightly (42 min against 15). Wappalyzer (no licence). Any send path (rule 2)
 
 **23,301 prospects** (14 Oct) · 94 hot · 2,903 public bodies (.gov/.edu/NHS) score 0 and
 cannot be contacted (`public-institution.ts`) · 1,597 measured by `pnpm lh`. Page weight, low contrast and unsized
-images now print under the site link in the `/prospects` SITE column. The
-`Australia [schools]` search was deleted 11 Sept: 13,134 rows, 57% of the table,
-0 outreach attached, and 6,711 of the then-8,870 backlog. Exported to
-`C:\dev\lead-engine-backups` first.
+images now print under the site link in the `/prospects` SITE column.
 
 **428 leads** · 0 awaiting model scoring. Rubric **1.2.0**: full-time counts.
 

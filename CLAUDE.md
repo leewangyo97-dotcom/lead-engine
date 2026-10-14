@@ -54,6 +54,7 @@ lib/
   sources/           one adapter per job board — see skills/source-adapter
   scoring/           deterministic pre-score (no model)
   gmail/             draft creation
+  people/            decision-maker discovery (/people) — README "Decision-makers"
   db/                drizzle schema + migrations
 scripts/             harvest, prefilter, keepalive, report, retention run nightly;
                      the apply-* pair, gmail:*, refilter, audit:titles are manual

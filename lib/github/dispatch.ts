@@ -12,7 +12,7 @@
  * the commands they replaced, and say so.
  */
 export const REPO =
-  process.env.GITHUB_DISPATCH_REPO ??
+  process.env.GITHUB_DISPATCH_REPO ||
   (process.env.VERCEL_GIT_REPO_OWNER && process.env.VERCEL_GIT_REPO_SLUG
     ? `${process.env.VERCEL_GIT_REPO_OWNER}/${process.env.VERCEL_GIT_REPO_SLUG}`
     : "leewangyo97-dotcom/lead-engine");

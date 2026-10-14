@@ -1273,3 +1273,38 @@ anything the owner chose, and it is not something they can see.
 directory and throws `EPERM` out of `kill()`. Chrome itself exits; the directory
 is left behind. The script swallows that throw, because losing a measured run to
 a cleanup error would be absurd.
+
+## Decision-makers (`/people`)
+
+**A job sits at "queued".** The site could not start `discover.yml`, almost
+always because `GITHUB_DISPATCH_TOKEN` is not set where the site runs (Vercel
+for the live site, `.env.local` for `pnpm dev`). The panel shows the command;
+`pnpm people:discover --queued` runs every waiting job from a terminal. If the
+token is set, open the repository's Actions tab: a `Discover <job id>` run that
+failed says why in its log (counts only; the logs are public).
+
+**"0 decision-makers found" for a company.** In order of likelihood: the site
+has no team, about or leadership page; its robots.txt disallows those pages
+(respected, not worked around); the names are drawn by JavaScript after load,
+which a plain fetch never sees; the domain is a public body or on the
+do-not-contact list, which discovery refuses before fetching anything. None of
+these is a bug. Try the company's own name search on SEC EDGAR only if it is a
+US company that raised money.
+
+**EDGAR or GitHub never contributes.** Each is skipped, not failed, without its
+key: `SEC_USER_AGENT` (a repository secret; SEC answers `403 Undeclared
+Automated Tool` without it) and `GITHUB_TOKEN` (Actions supplies it; locally it
+must be in `.env.local`). EDGAR also skips any company outside the US.
+
+**Someone asks how you got their details.** Open them on `/people` → Details:
+every field lists the page it came from and the date it was read.
+
+**Someone asks not to be contacted, or to be erased.** *Do not contact* keeps
+the row and puts their address on the suppression list, so no export or
+outreach path will use it and discovery will not bring it back. *Delete*
+erases the person and every source row; use it for an erasure request, and
+mark them Do not contact first if they also must never be collected again.
+
+**A guessed address looks right.** It is still a guess built from the
+company's pattern. It is never exported or copied: confirm it on a public page,
+and the next discovery run records it as verified if the site publishes it.
