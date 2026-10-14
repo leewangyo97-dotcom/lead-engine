@@ -72,7 +72,7 @@ opens a page that is unambiguously the message.
   filling the front of every batch; `/prospects` shows "site did not load".
 - **Decision-makers `/people`** (14 Oct): founders/owners/directors from company sites, SEC Form D,
   GitHub signals; sources per fact; guessed emails research only; export checks suppressions.
-  Waits on `GITHUB_DISPATCH_TOKEN` (one click) and `SEC_USER_AGENT` (repo secret, his contact).
+  Weeknights 20:47 UTC: next 25 prospects by score. Waits on `GITHUB_DISPATCH_TOKEN`, `SEC_USER_AGENT`.
 - **Owner-addressed emails** (15 Oct): prospect emails greet the discovered owner, to their own
   verified address if any (`recipient.ts`); follow-ups stay on the first address. 1 owner in 8.
   Mistyped addresses (`.xom`) are refused (`email-typo.ts`); fix them by hand.

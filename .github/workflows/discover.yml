@@ -1,8 +1,8 @@
 name: discover
 
-# Started by Discover on /people (lib/github/dispatch.ts). The title carries
-# the job id, which is how the page finds this run again.
-run-name: Discover ${{ inputs.job_id }}
+# Started by Discover on /people (lib/github/dispatch.ts), or on a schedule.
+# A started run's title carries the job id, which is how the page finds it again.
+run-name: ${{ inputs.job_id && format('Discover {0}', inputs.job_id) || 'Discover nightly' }}
 
 on:
   workflow_dispatch:
@@ -11,6 +11,11 @@ on:
         description: Discovery job to run
         required: true
         type: string
+  # Weeknights, half an hour after nightly.yml (20:17) has enriched and scored
+  # prospects: the next 25 by score with a website, which are fresh by then.
+  # Companies already discovered are skipped, so each night reaches new ones.
+  schedule:
+    - cron: '47 20 * * 1-5'
 
 # One discovery at a time: two would crawl the same hosts in parallel.
 concurrency:
@@ -41,9 +46,15 @@ jobs:
       # The job id reaches the shell as an environment variable, never pasted
       # into the script. Output is counts only: these logs are public.
       - name: Discover decision-makers
-        run: pnpm -s people:discover --job="$JOB_ID"
+        run: |
+          if [ -n "$JOB_ID" ]; then
+            pnpm -s people:discover --job="$JOB_ID"
+          else
+            pnpm -s people:discover --seed=prospects --limit="$NIGHTLY_LIMIT"
+          fi
         env:
           JOB_ID: ${{ inputs.job_id }}
+          NIGHTLY_LIMIT: 25
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           # Actions' own token: GitHub signals at 1,000 requests an hour.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

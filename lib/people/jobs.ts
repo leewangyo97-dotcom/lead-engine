@@ -32,7 +32,16 @@ export async function seedFromProspects(limit: number): Promise<string[]> {
       countryCode: prospects.countryCode,
     })
     .from(prospects)
-    .where(and(isNotNull(prospects.website), ne(prospects.status, "do_not_contact")))
+    .where(
+      and(
+        isNotNull(prospects.website),
+        ne(prospects.status, "do_not_contact"),
+        // Not discovered already, by this prospect or under its domain. Without
+        // this the top of the list stays the same every night, and once its
+        // first hundred were discovered the nightly run found nothing new.
+        sql`not exists (select 1 from ${companies} where ${companies.originId} = ${prospects.id} or (${prospects.rootDomain} is not null and ${companies.domain} = ${prospects.rootDomain}))`,
+      ),
+    )
     .orderBy(desc(prospects.score))
     .limit(limit * 4);
 

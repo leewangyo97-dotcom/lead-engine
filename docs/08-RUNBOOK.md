@@ -1283,6 +1283,12 @@ for the live site, `.env.local` for `pnpm dev`). The panel shows the command;
 token is set, open the repository's Actions tab: a `Discover <job id>` run that
 failed says why in its log (counts only; the logs are public).
 
+**The weeknight run.** `discover.yml` also runs at 20:47 UTC on weeknights and
+takes the next 25 prospects by score that have a website and no discovery yet.
+"no new companies to add" in its log means every prospect with a website has
+been read; nothing is wrong. It never re-reads a company: to refresh one, add
+its domain again from `/people`.
+
 **"0 decision-makers found" for a company.** In order of likelihood: the site
 has no team, about or leadership page; its robots.txt disallows those pages
 (respected, not worked around); the names are drawn by JavaScript after load,

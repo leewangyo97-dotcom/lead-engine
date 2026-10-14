@@ -100,7 +100,9 @@ are, including the source survey explaining why there is no fourth job board.
 Finds the founders, owners and directors behind companies already in the
 system (local businesses from `/prospects`, companies from job leads) or one
 domain typed in. Discovery runs as a job on GitHub Actions (`discover.yml`);
-the page polls it and fills in as it goes. Without `GITHUB_DISPATCH_TOKEN` the
+the page polls it and fills in as it goes. On weeknights at 20:47 UTC (04:47
+Manila), after the nightly has scored prospects, it also takes the next 25
+local businesses by score that have a website and have not been discovered. Without `GITHUB_DISPATCH_TOKEN` the
 job waits for `pnpm people:discover --queued`.
 
 Rules it keeps, all in code:
