@@ -124,8 +124,7 @@ Working copy `C:\dev\lead-engine`; `F:\lead-engine` is corrupt, awaiting chkdsk.
 - The schedule is written down **four** times — two `cron:` lines and two `if:`
   gates. Its test checked two, and the monthly retention job was silently
   scheduled never to fire again. Now asserted.
-- A test that stringifies an object containing a timestamp will fail on the
-  millisecond it runs. CI caught one; the local gate never would.
+- A test stringifying an object with a timestamp fails on the millisecond; CI caught one.
 - `refreshProspects({ ids, enrich: true })` must pass those ids to
   `runEnrichment`, or it enriches the global top of the queue instead
 - OSM values are normalised at the write path, never stored raw: emails via
@@ -139,7 +138,8 @@ Working copy `C:\dev\lead-engine`; `F:\lead-engine` is corrupt, awaiting chkdsk.
 - `enrichment_status` is the enrichment queue; a `no_website` row must be
   reopened when one appears, or its site is never read
 - Overpass 504s daily: load, not a bug, so retry. Neon autosuspends at 5 min idle; use the HTTP driver
-- **Every email is guarded:** `pnpm spam:check` (SpamAssassin in Docker, 0.0 of 2.5 on 13 Oct) and grade ≤ 8
+- **Every email is guarded:** `pnpm spam:check` (SpamAssassin in Docker, 0.0 of 2.5) and grade ≤ 8
+- **Demo pages + A/B subjects** (14 Oct): Make demo → gh-pages; set DEMO_BASE_URL to a custom domain first
 - Phases 1–3 contain **zero** model calls. Keep it that way.
 - `contentHash` stability is the single biggest cost lever — its test is not optional
 - The preview pane sometimes stops applying streamed updates. Check with curl

@@ -910,3 +910,14 @@ channel away, everywhere a send passes (`chooseChannel`, `composeContact`,
 Enhance), and scores them 0, out of the queue. Joshua agreed. By email domain
 only: ".org" proves nothing, and the category "schools" holds private schools
 too.
+
+## Demo pages on GitHub Pages; subject lines A/B tested (14 October)
+
+After 48 first messages with no reply, Joshua asked for "show, don't tell" and
+for A/B testing. Demos are one-page sites built only from the public listing,
+with labelled placeholders and noindex, published to the gh-pages branch. Not on
+Vercel: Hobby is non-commercial (rule 4), and every deployment here sits behind
+Vercel Authentication, which no prospect could pass. The first email links the
+demo in place of the "free sample" offer and the portfolio link, keeping one
+link. Subjects split per prospect by a hash of its id, recorded as the angle
+`/review` already groups by. Prospects stay in their half across follow-ups.
