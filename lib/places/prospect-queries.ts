@@ -204,6 +204,7 @@ async function queryProspects(
       website: prospects.website,
       email: prospects.email,
       emailConfidence: prospects.emailConfidence,
+      emailCheck: prospects.emailCheck,
       phoneE164: prospects.phoneE164,
       whatsappE164: prospects.whatsappE164,
       // Needed by `chooseChannel`, which offers email first in countries where a

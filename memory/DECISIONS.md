@@ -1028,3 +1028,15 @@ prospect becomes do-not-contact), while /review read zero answers. They now
 show beside replies on every cut ("0/51 +5 no") and in the totals. They never
 drive a suggestion: an angle that draws refusals is not one to repeat, so
 suggestions still weigh positive replies only. Joshua's pick.
+
+## Email domains checked in DNS before sending (15 October)
+
+After the Inbox card, nothing was left on the list, so this was chosen from the
+bounce data: all three bounces were map-listing addresses, and 3,541 of the
+4,422 addresses on file come only from the map. `pnpm email:mx` (nightly,
+before scoring) stores per prospect whether the email's domain has a mail
+server, falling back to the domain's own address per RFC 5321, and treating a
+null MX as dead. A dead domain disables Email and scores as no email; a DNS
+failure stores nothing and is retried. DNS only: no SMTP probing, which the
+Decision-makers spec also forbids. First run: 31 dead domains, 33 prospects,
+one already emailed.

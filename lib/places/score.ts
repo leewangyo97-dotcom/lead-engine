@@ -3,6 +3,7 @@ import { isWhatsAppCapable } from "./phone";
 import { publicDomain } from "./public-institution";
 import { emailUnconfirmed } from "./contact";
 import { mistypedEmail } from "./email-typo";
+import { emailDomainDead, type EmailCheck } from "./email-mx";
 
 /**
  * Scoring a prospect: how worth contacting they are, and why.
@@ -26,6 +27,8 @@ export interface ScorableProspect {
   emailConfidence?: string | null;
   /** The address bounced: worth nothing (lib/places/bounce.ts). */
   emailBounced?: boolean;
+  /** Its domain has no mail server: worth nothing either (lib/places/email-mx.ts). */
+  emailCheck?: EmailCheck | null;
   phoneE164?: string | null;
   whatsappE164?: string | null;
   enrichmentStatus?: string | null;
@@ -86,7 +89,8 @@ export function scoreProspect(place: ScorableProspect): ScoreResult {
   // A confirmed address outranks one the map listing alone holds, and a
   // bounced one counts for nothing.
   // A mistyped address (email-typo.ts) bounces like a bounced one: no email at all.
-  const usableEmail = !!place.email && !place.emailBounced && !mistypedEmail(place.email);
+  const usableEmail =
+    !!place.email && !place.emailBounced && !mistypedEmail(place.email) && !emailDomainDead(place);
   if (usableEmail) {
     if (emailUnconfirmed(place)) reasons.emailUnconfirmed = WEIGHTS.emailUnconfirmed;
     else reasons.email = WEIGHTS.email;

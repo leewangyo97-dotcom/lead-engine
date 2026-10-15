@@ -1,4 +1,4 @@
-import { resolveMx } from "node:dns/promises";
+import { workingResolver } from "../places/email-mx";
 import { OSM_USER_AGENT } from "../places/nominatim";
 import { getRobots, isAllowed } from "../places/robots";
 import type { Fetched, ProviderContext } from "./providers/types";
@@ -72,7 +72,7 @@ export function createContext(env: Record<string, string | undefined> = process.
       if (mx.has(key)) return mx.get(key)!;
       let found = false;
       try {
-        found = (await resolveMx(key)).length > 0;
+        found = (await (await workingResolver()).resolveMx(key)).length > 0;
       } catch {
         found = false;
       }

@@ -1,6 +1,7 @@
 import { publicDomain, publicReason } from "./public-institution";
 import { buildWhatsAppLink, isWhatsAppCapable } from "./phone";
 import { mistypedEmail, mistypedReason } from "./email-typo";
+import { DEAD_DOMAIN_REASON, emailDomainDead, type EmailCheck } from "./email-mx";
 
 /**
  * Choosing how to reach a prospect, and what the first message says.
@@ -26,6 +27,8 @@ export interface ContactablePlace {
   emailConfidence?: string | null;
   /** The address bounced (lib/places/bounce.ts): no email, but phone and WhatsApp stay. */
   emailBounced?: boolean;
+  /** Whether its domain has a mail server (lib/places/email-mx.ts). */
+  emailCheck?: EmailCheck | null;
 }
 
 /**
@@ -197,7 +200,9 @@ export function chooseChannel(
       ? { channel: "email", available: false, reason: BOUNCED_REASON }
       : mistyped
         ? { channel: "email", available: false, reason: mistypedReason(mistyped) }
-        : {
+        : emailDomainDead(place)
+          ? { channel: "email", available: false, reason: DEAD_DOMAIN_REASON }
+          : {
           channel: "email",
           available: true,
           href: `mailto:${place.email}?subject=${encodeURIComponent(

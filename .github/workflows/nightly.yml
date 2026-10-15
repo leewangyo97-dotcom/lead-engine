@@ -86,6 +86,17 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
+      # DNS only, no mail server is contacted: does each new address's domain
+      # take mail at all? A dead one is refused before anything is sent and
+      # scores as no email (lib/places/email-mx.ts). Before scoring, so tonight's
+      # scores already know.
+      - name: Check email domains
+        continue-on-error: true
+        timeout-minutes: 3
+        run: pnpm email:mx --limit=2000
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
       # Cheap, pure, no network. Re-scoring everything nightly means a weight
       # change takes effect without anyone remembering to run it.
       - name: Score prospects

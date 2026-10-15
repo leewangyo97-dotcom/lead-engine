@@ -257,6 +257,12 @@ export const prospects = pgTable(
     email: text("email"),
     /** How the email was obtained — a mailto: link is worth more than a regex hit. */
     emailConfidence: text("email_confidence"),
+    /**
+     * Whether the email's domain has a mail server (lib/places/email-mx.ts):
+     * the domain checked, the answer, when. Null until checked; a changed
+     * address is checked again because its domain no longer matches.
+     */
+    emailCheck: jsonb("email_check").$type<{ domain: string; mx: boolean; at: string }>(),
     phoneE164: text("phone_e164"),
     /** Scraped from a wa.me link: a confirmed WhatsApp number, not a guess. */
     whatsappE164: text("whatsapp_e164"),

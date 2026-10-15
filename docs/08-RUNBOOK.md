@@ -1325,3 +1325,15 @@ the WhatsApp chat" opens the chat. Mark Replied, Won or Lost; undo puts it back.
 A row that says nobody answered needs nothing: no answer is the default.
 Someone who answered "no, stop" belongs under "they said no" on `/prospects`,
 which also blocks their number and address.
+
+## "Their email domain has no mail server"
+
+The nightly run asks DNS whether each new address's domain takes mail
+(`pnpm email:mx`; no mail server is contacted). A domain that does not exist,
+or has neither a mail server nor an address of its own, is dead: Email is
+disabled with that reason and the address scores as none. The first check, 15
+Oct: 31 of 1,571 domains dead, covering 33 prospects, one of them already
+emailed. If the business has a new address, fix it by hand; a changed address
+is checked again the next night. "Did not answer" means DNS failed, not the
+domain, and that domain is asked again next run. On a machine whose resolver
+refuses queries, the script falls back to 1.1.1.1 and 8.8.8.8 by itself.
