@@ -27,13 +27,9 @@ opens a page that is unambiguously the message.
 
 ### 1. Outcomes — this is the project
 
-- **The follow-ups are ten days overdue.** Due 13–14 Sept; on 24 Sept
-  `select step … from outreach` still returns **no row above step 0**. Dry-run
-  11 Sept: **0 verifier violations, 0 over length, correct channel** — nothing
-  blocks but the clicking. Rung 2 falls 7 days after rung 1 is actually sent (the
-  ladder ran 4 days long until 20 Sept), so starting late does not stack them.
-  The app writes prospect ones on the click; the two lead ones (Atria, This Dot
-  Labs) are Gmail drafts since 24 Sept, unsent.
+- **25 follow-ups are due, a month overdue** (15 Oct). `/followups` → Start sweep: one business
+  at a time with its send buttons. Starting late does not stack rungs (rung 2 counts from rung 1's
+  send). Nothing blocks but the clicking. Lead ones (Atria, This Dot Labs) sit unsent in Gmail.
 - **Send the 12 unsent drafts.** All `no_website` Cebu rows, so Lighthouse has
   nothing to add to them. Re-verified 20 Sept: 0 false.
 - **Check whether the WhatsApp sends delivered.** 6 of 12 went to *guessed*

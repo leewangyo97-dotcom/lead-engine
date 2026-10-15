@@ -1,4 +1,4 @@
-import { and, desc, eq, isNotNull, or, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "../db";
 import { prospects, searches } from "../db/schema";
 import { chooseChannel, emailUnconfirmed, type ContactOption } from "./contact";
@@ -172,6 +172,12 @@ export async function getTopProspects(limit = 25, filter: QueueFilter = {}): Pro
 export async function getProspect(id: string): Promise<ProspectRow | null> {
   const [row] = await queryProspects(eq(prospects.id, id), 1);
   return row ?? null;
+}
+
+/** Several prospects by id, whatever their status: the follow-up sweep's rows. */
+export async function getProspectsByIds(ids: string[]): Promise<ProspectRow[]> {
+  if (ids.length === 0) return [];
+  return queryProspects(inArray(prospects.id, ids), ids.length);
 }
 
 export async function getProspects(

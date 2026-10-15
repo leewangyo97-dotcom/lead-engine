@@ -2,6 +2,8 @@ import { getDueFollowups, type FollowupRow } from "@/lib/leads/followup-queries"
 import { LADDER_DAYS, ladderRungs } from "@/lib/followups";
 
 import { Shell } from "@/app/components/shell";
+import { FollowupSweep, type SweepItem } from "@/app/components/followup-sweep";
+import { getProspectsByIds } from "@/lib/places/prospect-queries";
 
 export const dynamic = "force-dynamic";
 
@@ -72,6 +74,31 @@ function LadderTrack({
 
 export default async function Followups() {
   const due = await getDueFollowups();
+  // The send buttons need each business's channels, read the way /prospects reads them.
+  const rows = new Map(
+    (await getProspectsByIds(due.filter((d) => d.kind === "prospect").map((d) => d.leadId))).map((r) => [r.id, r]),
+  );
+  const sweep: SweepItem[] = due.map((d) => {
+    const row = d.kind === "prospect" ? rows.get(d.leadId) : undefined;
+    return {
+      id: d.leadId,
+      kind: d.kind,
+      name: d.company,
+      href: d.kind === "prospect" ? `/prospects?prospect=${d.leadId}` : `/lead/${d.leadId}`,
+      detail: `Follow-up ${d.nextStep} of ${LADDER_DAYS.length} · ${d.daysSince} days since the last message`,
+      contact: row
+        ? {
+            id: row.id,
+            whatsapp: row.whatsapp,
+            email: row.emailChannel,
+            contacted: row.contacted,
+            declined: row.declined,
+            emailBounced: row.emailBounced,
+            status: row.status,
+          }
+        : null,
+    };
+  });
 
   return (
     <Shell current="/followups">
@@ -91,6 +118,8 @@ export default async function Followups() {
         unanswered. A late rung pushes the one after it back rather than stacking on top of it.
         A logged reply removes a lead from this list by itself.
       </p>
+
+      <FollowupSweep items={sweep} />
 
       {due.length === 0 ? (
         <p className="mt-7 rounded-md border border-rule bg-surface p-7 text-body text-muted">

@@ -34,6 +34,10 @@ pnpm followups  # what the day-4 / day-11 ladder owes
 pnpm tokens     # token spend per run; exits non-zero over 40k
 ```
 
+Follow-ups that are due wait on `/followups`; "Start sweep" shows them one at a
+time with the same send buttons as `/prospects`, which write the right
+follow-up text themselves.
+
 When anyone answers, mark it on `/replies`: every business messaged, oldest
 first, with a link that opens the Gmail search or the WhatsApp chat where an
 answer would be. The app cannot read either, so `/review` learns only from
