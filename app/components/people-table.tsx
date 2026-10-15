@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { STATUSES, STATUS_LABEL, type PersonStatus } from "@/lib/people/status";
 import { PersonDrawer } from "./person-drawer";
+import { PersonEmail } from "./person-email";
 
 export type SortKey = "score" | "name" | "company" | "added";
 
@@ -25,6 +26,8 @@ export interface PersonView {
   location: string | null;
   sources: string[];
   blocked: boolean;
+  /** The local business behind their company, when there is one: Copy email writes about it. */
+  prospectId: string | null;
 }
 
 const SHORT_SOURCE: Record<string, string> = {
@@ -87,7 +90,17 @@ function StatusSelect({ person, onChange }: { person: PersonView; onChange: (nex
  * like the do-not-contact question on /prospects, and the row goes at once:
  * no page reload.
  */
-function RowActions({ person, onOpen, onDeleted }: { person: PersonView; onOpen: () => void; onDeleted: () => void }) {
+function RowActions({
+  person,
+  onOpen,
+  onDeleted,
+  onSent,
+}: {
+  person: PersonView;
+  onOpen: () => void;
+  onDeleted: () => void;
+  onSent: () => void;
+}) {
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -129,12 +142,17 @@ function RowActions({ person, onOpen, onDeleted }: { person: PersonView; onOpen:
       </span>
     );
   }
+  // Who can be written to from here: someone at a local business who has not
+  // said no, and whose address is on no list.
+  const writable =
+    !!person.prospectId && !person.blocked && person.status !== "do_not_contact" && person.status !== "not_interested";
   return (
-    <span className="inline-flex items-center gap-4 text-body-sm">
-      <button type="button" onClick={onOpen} className="text-accent underline underline-offset-2">
+    <span className="inline-flex flex-wrap items-start gap-4 text-body-sm">
+      {writable && <PersonEmail prospectId={person.prospectId!} personId={person.id} onSent={onSent} />}
+      <button type="button" onClick={onOpen} className="py-1 text-accent underline underline-offset-2">
         Details
       </button>
-      <button type="button" onClick={() => setConfirming(true)} className="text-secondary hover:text-stop">
+      <button type="button" onClick={() => setConfirming(true)} className="py-1 text-secondary hover:text-stop">
         Delete
       </button>
     </span>
@@ -224,7 +242,12 @@ export function PeopleTable({
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-4">
               <StatusSelect person={p} onChange={update(p.id)} />
-              <RowActions person={p} onOpen={() => setOpen(p.id)} onDeleted={remove(p.id)} />
+              <RowActions
+                person={p}
+                onOpen={() => setOpen(p.id)}
+                onDeleted={remove(p.id)}
+                onSent={() => p.status === "new" && update(p.id)({ status: "contacted" })}
+              />
             </div>
           </li>
         ))}
@@ -290,7 +313,12 @@ export function PeopleTable({
                 </td>
                 <td className="px-4 py-3 font-mono text-data-sm text-muted">{p.added}</td>
                 <td className="px-4 py-3">
-                  <RowActions person={p} onOpen={() => setOpen(p.id)} onDeleted={remove(p.id)} />
+                  <RowActions
+                person={p}
+                onOpen={() => setOpen(p.id)}
+                onDeleted={remove(p.id)}
+                onSent={() => p.status === "new" && update(p.id)({ status: "contacted" })}
+              />
                 </td>
               </tr>
             ))}

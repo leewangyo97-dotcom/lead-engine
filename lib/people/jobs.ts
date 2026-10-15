@@ -20,7 +20,13 @@ export const MAX_PER_JOB = 50;
 const isPublic = (domain: string | null) => !!domain && !!publicDomain(`x@${domain}`);
 
 /** Companies from the best-scored local businesses with a website, not yet added. */
-export async function seedFromProspects(limit: number): Promise<string[]> {
+/** Narrows "from local businesses" to the country or category chosen on /people. */
+export interface SeedScope {
+  countryCode?: string;
+  category?: string;
+}
+
+export async function seedFromProspects(limit: number, scope: SeedScope = {}): Promise<string[]> {
   const db = getDb();
   const rows = await db
     .select({
@@ -36,6 +42,8 @@ export async function seedFromProspects(limit: number): Promise<string[]> {
       and(
         isNotNull(prospects.website),
         ne(prospects.status, "do_not_contact"),
+        scope.countryCode ? eq(prospects.countryCode, scope.countryCode) : undefined,
+        scope.category ? eq(prospects.category, scope.category) : undefined,
         // Not discovered already, by this prospect or under its domain. Without
         // this the top of the list stays the same every night, and once its
         // first hundred were discovered the nightly run found nothing new.

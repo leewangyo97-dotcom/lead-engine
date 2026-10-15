@@ -22,7 +22,16 @@ const working = (j: JobView) => j.status === "queued" || j.status === "running";
  * refreshes its table when a job finishes, so new people appear on their own.
  * Without GITHUB_DISPATCH_TOKEN the job waits for the command shown.
  */
-export function DiscoverPanel({ jobs: initial, oneClick }: { jobs: JobView[]; oneClick: boolean }) {
+export function DiscoverPanel({
+  jobs: initial,
+  oneClick,
+  scope = {},
+}: {
+  jobs: JobView[];
+  oneClick: boolean;
+  /** The Country and Category chips that are on: "From local businesses" takes only those. */
+  scope?: { country?: string; category?: string; label?: string };
+}) {
   const router = useRouter();
   const [jobs, setJobs] = useState(initial);
   const [busy, setBusy] = useState(false);
@@ -114,10 +123,10 @@ export function DiscoverPanel({ jobs: initial, oneClick }: { jobs: JobView[]; on
         <button
           type="button"
           disabled={busy}
-          onClick={() => start({ seed: "prospects", limit })}
+          onClick={() => start({ seed: "prospects", limit, country: scope.country, category: scope.category })}
           className="rounded-xs bg-accent px-3 py-1 text-body-sm text-on-accent disabled:opacity-50"
         >
-          From local businesses
+          {scope.label ? `From local businesses: ${scope.label}` : "From local businesses"}
         </button>
         <button
           type="button"

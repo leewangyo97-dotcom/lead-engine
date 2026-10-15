@@ -134,6 +134,12 @@ Rules it keeps, all in code:
   and their sources; discovery can find them again, so use Do not contact to
   keep someone out.
 - People never contacted are deleted after 12 months (`pnpm retention`, nightly).
+- **Country and Category chips** narrow the table, and "From local businesses"
+  then discovers only that country or category.
+- **Copy email** on a person at a local business writes to that person: their
+  name in the greeting, their own address when verified, the business's
+  otherwise. A business already emailed gets its next follow-up instead, to
+  wherever the first email went; the panel says so.
 - **Emails to local businesses greet the owner** found here ("Hi Matt,"), and go to
   the owner's own address when they published one; follow-ups stay with the
   first address (`lib/places/recipient.ts`).

@@ -17,6 +17,10 @@ export interface PeopleFilter {
   q?: string;
   seniority?: Seniority[];
   industry?: string;
+  /** ISO country code, from the Country chips. */
+  country?: string;
+  /** An exact industry, from the Category chips; `industry` is the typed, partial one. */
+  category?: string;
   size?: string;
   location?: string;
   verified?: boolean;
@@ -43,6 +47,8 @@ export function parseFilter(params: Record<string, string | string[] | undefined
     q: one("q"),
     seniority: seniority.length ? seniority : undefined,
     industry: one("industry"),
+    country: /^[A-Za-z]{2}$/.test(one("country") ?? "") ? one("country")!.toUpperCase() : undefined,
+    category: one("category"),
     size: SIZE_BANDS.includes(one("size") as never) ? one("size") : undefined,
     location: one("location"),
     verified: one("verified") === "1",
@@ -68,6 +74,8 @@ function where(f: PeopleFilter): SQL | undefined {
       : undefined,
     f.seniority?.length ? inArray(people.seniority, f.seniority) : undefined,
     f.industry ? ilike(companies.industry, like(f.industry)) : undefined,
+    f.country ? eq(companies.countryCode, f.country) : undefined,
+    f.category ? eq(companies.industry, f.category) : undefined,
     f.size ? eq(companies.sizeBand, f.size) : undefined,
     f.location ? ilike(companies.location, like(f.location)) : undefined,
     f.verified ? eq(people.emailStatus, "verified") : undefined,
@@ -98,6 +106,9 @@ const SELECT = {
   industry: companies.industry,
   sizeBand: companies.sizeBand,
   location: companies.location,
+  countryCode: companies.countryCode,
+  // The local business this company came from, when it did: what Copy email writes about.
+  prospectId: sql<string | null>`case when ${companies.origin} = 'prospect' then ${companies.originId} end`,
   // Which sources contributed anything to this person, for the table's column.
   sources: sql<string[]>`coalesce((select array_agg(distinct ${peopleSources.sourceType}) from ${peopleSources} where ${peopleSources.personId} = ${people.id}), '{}')`,
   // On the do-not-contact list: their address, its bounce, or the company's domain.
@@ -127,6 +138,27 @@ export async function listPeople(f: PeopleFilter) {
       .where(condition),
   ]);
   return { rows, total: Number(total) };
+}
+
+/** The Country and Category chips: every value present, with how many people each holds. */
+export async function peopleFacets(): Promise<{ countries: Facet[]; categories: Facet[] }> {
+  const db = getDb();
+  const facet = (column: typeof companies.countryCode | typeof companies.industry) =>
+    db
+      .select({ name: sql<string>`${column}`, count: count() })
+      .from(people)
+      .innerJoin(companies, eq(companies.id, people.companyId))
+      .where(sql`${column} is not null`)
+      .groupBy(column)
+      .orderBy(desc(count()));
+  const [countries, categories] = await Promise.all([facet(companies.countryCode), facet(companies.industry)]);
+  const tidy = (rows: { name: string; count: number }[]) => rows.map((r) => ({ name: r.name, count: Number(r.count) }));
+  return { countries: tidy(countries), categories: tidy(categories) };
+}
+
+export interface Facet {
+  name: string;
+  count: number;
 }
 
 /** One person, their company, and every fact grouped by field with its source. */

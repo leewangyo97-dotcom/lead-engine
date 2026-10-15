@@ -40,6 +40,7 @@ opens a page that is unambiguously the message.
 - **Inbox "Waiting on you"** (15 Oct) counts all of the above in one card, with links (`lib/today.ts`).
 - **Dead email domains refused** (15 Oct): nightly `pnpm email:mx`, DNS only. 31 domains, 33 prospects.
 - **`pnpm setup:check`** (15 Oct) lists what setup is missing, with fixes. 4 to do on 15 Oct.
+- **/people** (15 Oct): Country/Category chips; Copy email per person (shared `CopiedPanel`).
 
 ### 2. Decisions only Joshua can make
 

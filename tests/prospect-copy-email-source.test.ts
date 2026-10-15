@@ -84,7 +84,7 @@ describe("recordCopiedEmail", () => {
   const record = body(LOG, "export async function recordCopiedEmail(");
 
   it("composes the message on the server rather than trusting the browser's copy", () => {
-    expect(record).toMatch(/composeContact\(prospectId, "email", now\)/);
+    expect(record).toMatch(/composeContact\(prospectId, "email", now(, opts)?\)/);
     expect(record).not.toMatch(/request|json\(/);
   });
 

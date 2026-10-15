@@ -12,9 +12,10 @@ export const dynamic = "force-dynamic";
  * prospects the Email button refuses (do-not-contact, suppressed, a finished
  * ladder), so a copied message can never be one the app would not send.
  */
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const composed = await composeContact(id, "email");
+  const personId = new URL(request.url).searchParams.get("person") ?? undefined; // chosen on /people
+  const composed = await composeContact(id, "email", undefined, { personId });
   if (!composed.ok) {
     return Response.json({ error: composed.blocked }, { status: 409 });
   }
@@ -27,6 +28,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     subject: composed.subject,
     body: composed.body,
     to: to ? (cleanEmail(to) ?? to) : null,
+    // Who the email greets, when it is a person rather than the business.
+    greets: composed.person?.name ?? null,
+    // 0 for a first email; a follow-up goes where the first one went.
+    step: composed.step,
     // Only in the map listing, never seen on their site: say so before the paste.
     unconfirmed: emailUnconfirmed(composed.place),
     // The copy is the message already marked sent, inside the reopen window, so
@@ -39,9 +44,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 }
 
 /** "I sent it" for a copied email — see `recordCopiedEmail`. */
-export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const result = await recordCopiedEmail(id);
+  const personId = new URL(request.url).searchParams.get("person") ?? undefined;
+  const result = await recordCopiedEmail(id, undefined, { personId });
   if (!result.ok) return Response.json({ error: result.error }, { status: 409 });
   return Response.json(result);
 }

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { contactStatus, dayLabel, type LastContact } from "@/lib/places/contact-status";
 
 /** What the Copy email button put on the clipboard, and where it goes. */
-interface Copied {
+export interface Copied {
   subject: string;
   body: string;
   to: string | null;
@@ -15,9 +15,13 @@ interface Copied {
   alreadySent: string | null;
   /** The address is only in the map listing, so it may bounce. */
   unconfirmed?: boolean;
+  /** The person the email is written to, when it is not the business. */
+  greets?: string | null;
+  /** 0 for a first email; a follow-up's rung otherwise. */
+  step?: number;
 }
 
-async function toClipboard(text: string): Promise<boolean> {
+export async function toClipboard(text: string): Promise<boolean> {
   try {
     await navigator.clipboard.writeText(text);
     return true;
@@ -73,6 +77,136 @@ function CopyIcon({ text, label }: { text: string; label: string }) {
         )}
       </svg>
     </button>
+  );
+}
+
+/**
+ * What a Copy email click shows: the address and subject with their own copy
+ * buttons, Gmail's compose window, and "I sent it". Shared by the rows of
+ * /prospects and /people, so a change to it reaches both.
+ */
+export function CopiedPanel({
+  copied,
+  sent,
+  onMarkSent,
+  onCopyAgain,
+  onDone,
+}: {
+  copied: Copied;
+  sent: "no" | "saving" | "yes";
+  onMarkSent: () => void;
+  onCopyAgain: () => void;
+  onDone: () => void;
+}) {
+  return (
+    <div
+      role="status"
+      className="mt-1 flex w-[320px] flex-col items-start gap-2 rounded-xs border border-rule bg-sunk p-3"
+    >
+      <span className="text-caption text-muted">
+        {copied.onClipboard
+          ? "Email copied. Open a new message and paste it in (Ctrl+V)."
+          : "Your browser blocked copying. Select this text and press Ctrl+C:"}
+      </span>
+      {/* Copy email on /people picks a person, but a sequence already begun
+          goes where it began: say so, rather than let the greeting surprise. */}
+      {!!copied.step && (
+        <span className="text-caption text-muted">
+          Follow-up {copied.step}: it goes where the first email went
+          {copied.greets ? "" : ", written to the business"}.
+        </span>
+      )}
+      {!copied.onClipboard && (
+        <textarea
+          readOnly
+          rows={8}
+          value={copied.body}
+          onFocus={(e) => e.currentTarget.select()}
+          className="w-full rounded-xs border border-rule bg-surface p-2 text-body-sm text-primary"
+        />
+      )}
+      {/* In the order Gmail asks for them: address, then subject. */}
+      {copied.to && (
+        <span className="flex items-start gap-2 text-caption text-muted">
+          <span>
+            To: <span className="select-all font-mono text-data-sm text-secondary">{copied.to}</span>
+          </span>
+          <CopyIcon text={copied.to} label="email address" />
+        </span>
+      )}
+      {copied.to && copied.greets && (
+        <span className="text-caption text-muted">
+          Written to <span className="text-secondary">{copied.greets}</span>
+        </span>
+      )}
+      {copied.to && copied.unconfirmed && (
+        <span className="text-caption text-hold">
+          Unconfirmed: this address is only in their map listing, not on a website of theirs,
+          so it may bounce. If it does, click "it bounced" on the row.
+        </span>
+      )}
+      <span className="flex items-start gap-2 text-caption text-muted">
+        <span>
+          Subject: <span className="select-all text-secondary">{copied.subject}</span>
+        </span>
+        <CopyIcon text={copied.subject} label="subject" />
+      </span>
+      {copied.to ? (
+        <>
+          <a
+            href={gmailCompose(copied)}
+            target="_blank"
+            rel="noreferrer"
+            className="text-body-sm text-accent underline underline-offset-2"
+          >
+            Open a new Gmail message
+          </a>
+          {sent === "yes" ? (
+            <span className="text-caption text-go">
+              ✓ Marked as sent. The follow-up clock has started.
+            </span>
+          ) : copied.alreadySent ? (
+            // The same message, already marked sent: say when, rather than
+            // offer the click again as if it had never happened.
+            <span className="text-caption text-go">
+              ✓ Already marked sent {dayLabel(copied.alreadySent)}
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={onMarkSent}
+              disabled={sent === "saving"}
+              className="text-caption text-accent underline underline-offset-2 disabled:opacity-50"
+            >
+              I sent it — start the follow-up clock
+            </button>
+          )}
+        </>
+      ) : (
+        <span className="text-caption text-faint">
+          No email address on file — paste it into their contact form or page instead.
+        </span>
+      )}
+      <button
+        type="button"
+        onClick={onCopyAgain}
+        className="text-caption text-secondary underline underline-offset-2 hover:text-primary"
+      >
+        copy the email again
+      </button>
+      {/*
+        * No refresh until dismissed: a send sets the prospect to contacted,
+        * the queue lists only new ones, and refreshing on the click would
+        * pull this panel out from under the person reading it.
+        */}
+      <button
+        type="button"
+        onClick={onDone}
+        className="text-caption text-secondary underline underline-offset-2 hover:text-primary"
+      >
+        done
+      </button>
+    </div>
   );
 }
 
@@ -288,105 +422,17 @@ export function ProspectRowActions({
         )}
       </div>
       {copied && (
-        <div
-          role="status"
-          className="mt-1 flex w-[320px] flex-col items-start gap-2 rounded-xs border border-rule bg-sunk p-3"
-        >
-          <span className="text-caption text-muted">
-            {copied.onClipboard
-              ? "Email copied. Open a new message and paste it in (Ctrl+V)."
-              : "Your browser blocked copying. Select this text and press Ctrl+C:"}
-          </span>
-          {!copied.onClipboard && (
-            <textarea
-              readOnly
-              rows={8}
-              value={copied.body}
-              onFocus={(e) => e.currentTarget.select()}
-              className="w-full rounded-xs border border-rule bg-surface p-2 text-body-sm text-primary"
-            />
-          )}
-          {/* In the order Gmail asks for them: address, then subject. */}
-          {copied.to && (
-            <span className="flex items-start gap-2 text-caption text-muted">
-              <span>
-                To: <span className="select-all font-mono text-data-sm text-secondary">{copied.to}</span>
-              </span>
-              <CopyIcon text={copied.to} label="email address" />
-            </span>
-          )}
-          {copied.to && copied.unconfirmed && (
-            <span className="text-caption text-hold">
-              Unconfirmed: this address is only in their map listing, not on a website of theirs,
-              so it may bounce. If it does, click "it bounced" on the row.
-            </span>
-          )}
-          <span className="flex items-start gap-2 text-caption text-muted">
-            <span>
-              Subject: <span className="select-all text-secondary">{copied.subject}</span>
-            </span>
-            <CopyIcon text={copied.subject} label="subject" />
-          </span>
-          {copied.to ? (
-            <>
-              <a
-                href={gmailCompose(copied)}
-                target="_blank"
-                rel="noreferrer"
-                className="text-body-sm text-accent underline underline-offset-2"
-              >
-                Open a new Gmail message
-              </a>
-              {sent === "yes" ? (
-                <span className="text-caption text-go">
-                  ✓ Marked as sent. The follow-up clock has started.
-                </span>
-              ) : copied.alreadySent ? (
-                // The same message, already marked sent: say when, rather than
-                // offer the click again as if it had never happened.
-                <span className="text-caption text-go">
-                  ✓ Already marked sent {dayLabel(copied.alreadySent)}
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={markSent}
-                  disabled={sent === "saving"}
-                  className="text-caption text-accent underline underline-offset-2 disabled:opacity-50"
-                >
-                  I sent it — start the follow-up clock
-                </button>
-              )}
-            </>
-          ) : (
-            <span className="text-caption text-faint">
-              No email address on file — paste it into their contact form or page instead.
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={async () => setCopied({ ...copied, onClipboard: await toClipboard(copied.body) })}
-            className="text-caption text-secondary underline underline-offset-2 hover:text-primary"
-          >
-            copy the email again
-          </button>
-          {/*
-            * No refresh until dismissed: a send sets the prospect to contacted,
-            * the queue lists only new ones, and refreshing on the click would
-            * pull this panel out from under the person reading it.
-            */}
-          <button
-            type="button"
-            onClick={() => {
-              setCopied(null);
-              if (sent === "yes") router.refresh();
-              setSent("no");
-            }}
-            className="text-caption text-secondary underline underline-offset-2 hover:text-primary"
-          >
-            done
-          </button>
-        </div>
+        <CopiedPanel
+          copied={copied}
+          sent={sent}
+          onMarkSent={markSent}
+          onCopyAgain={async () => setCopied({ ...copied, onClipboard: await toClipboard(copied.body) })}
+          onDone={() => {
+            setCopied(null);
+            if (sent === "yes") router.refresh();
+            setSent("no");
+          }}
+        />
       )}
       {status && (
         <span className={`text-caption ${status.sent ? "text-go" : "text-hold"}`}>{status.text}</span>

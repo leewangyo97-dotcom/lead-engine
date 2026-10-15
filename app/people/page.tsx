@@ -4,7 +4,17 @@ import { PeopleTable, type PersonView, type SortKey } from "@/app/components/peo
 import { dispatchConfigured } from "@/lib/github/dispatch";
 import { formatDay, formatWhen } from "@/lib/people/format";
 import { recentJobs } from "@/lib/people/jobs";
-import { listPeople, PAGE_SIZE, parseFilter, SIZE_BANDS, STATUSES, STATUS_LABEL } from "@/lib/people/queries";
+import {
+  listPeople,
+  PAGE_SIZE,
+  parseFilter,
+  peopleFacets,
+  SIZE_BANDS,
+  STATUSES,
+  STATUS_LABEL,
+  type Facet,
+} from "@/lib/people/queries";
+import { categoryLabel } from "@/lib/places/queue-filter";
 import { SENIORITY_LABEL } from "@/lib/people/seniority";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +24,59 @@ type Params = Record<string, string | string[] | undefined>;
 const SENIORITY_FILTERS = ["founder_owner", "c_level", "vp", "director"] as const;
 const INPUT =
   "mt-2 w-full rounded-sm border border-rule bg-sunk px-3 py-2 text-body-sm text-primary placeholder:text-faint";
+
+const REGION = new Intl.DisplayNames(["en"], { type: "region" });
+/** "AU" reads "Australia"; anything Intl does not know stays as it came. */
+const countryName = (code: string) => {
+  try {
+    return REGION.of(code) ?? code;
+  } catch {
+    return code;
+  }
+};
+
+/**
+ * Country and Category, as chips with how many people each holds, like the
+ * ones on /prospects. Clicking the active chip clears it.
+ */
+function FilterChips({
+  label,
+  keyName,
+  active,
+  options,
+  params,
+  format,
+}: {
+  label: string;
+  keyName: "country" | "category";
+  active?: string;
+  options: Facet[];
+  params: Params;
+  format: (value: string) => string;
+}) {
+  if (options.length === 0) return null;
+  return (
+    <div className="mt-3 flex flex-wrap items-baseline gap-2">
+      <span className="mr-1 text-label text-secondary">{label}</span>
+      {options.map((o) => {
+        const on = active === o.name;
+        return (
+          <a
+            key={o.name}
+            href={`/people${query(params, { [keyName]: on ? undefined : o.name, page: undefined })}`}
+            aria-current={on ? "true" : undefined}
+            className={`rounded-xs border px-3 py-1 text-body-sm ${
+              on ? "border-accent bg-accent-tint text-primary" : "border-rule text-secondary hover:bg-hovered"
+            }`}
+          >
+            {format(o.name)}
+            <span className="ml-2 font-mono text-data-sm text-muted">{o.count}</span>
+          </a>
+        );
+      })}
+    </div>
+  );
+}
 
 /** The page's query string with some keys changed; undefined drops a key. */
 function query(params: Params, changes: Record<string, string | undefined> = {}): string {
@@ -30,13 +93,18 @@ function query(params: Params, changes: Record<string, string | undefined> = {})
 export default async function PeoplePage({ searchParams }: { searchParams: Promise<Params> }) {
   const params = await searchParams;
   const filter = parseFilter(params);
-  const [{ rows, total }, jobs] = await Promise.all([listPeople(filter), recentJobs(5)]);
+  const [{ rows, total }, jobs, facets] = await Promise.all([listPeople(filter), recentJobs(5), peopleFacets()]);
+  // What "From local businesses" is narrowed to: the chips chosen here.
+  const scopeLabel = [filter.country && countryName(filter.country), filter.category && categoryLabel(filter.category)]
+    .filter(Boolean)
+    .join(" · ");
 
   const page = filter.page ?? 1;
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   // From the parsed filter, not the raw keys: an applied form sends every field, empty or not.
   const filtered = !!(
-    filter.q || filter.seniority || filter.industry || filter.size || filter.location || filter.verified ||
+    filter.q || filter.seniority || filter.industry || filter.country || filter.category || filter.size ||
+    filter.location || filter.verified ||
     filter.scoreMin !== undefined || filter.scoreMax !== undefined || filter.status
   );
 
@@ -71,6 +139,7 @@ export default async function PeoplePage({ searchParams }: { searchParams: Promi
     location: r.location,
     sources: r.sources ?? [],
     blocked: !!r.blocked,
+    prospectId: r.prospectId,
   }));
 
   return (
@@ -85,6 +154,7 @@ export default async function PeoplePage({ searchParams }: { searchParams: Promi
 
         <DiscoverPanel
           oneClick={dispatchConfigured()}
+          scope={{ country: filter.country, category: filter.category, label: scopeLabel || undefined }}
           jobs={jobs.map((j) => ({
             id: j.id,
             status: j.status,
@@ -95,15 +165,33 @@ export default async function PeoplePage({ searchParams }: { searchParams: Promi
           }))}
         />
 
+        <div className="mt-6">
+          <FilterChips
+            label="Country"
+            keyName="country"
+            active={filter.country}
+            options={facets.countries}
+            params={params}
+            format={countryName}
+          />
+          <FilterChips
+            label="Category"
+            keyName="category"
+            active={filter.category}
+            options={facets.categories}
+            params={params}
+            format={categoryLabel}
+          />
+        </div>
+
         <form method="get" action="/people" className="mt-6 rounded-md border border-rule bg-surface p-5">
+          {/* Applying the form keeps the chips that are on. */}
+          {filter.country && <input type="hidden" name="country" value={filter.country} />}
+          {filter.category && <input type="hidden" name="category" value={filter.category} />}
           <div className="grid gap-4 md:grid-cols-4">
             <label className="block md:col-span-2">
               <span className="text-label text-secondary">Search</span>
               <input name="q" defaultValue={filter.q ?? ""} placeholder="Name, title, company or email" className={INPUT} />
-            </label>
-            <label className="block">
-              <span className="text-label text-secondary">Industry</span>
-              <input name="industry" defaultValue={filter.industry ?? ""} placeholder="Dental, software…" className={INPUT} />
             </label>
             <label className="block">
               <span className="text-label text-secondary">Location</span>

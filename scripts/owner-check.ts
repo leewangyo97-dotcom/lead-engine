@@ -147,6 +147,31 @@ async function main() {
       afterWa.ok ? `${afterWa.place.email} | ${afterWa.body.split("\n")[0].slice(0, 40)}` : afterWa.blocked,
     );
 
+    // F. A person chosen on /people is written to, not the best-ranked one.
+    const f = await prospect(6, {});
+    await owner(f.id, {
+      name: "Ann Lee",
+      title: "Director",
+      seniority: "director",
+      email: "ann@owner-check-6.lead-engine-fixture.com",
+      emailStatus: "verified",
+    });
+    const tom = await owner(f.id, { name: "Tom Reyes", title: "Owner", email: null, emailStatus: "unknown" });
+    const auto = await composeContact(f.id, "email");
+    const picked = await composeContact(f.id, "email", undefined, { personId: tom.id });
+    check(
+      "by default, the person with an address of their own",
+      auto.ok && auto.place.email === "ann@owner-check-6.lead-engine-fixture.com" && auto.body.startsWith("Hi Ann,"),
+    );
+    check(
+      "a person chosen on /people is written to instead, at the business",
+      picked.ok && picked.place.email === "info@owner-check-6.lead-engine-fixture.com" && picked.body.startsWith("Hi Tom,"),
+      picked.ok ? `${picked.place.email} | ${picked.body.split(String.fromCharCode(10))[0]}` : picked.blocked,
+    );
+    const pickedCopy = await recordCopiedEmail(f.id, undefined, { personId: tom.id });
+    const [tomAfter] = await db.select({ status: people.status }).from(people).where(eq(people.id, tom.id));
+    check("and the send is recorded against them", pickedCopy.ok && tomAfter.status === "contacted");
+
     // E. A mistyped address is refused before anything is written.
     const e = await prospect(5, { email: "info@owner-check-5.xom" });
     const typo = await composeContact(e.id, "email");

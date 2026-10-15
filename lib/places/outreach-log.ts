@@ -16,6 +16,7 @@ import { cleanEmail } from "../sources/email";
 import {
   addressListed,
   addressTo,
+  ownerFor,
   personClosed,
   earlierEmailsFor,
   markPersonContacted,
@@ -353,6 +354,8 @@ export async function composeContact(
   prospectId: string,
   channel: Channel,
   now: () => Date = () => new Date(),
+  /** A person chosen on /people, written to instead of the best-ranked owner. */
+  opts: { personId?: string } = {},
 ): Promise<ComposedContact> {
   const db = getDb();
 
@@ -395,7 +398,10 @@ export async function composeContact(
   // An owner was read off the business's own website, so a record with no
   // website names nobody: "I couldn't find a website" beside a name taken from
   // one contradicts itself (verifier, 15 Oct).
-  const owner = place.website ? (owners.get(prospectId) ?? null) : null;
+  // A person chosen on /people takes the best-ranked one's place. A sequence
+  // already begun still goes where it began (pickRecipient), whoever is chosen.
+  const chosen = opts.personId ? await ownerFor(prospectId, opts.personId) : (owners.get(prospectId) ?? null);
+  const owner = place.website ? chosen : null;
   // A sequence that began on WhatsApp went to the business, so its email
   // follow-ups do too: "following up" to an owner never written to is untrue.
   const started = earlier.get(prospectId) ?? (previous ? { toAddress: null, personId: null } : null);
@@ -710,8 +716,9 @@ export async function markProspectSent(
 export async function recordCopiedEmail(
   prospectId: string,
   now: () => Date = () => new Date(),
+  opts: { personId?: string } = {},
 ): Promise<{ ok: boolean; outreachId?: string; alreadySent?: boolean; error?: string }> {
-  const composed = await composeContact(prospectId, "email", now);
+  const composed = await composeContact(prospectId, "email", now, opts);
   if (!composed.ok) return { ok: false, error: composed.blocked };
   const { place, personId, draft, step, reopening, awaiting, angle, subject, body, option } = composed;
   if (!option.available) return { ok: false, error: option.reason ?? "no email address" };

@@ -99,7 +99,7 @@ export function bestOwner(rows: (Owner & { score: number | null })[]): Owner | n
 }
 
 /** The decision-maker to address for each prospect, from discovery. */
-export async function ownersFor(prospectIds: string[]): Promise<Map<string, Owner>> {
+export async function ownersFor(prospectIds: string[], personId?: string): Promise<Map<string, Owner>> {
   if (prospectIds.length === 0) return new Map();
   const rows = await getDb()
     .select({
@@ -121,6 +121,7 @@ export async function ownersFor(prospectIds: string[]): Promise<Map<string, Owne
         eq(companies.origin, "prospect"),
         inArray(companies.originId, prospectIds),
         notInArray(people.status, CLOSED),
+        personId ? eq(people.id, personId) : undefined,
       ),
     );
 
@@ -146,6 +147,15 @@ export async function ownersFor(prospectIds: string[]): Promise<Map<string, Owne
     if (owner) owners.set(id, owner);
   }
   return owners;
+}
+
+/**
+ * One chosen person at a prospect, as the addressee: the Copy email on a row
+ * of /people. The same checks as `ownersFor` (their own business, not closed,
+ * an address only when verified and on no list); null when they fail them.
+ */
+export async function ownerFor(prospectId: string, personId: string): Promise<Owner | null> {
+  return (await ownersFor([prospectId], personId)).get(prospectId) ?? null;
 }
 
 /** The latest email of each prospect's sequence (drafts awaiting review excluded). */

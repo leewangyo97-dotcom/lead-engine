@@ -188,7 +188,7 @@ describe("where the recipient is used", () => {
   });
 
   it("names no owner on a record with no website, where the email says none was found", () => {
-    expect(log).toContain("const owner = place.website ? (owners.get(prospectId) ?? null) : null;");
+    expect(log).toContain("const owner = place.website ? chosen : null;");
     expect(readFileSync("lib/places/prospect-queries.ts", "utf8")).toContain(
       "owner: r.website ? (owners.get(r.id) ?? null) : null,",
     );

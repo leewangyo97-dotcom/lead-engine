@@ -16,7 +16,16 @@ export async function GET() {
  * the command that runs it.
  */
 export async function POST(request: Request) {
-  let body: { seed?: string; limit?: number; domain?: string; name?: string; countryCode?: string };
+  let body: {
+    seed?: string;
+    limit?: number;
+    domain?: string;
+    name?: string;
+    countryCode?: string;
+    /** "From local businesses" narrowed to the chips chosen on /people. */
+    country?: string;
+    category?: string;
+  };
   try {
     body = await request.json();
   } catch {
@@ -27,7 +36,12 @@ export async function POST(request: Request) {
   let companyIds: string[];
   try {
     if (body.domain) companyIds = [await addCompany({ domain: body.domain, name: body.name, countryCode: body.countryCode })];
-    else if (body.seed === "prospects") companyIds = await seedFromProspects(limit);
+    else if (body.seed === "prospects") {
+      companyIds = await seedFromProspects(limit, {
+        countryCode: /^[A-Za-z]{2}$/.test(body.country ?? "") ? body.country!.toUpperCase() : undefined,
+        category: body.category?.trim() || undefined,
+      });
+    }
     else if (body.seed === "leads") companyIds = await seedFromLeads(limit);
     else return Response.json({ error: "give a domain, or seed: prospects | leads" }, { status: 400 });
   } catch (err) {
