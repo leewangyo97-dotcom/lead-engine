@@ -17,6 +17,11 @@ function CutTable({ title, cuts }: { title: string; cuts: Cut[] }) {
               <td className="py-3 text-secondary">{c.key}</td>
               <td className="py-3 text-right font-mono tabular-nums text-primary">
                 {c.replies}/{c.sends}
+                {c.noes > 0 && (
+                  <span className="ml-2 text-faint" title="answered with a no: they asked not to be contacted">
+                    +{c.noes} no
+                  </span>
+                )}
               </td>
               <td className="w-[96px] py-3 text-right font-mono tabular-nums">
                 {c.replyRate == null ? (
@@ -95,7 +100,14 @@ export default async function Review() {
           empty page most weeks and hide the only evidence there is. Saying so
           beats printing a range the numbers do not obey. */}
       <p className="mt-2 text-body text-secondary">
-        {rollup.totalReplies} replies from {rollup.totalSends} sends, all time.
+        {rollup.totalReplies} replies from {rollup.totalSends} sends, all time
+        {rollup.totalNoes > 0 && (
+          <>
+            , and {rollup.totalNoes} answered with a no. A no is an answer, so it is shown, but it
+            never drives a suggestion: an angle that draws refusals is not one to repeat
+          </>
+        )}
+        .
       </p>
 
       {rollup.suggestion ? (
@@ -123,8 +135,9 @@ export default async function Review() {
           ) : rollup.totalReplies === 0 ? (
             <>
               No suggestion yet, and it is not for want of sends — there are {rollup.totalSends}.
-              Nothing has replied, so every cut below reads zero and there is no difference between
-              them to report. The first reply is what unblocks this.
+              Nothing has replied{rollup.totalNoes > 0 ? ` (${rollup.totalNoes} said no)` : ""}, so
+              every reply rate below reads zero and there is no difference between them to report.
+              The first reply is what unblocks this. Mark answers on /replies as they come in.
             </>
           ) : (
             <>

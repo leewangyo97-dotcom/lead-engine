@@ -14,6 +14,12 @@ export interface Cut {
   key: string;
   sends: number;
   replies: number;
+  /**
+   * Sends answered with a no: "they said no" on /prospects after a message.
+   * An answer, so it is shown, but never a reply to learn from: an angle that
+   * draws refusals is not one to repeat, so suggestions ignore it.
+   */
+  noes: number;
   /** null below MIN_SENDS: a rate over three sends is noise wearing a number. */
   replyRate: number | null;
 }
@@ -27,13 +33,28 @@ export const MIN_SENDS = 5;
 /** Enough total outcomes for any suggestion to be worth making at all. */
 export const MIN_TOTAL_FOR_SUGGESTION = 20;
 
-function toCut(key: string, sends: number, replies: number): Cut {
-  return { key, sends, replies, replyRate: sends >= MIN_SENDS ? replies / sends : null };
+function toCut(key: string, sends: number, replies: number, noes = 0): Cut {
+  return { key, sends, replies, noes, replyRate: sends >= MIN_SENDS ? replies / sends : null };
+}
+
+/**
+ * What a prospect's status says about the messages it was sent. Won and lost
+ * are replies: someone wrote back. Do-not-contact after a send is "they said
+ * no", set only by that button on /prospects, and counted apart (15 Oct: five
+ * businesses had said no while /review read zero answers).
+ */
+export function prospectAnswer(status: string): { replied: boolean; saidNo: boolean } {
+  return {
+    replied: status === "replied" || status === "won" || status === "lost",
+    saidNo: status === "do_not_contact",
+  };
 }
 
 export interface Rollup {
   totalSends: number;
   totalReplies: number;
+  /** Sends answered with a no; see `Cut.noes`. */
+  totalNoes: number;
   byAngle: Cut[];
   bySource: Cut[];
   byStack: Cut[];
@@ -73,13 +94,14 @@ export async function buildRollup(since?: Date): Promise<Rollup> {
 
   const repliedLeads = new Set(replied.map((r) => r.leadId).filter(Boolean) as string[]);
 
-  const tally = new Map<string, Map<string, { sends: number; replies: number }>>();
-  const bump = (dimension: string, key: string, isReply: boolean) => {
+  const tally = new Map<string, Map<string, { sends: number; replies: number; noes: number }>>();
+  const bump = (dimension: string, key: string, isReply: boolean, isNo = false) => {
     if (!key) return;
     const dim = tally.get(dimension) ?? new Map();
-    const cell = dim.get(key) ?? { sends: 0, replies: 0 };
+    const cell = dim.get(key) ?? { sends: 0, replies: 0, noes: 0 };
     cell.sends += 1;
     if (isReply) cell.replies += 1;
+    if (isNo) cell.noes += 1;
     dim.set(key, cell);
     tally.set(dimension, dim);
   };
@@ -100,25 +122,27 @@ export async function buildRollup(since?: Date): Promise<Rollup> {
   // from job applications alone while half the messages went to businesses, and
   // the angles differ completely between the two.
   for (const row of prospectSends) {
-    bump("angle", row.angle ?? "unrecorded", row.replied);
-    bump("source", row.source, row.replied);
-    if (row.sentAt) bump("day", DAYS[new Date(row.sentAt).getUTCDay()], row.replied);
-    bump("stack", row.category, row.replied);
+    bump("angle", row.angle ?? "unrecorded", row.replied, row.saidNo);
+    bump("source", row.source, row.replied, row.saidNo);
+    if (row.sentAt) bump("day", DAYS[new Date(row.sentAt).getUTCDay()], row.replied, row.saidNo);
+    bump("stack", row.category, row.replied, row.saidNo);
   }
 
   const cutsFor = (dimension: string): Cut[] =>
     [...(tally.get(dimension) ?? new Map()).entries()]
-      .map(([key, v]) => toCut(key, v.sends, v.replies))
+      .map(([key, v]) => toCut(key, v.sends, v.replies, v.noes))
       .sort((a, b) => b.sends - a.sends);
 
   const totalSends = sent.length + prospectSends.length;
   const totalReplies =
     sent.filter((s) => repliedLeads.has(s.leadId)).length +
     prospectSends.filter((p) => p.replied).length;
+  const totalNoes = prospectSends.filter((p) => p.saidNo).length;
 
   return {
     totalSends,
     totalReplies,
+    totalNoes,
     byAngle: cutsFor("angle"),
     bySource: cutsFor("source"),
     byStack: cutsFor("stack"),
@@ -187,6 +211,6 @@ async function prospectRollupRows(since?: Date) {
     sentAt: r.sentAt,
     category: r.category,
     source: `prospects:${r.channel}`,
-    replied: r.status === "replied" || r.status === "won" || r.status === "lost",
+    ...prospectAnswer(r.status),
   }));
 }

@@ -1020,3 +1020,11 @@ which STATE calls the project: every business messaged, oldest first, with a
 link to the Gmail search or WhatsApp chat where an answer would be, and
 Replied / Won / Lost on the row. 68 messaged, 0 answers marked; /review can
 only learn from what is marked.
+
+## A "no" counts as an answer on /review, never as a reply to learn from (15 October)
+
+Five businesses messaged were later marked "they said no" (the only way a
+prospect becomes do-not-contact), while /review read zero answers. They now
+show beside replies on every cut ("0/51 +5 no") and in the totals. They never
+drive a suggestion: an angle that draws refusals is not one to repeat, so
+suggestions still weigh positive replies only. Joshua's pick.

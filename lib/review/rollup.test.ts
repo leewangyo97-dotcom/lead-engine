@@ -1,12 +1,38 @@
 import { describe, expect, it } from "vitest";
-import { MIN_SENDS, proposeChange, type Cut } from "./rollup";
+import { MIN_SENDS, proposeChange, prospectAnswer, type Cut } from "./rollup";
 import { LADDER_DAYS, MAX_STEP, isDue } from "../followups";
 
-const cut = (key: string, sends: number, replies: number): Cut => ({
+const cut = (key: string, sends: number, replies: number, noes = 0): Cut => ({
   key,
   sends,
   replies,
+  noes,
   replyRate: sends >= MIN_SENDS ? replies / sends : null,
+});
+
+describe("what a prospect's status says about its messages", () => {
+  it("counts replied, won and lost as replies", () => {
+    for (const status of ["replied", "won", "lost"]) {
+      expect(prospectAnswer(status)).toEqual({ replied: true, saidNo: false });
+    }
+  });
+
+  it("counts 'they said no' as an answer, apart from replies (15 Oct)", () => {
+    expect(prospectAnswer("do_not_contact")).toEqual({ replied: false, saidNo: true });
+  });
+
+  it("counts a message still waiting as neither", () => {
+    expect(prospectAnswer("contacted")).toEqual({ replied: false, saidNo: false });
+  });
+});
+
+describe("a no", () => {
+  it("never makes an angle look like one to repeat", () => {
+    // Twenty sends each; "demo" drew ten refusals and no replies. Noes are
+    // shown, never weighed: there is no suggestion to lead with "demo".
+    const byAngle = [cut("demo/subject-a", 20, 0, 10), cut("site/subject-b", 20, 0)];
+    expect(proposeChange(byAngle, 40)).toBeNull();
+  });
 });
 
 describe("rubric suggestions", () => {
