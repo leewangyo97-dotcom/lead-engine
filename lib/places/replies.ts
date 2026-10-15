@@ -1,4 +1,4 @@
-import { and, eq, gte, isNotNull, sql } from "drizzle-orm";
+import { and, eq, gte, isNotNull, isNull, sql } from "drizzle-orm";
 import { getDb } from "../db";
 import { leads, outreach, prospects } from "../db/schema";
 
@@ -98,6 +98,40 @@ export async function messagedLeads(): Promise<MessagedLead[]> {
     .groupBy(leads.id)
     .orderBy(sql`max(${outreach.sentAt}) asc`);
   return rows.map((r) => ({ ...r, lastSentAt: new Date(r.lastSentAt) }));
+}
+
+export interface OpenedNotSent {
+  id: string;
+  name: string;
+  channel: string;
+  openedAt: Date;
+  /** A Gmail draft exists: it waits in Drafts. Otherwise it went to the mail app. */
+  inGmail: boolean;
+}
+
+/**
+ * Messages opened, by a Gmail draft or the mail app, and never confirmed with
+ * "I sent it". Each either went out and is not counted, or never went: the
+ * row on /prospects says which once the button is pressed.
+ */
+export async function openedNotSent(): Promise<OpenedNotSent[]> {
+  const rows = await getDb()
+    .select({
+      id: prospects.id,
+      name: prospects.name,
+      channel: outreach.channel,
+      openedAt: outreach.createdAt,
+      gmailDraftId: outreach.gmailDraftId,
+    })
+    .from(outreach)
+    .innerJoin(prospects, eq(prospects.id, outreach.prospectId))
+    .where(and(isNull(outreach.sentAt), gte(outreach.step, 0)))
+    .orderBy(outreach.createdAt);
+  // One line per business: the earliest unconfirmed message is the one waiting.
+  const seen = new Set<string>();
+  return rows
+    .filter((r) => !seen.has(r.id) && !!seen.add(r.id))
+    .map((r) => ({ id: r.id, name: r.name, channel: r.channel, openedAt: r.openedAt, inGmail: !!r.gmailDraftId }));
 }
 
 /**

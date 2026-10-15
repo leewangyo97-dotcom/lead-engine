@@ -2,6 +2,7 @@ import { getInbox, getJudgedCount, tierOf } from "@/lib/leads/queries";
 import { getPipelineFaults } from "@/lib/leads/health-query";
 import { getInboxStats } from "@/lib/leads/stats";
 import { getAwaitingSend } from "@/lib/leads/awaiting-send";
+import { waitingOnYou } from "@/lib/today";
 import { Shell } from "./components/shell";
 import { StatTiles } from "./components/stat-tiles";
 import { InboxList } from "./components/inbox-list";
@@ -58,11 +59,12 @@ export default async function Inbox({
   const { tab } = await searchParams;
   const active = TABS.find((t) => t.key === tab) ?? TABS[2];
 
-  const [all, faults, stats, awaiting] = await Promise.all([
+  const [all, faults, stats, awaiting, waiting] = await Promise.all([
     getInbox(),
     getPipelineFaults(),
     getInboxStats(),
     getAwaitingSend(),
+    waitingOnYou(),
   ]);
 
   // Filtering here rather than in SQL: the triage list is capped by the
@@ -95,6 +97,27 @@ export default async function Inbox({
         <div className="mt-5">
           <StatTiles stats={stats} />
         </div>
+
+        {waiting.length > 0 && (
+          /* What only a person can do, in one place (lib/today.ts). Each
+             queue had its own page and nothing sent anyone to it. */
+          <section aria-label="Waiting on you" className="mt-5 rounded-md border border-hold bg-hold-tint p-5">
+            <p className="text-label text-secondary">Waiting on you</p>
+            <ul className="mt-3 flex flex-col gap-2">
+              {waiting.map((w) => (
+                <li key={w.key} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-body-sm">
+                  {w.count > 0 && <span className="font-mono tabular-nums text-primary">{w.count}</span>}
+                  <span className="text-secondary">{w.text}</span>
+                  {w.href && (
+                    <a href={w.href} className="text-accent underline underline-offset-2">
+                      {w.action}
+                    </a>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {awaiting.length > 0 && (
           /* The one queue with a deadline. A draft in Gmail was invisible here

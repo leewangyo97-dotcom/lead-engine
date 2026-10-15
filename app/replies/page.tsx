@@ -8,6 +8,7 @@ import {
   gmailSearchUrl,
   messagedLeads,
   messagedProspects,
+  openedNotSent,
   whatsappChatUrl,
   type MessagedProspect,
 } from "@/lib/places/replies";
@@ -48,7 +49,7 @@ function Row({ p, now }: { p: MessagedProspect; now: Date }) {
  * with a one-click look at where an answer would be.
  */
 export default async function RepliesPage() {
-  const [prospectRows, leadRows] = await Promise.all([messagedProspects(), messagedLeads()]);
+  const [prospectRows, leadRows, opened] = await Promise.all([messagedProspects(), messagedLeads(), openedNotSent()]);
   const now = new Date();
 
   const waiting = prospectRows.filter((p) => p.status === "contacted");
@@ -103,6 +104,29 @@ export default async function RepliesPage() {
                   </li>
                 ))}
               </ul>
+            )}
+
+            {opened.length > 0 && (
+              <section id="unsent" className="mt-8">
+                <h2 className="text-label text-secondary">Opened but never marked sent</h2>
+                <p className="mt-1 max-w-prose text-caption text-muted">
+                  These were opened as a Gmail draft or in your mail app, and &quot;I sent it&quot; was
+                  never pressed, so they count as not sent and get no follow-ups. Open each: send it
+                  and press the button, or leave it.
+                </p>
+                <ul className="mt-3 rounded-md border border-rule bg-surface">
+                  {opened.map((o) => (
+                    <li key={o.id} className="border-t border-rule-soft px-5 py-3 first:border-t-0">
+                      <a href={`/prospects?prospect=${o.id}`} className="text-primary hover:underline">
+                        {o.name}
+                      </a>
+                      <span className="ml-3 text-caption text-muted">
+                        {o.inGmail ? "a draft in Gmail" : `opened in your mail app`} · {formatDay(o.openedAt)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             )}
 
             {answered.length + leadsDone.length > 0 && (

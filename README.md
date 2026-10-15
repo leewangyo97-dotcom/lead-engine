@@ -34,6 +34,10 @@ pnpm followups  # what the day-4 / day-11 ladder owes
 pnpm tokens     # token spend per run; exits non-zero over 40k
 ```
 
+The Inbox opens with "Waiting on you": follow-ups due, emails opened but never
+marked sent, messages waiting for an answer, and setup still missing, each with
+a link to where it is done.
+
 Follow-ups that are due wait on `/followups`; "Start sweep" shows them one at a
 time with the same send buttons as `/prospects`, which write the right
 follow-up text themselves.
