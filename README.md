@@ -181,6 +181,10 @@ Rules it keeps, all in code:
 
 ## Setup
 
+`pnpm setup:check` checks every piece of setup (database, Gmail, the GitHub
+token the buttons use, the repository secrets) and prints the command that
+fixes each gap; it never prints a value.
+
 Requires `DATABASE_URL` (Neon, pooled) in `.env.local`, plus the three
 `GOOGLE_*` values for Gmail. Copy `.env.example` and fill it in — that file must
 never hold a real value, since it is committed.

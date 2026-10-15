@@ -54,6 +54,7 @@
     "claude:unwrap": "tsx scripts/claude-unwrap.ts",
     "spam:check": "tsx scripts/spam-check.ts",
     "demo:publish": "tsx scripts/demo-publish.ts",
+    "setup:check": "tsx scripts/setup-check.ts",
     "email:mx": "tsx scripts/email-mx.ts",
     "people:discover": "tsx scripts/people-discover.ts"
   },

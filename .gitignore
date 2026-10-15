@@ -19,3 +19,6 @@ client_secret_*.json
 
 # gh-pages worktree for demo pages (scripts/demo-publish.ts)
 .demo-site/
+
+# A local Python virtualenv, not part of the app.
+.venv/
