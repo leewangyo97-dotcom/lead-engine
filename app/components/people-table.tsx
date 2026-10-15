@@ -4,6 +4,8 @@ import { useCallback, useState } from "react";
 import { STATUSES, STATUS_LABEL, type PersonStatus } from "@/lib/people/status";
 import { PersonDrawer } from "./person-drawer";
 import { PersonEmail } from "./person-email";
+import { ProspectDemo } from "./prospect-demo";
+import { ProspectEnhance } from "./prospect-enhance";
 
 export type SortKey = "score" | "name" | "company" | "added";
 
@@ -28,6 +30,14 @@ export interface PersonView {
   blocked: boolean;
   /** The local business behind their company, when there is one: Copy email writes about it. */
   prospectId: string | null;
+  /** That business as Enhance and Make demo need it, read the way /prospects reads it. */
+  business: {
+    name: string;
+    demoUrl: string | null;
+    demoEligible: boolean;
+    /** Why no demo can be made, when none can and none exists ("they already have a website"). */
+    demoBlocked: string | null;
+  } | null;
 }
 
 const SHORT_SOURCE: Record<string, string> = {
@@ -148,7 +158,31 @@ function RowActions({
     !!person.prospectId && !person.blocked && person.status !== "do_not_contact" && person.status !== "not_interested";
   return (
     <span className="inline-flex flex-wrap items-start gap-4 text-body-sm">
-      {writable && <PersonEmail prospectId={person.prospectId!} personId={person.id} onSent={onSent} />}
+      {/* Copy email writes to this person; Enhance and Make demo act on their
+          business, exactly as on its /prospects row. */}
+      {(writable || (person.prospectId && person.business)) && (
+        <span className="flex flex-col items-start gap-2">
+          {writable && <PersonEmail prospectId={person.prospectId!} personId={person.id} onSent={onSent} />}
+          {person.prospectId && person.business && (
+            <>
+              <ProspectEnhance id={person.prospectId} name={person.business.name} />
+              <ProspectDemo
+                id={person.prospectId}
+                demoUrl={person.business.demoUrl}
+                eligible={person.business.demoEligible}
+              />
+              {/* A demo is a one-page site for a business with none, and its
+                  email says so; discovery reads businesses that have a site.
+                  Shown with the reason rather than missing without one. */}
+              {person.business.demoBlocked && (
+                <span className="text-caption text-faint" title="A demo is a free one-page site for a business that has none">
+                  Make demo: no, {person.business.demoBlocked}
+                </span>
+              )}
+            </>
+          )}
+        </span>
+      )}
       <button type="button" onClick={onOpen} className="py-1 text-accent underline underline-offset-2">
         Details
       </button>

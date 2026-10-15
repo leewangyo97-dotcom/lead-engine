@@ -15,6 +15,8 @@ import {
   type Facet,
 } from "@/lib/people/queries";
 import { categoryLabel } from "@/lib/places/queue-filter";
+import { getProspectsByIds } from "@/lib/places/prospect-queries";
+import { demoIneligible } from "@/lib/demo/render";
 import { SENIORITY_LABEL } from "@/lib/people/seniority";
 
 export const dynamic = "force-dynamic";
@@ -94,6 +96,10 @@ export default async function PeoplePage({ searchParams }: { searchParams: Promi
   const params = await searchParams;
   const filter = parseFilter(params);
   const [{ rows, total }, jobs, facets] = await Promise.all([listPeople(filter), recentJobs(5), peopleFacets()]);
+  // Enhance and Make demo act on the business, so it is read the way /prospects
+  // reads it: the published demo link and whether a demo can be made match.
+  const businessIds = [...new Set(rows.map((r) => r.prospectId).filter((id): id is string => !!id))];
+  const businesses = new Map((await getProspectsByIds(businessIds)).map((b) => [b.id, b]));
   // What "From local businesses" is narrowed to: the chips chosen here.
   const scopeLabel = [filter.country && countryName(filter.country), filter.category && categoryLabel(filter.category)]
     .filter(Boolean)
@@ -140,6 +146,17 @@ export default async function PeoplePage({ searchParams }: { searchParams: Promi
     sources: r.sources ?? [],
     blocked: !!r.blocked,
     prospectId: r.prospectId,
+    business: (() => {
+      const b = r.prospectId ? businesses.get(r.prospectId) : undefined;
+      return b
+        ? {
+            name: b.name,
+            demoUrl: b.demoUrl,
+            demoEligible: b.demoEligible,
+            demoBlocked: !b.demoEligible && !b.demoUrl ? demoIneligible(b) : null,
+          }
+        : null;
+    })(),
   }));
 
   return (

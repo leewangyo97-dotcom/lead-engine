@@ -140,6 +140,9 @@ Rules it keeps, all in code:
   name in the greeting, their own address when verified, the business's
   otherwise. A business already emailed gets its next follow-up instead, to
   wherever the first email went; the panel says so.
+- **Enhance and Make demo** act on the person's business, as on `/prospects`.
+  A demo is a one-page site for a business with none, so for businesses found
+  here (all have a site) the row says why there is no demo instead.
 - **Emails to local businesses greet the owner** found here ("Hi Matt,"), and go to
   the owner's own address when they published one; follow-ups stay with the
   first address (`lib/places/recipient.ts`).
