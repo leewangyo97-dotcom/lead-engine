@@ -54,6 +54,7 @@ export function toGeocodedPlace(r: NominatimResult): GeocodedPlace {
     // A country or region must be searched as an area: a 15km circle around the
     // centroid of the Philippines returns the sea.
     isArea: osmType === "relation" && AREA_TYPES.has(r.addresstype ?? r.type ?? ""),
+    isCountry: osmType === "relation" && (r.addresstype ?? r.type) === "country",
   };
 }
 

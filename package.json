@@ -57,6 +57,7 @@
     "setup:check": "tsx scripts/setup-check.ts",
     "email:mx": "tsx scripts/email-mx.ts",
     "people:tidy": "tsx scripts/people-tidy.ts",
+    "places:compare": "tsx scripts/places-compare.ts",
     "people:discover": "tsx scripts/people-discover.ts"
   },
   "dependencies": {

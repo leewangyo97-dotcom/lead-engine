@@ -236,6 +236,19 @@ still do not load, the search is kept as complete with a note naming them;
 search again to retry, and the places already found are skipped as
 duplicates. The terminal and the Actions log print one line per category.
 
+**Whole countries come from Geofabrik on GitHub Actions (17 Oct).** "Run now"
+(`search-run.yml`) installs osmium-tool and sets `PLACES_COUNTRY_SOURCE=geofabrik`.
+A search whose place is a whole country then downloads that country's daily
+Geofabrik extract (checked against its MD5), clips it to the country's own
+boundary relation, and reads every category in one pass. Any failure there is
+logged and the search carries on through Overpass, so the worst case is the
+old path. `pnpm search:run --drain` on this machine uses Overpass unless
+osmium is installed, or `OSMIUM_DOCKER=1` is set with Docker running.
+
+`pnpm places:compare "<country>" [categories]` runs a country both ways and
+compares the results place by place, writing nothing: the check that the two
+paths agree. Differences should be edits made since the extract was cut.
+
 ## `enrich: nothing pending with a website`
 
 Not a fault. Stage A stores a website only when OpenStreetMap has the tag, and

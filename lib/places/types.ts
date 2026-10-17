@@ -55,4 +55,6 @@ export interface GeocodedPlace {
   boundingBox?: [number, number, number, number];
   /** True when the match is a country/region, where a radius makes no sense. */
   isArea: boolean;
+  /** A whole country (Nominatim's address type): searched from a Geofabrik extract where osmium runs. */
+  isCountry?: boolean;
 }

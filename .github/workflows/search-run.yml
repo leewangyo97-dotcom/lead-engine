@@ -33,10 +33,22 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # Whole-country searches read a Geofabrik extract with osmium instead of
+      # asking Overpass category by category (lib/places/osmium.ts). Canada's
+      # extract is a few GB; the preinstalled SDKs below are not used here and
+      # removing them leaves room for the largest countries.
+      - name: Install osmium
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          sudo apt-get update -q
+          sudo apt-get install -y -q osmium-tool
+          osmium --version | head -1
+
       - name: Drain the search queue
         run: pnpm search:run --drain
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PLACES_COUNTRY_SOURCE: geofabrik
 
       # The new rows mean little until their sites are read for an email
       # address. The same bound as the nightly, for the same reason: other

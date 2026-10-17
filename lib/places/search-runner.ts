@@ -5,6 +5,7 @@ import { chunk } from "../chunk";
 import { prospects, searches } from "../db/schema";
 import { geocode } from "./nominatim";
 import { overpassProvider } from "./overpass";
+import { countryPlaces, osmiumAvailable } from "./osmium";
 import { normalizeName, rootDomain } from "./normalize";
 import { firstUsableEmail } from "./extract";
 import { normaliseSocial } from "./social";
@@ -81,8 +82,36 @@ export async function runSearch(
     let found = 0;
     let inserted = 0;
     const failed: { category: string; error: string }[] = [];
+    let fromExtract = false;
 
-    if (place.isArea) {
+    /*
+     * A whole country, where osmium runs (GitHub Actions installs it): every
+     * category from one Geofabrik download, minutes instead of an hour of
+     * Overpass queries. Any failure falls through to Overpass below, so the
+     * worst case is the old path, never a lost search.
+     */
+    if (place.isCountry && place.countryCode && process.env.PLACES_COUNTRY_SOURCE === "geofabrik" && osmiumAvailable()) {
+      try {
+        const raw = await countryPlaces({
+          countryCode: place.countryCode,
+          osmId: place.osmId,
+          categories,
+          log: (line) => onProgress?.(line),
+        });
+        for (const [i, category] of categories.entries()) {
+          const mine = raw.filter((p) => p.category === category);
+          const added = await persist(searchId, place.countryCode, mine);
+          found += mine.length;
+          inserted += added;
+          onProgress?.(`${i + 1}/${categories.length} ${category}: ${mine.length} found, ${added} new`);
+        }
+        fromExtract = true;
+      } catch (err) {
+        onProgress?.(`Geofabrik did not work (${err instanceof Error ? err.message : err}); asking Overpass instead`);
+      }
+    }
+
+    if (place.isArea && !fromExtract) {
       /*
        * One category per query, two at a time, each saved as it arrives.
        *
@@ -114,7 +143,7 @@ export async function runSearch(
         { concurrency: AREA_CONCURRENCY },
       );
       if (failed.length === categories.length) throw new Error(failed[0].error);
-    } else {
+    } else if (!place.isArea) {
       const raw = await overpassProvider.search({
         lat: place.lat,
         lon: place.lon,
