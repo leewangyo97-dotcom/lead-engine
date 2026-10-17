@@ -1040,3 +1040,17 @@ null MX as dead. A dead domain disables Email and scores as no email; a DNS
 failure stores nothing and is retried. DNS only: no SMTP probing, which the
 Decision-makers spec also forbids. First run: 31 dead domains, 33 prospects,
 one already emailed.
+
+## Decision-makers: one row per business; non-buyers and headings dropped (17 October)
+
+Joshua saw "duplicates" on /people. None were: 53 people, 53 names. Three
+things looked like it: several people per business (Beckett Electrical had 8,
+so its name filled 8 rows), headings saved as people (Alta Roofing's "Quality
+Materials" and "The Alta Difference", with marketing sentences for titles),
+and titles that were sentences or carried licence numbers. Now: one row per
+business by default (its best person, ranked as an addressee is), "+N more
+here" for the rest; names starting "The" or made of marketing words are not
+people; a sentence-title becomes the role it names; assistant, HR, payroll,
+accounts payable, receptionist and "first impressions" roles are not
+decision-makers. `pnpm people:tidy` applied this to stored rows: 6 removed, 3
+titles tidied. Buffer (7 people), test data from building the tab, removed.

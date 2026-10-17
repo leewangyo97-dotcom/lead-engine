@@ -109,7 +109,7 @@ export default async function PeoplePage({ searchParams }: { searchParams: Promi
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   // From the parsed filter, not the raw keys: an applied form sends every field, empty or not.
   const filtered = !!(
-    filter.q || filter.seniority || filter.industry || filter.country || filter.category || filter.size ||
+    filter.q || filter.seniority || filter.industry || filter.country || filter.category || filter.company || filter.size ||
     filter.location || filter.verified ||
     filter.scoreMin !== undefined || filter.scoreMax !== undefined || filter.status
   );
@@ -145,6 +145,8 @@ export default async function PeoplePage({ searchParams }: { searchParams: Promi
     location: r.location,
     sources: r.sources ?? [],
     blocked: !!r.blocked,
+    companyId: r.companyId,
+    companyPeople: Number(r.companyPeople ?? 1),
     prospectId: r.prospectId,
     business: (() => {
       const b = r.prospectId ? businesses.get(r.prospectId) : undefined;
@@ -276,6 +278,12 @@ export default async function PeoplePage({ searchParams }: { searchParams: Promi
               <input type="checkbox" name="verified" value="1" defaultChecked={filter.verified} />
               Has a verified email
             </label>
+            {/* One row per business by default: several people at one business
+                read as the same row repeated. */}
+            <label className="inline-flex items-center gap-2 text-body-sm text-secondary">
+              <input type="checkbox" name="all" value="1" defaultChecked={!filter.perBusiness && !filter.company} />
+              Everyone at each business
+            </label>
           </fieldset>
 
           {filter.sort !== "score" && <input type="hidden" name="sort" value={filter.sort} />}
@@ -294,8 +302,17 @@ export default async function PeoplePage({ searchParams }: { searchParams: Promi
 
         <div className="mt-7 flex flex-wrap items-baseline gap-6 font-mono text-data-sm tabular-nums text-muted">
           <span className="text-primary">
-            {total} {total === 1 ? "person" : "people"}
+            {total}{" "}
+            {filter.perBusiness ? (total === 1 ? "business" : "businesses") : total === 1 ? "person" : "people"}
           </span>
+          {filter.company && rows[0] && (
+            <span>
+              everyone at {rows[0].company} ·{" "}
+              <a href="/people" className="text-accent underline underline-offset-2">
+                back to one per business
+              </a>
+            </span>
+          )}
           {pages > 1 && (
             <span>
               page {page} of {pages}
@@ -319,7 +336,7 @@ export default async function PeoplePage({ searchParams }: { searchParams: Promi
               : "Nobody yet. Start discovery above: it reads company websites for the people who decide."}
           </p>
         ) : (
-          <PeopleTable rows={view} sorts={sorts} seniorityLabel={SENIORITY_LABEL} />
+          <PeopleTable rows={view} sorts={sorts} seniorityLabel={SENIORITY_LABEL} perBusiness={!!filter.perBusiness} />
         )}
 
         {pages > 1 && (

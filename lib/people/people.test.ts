@@ -32,6 +32,13 @@ describe("seniorityOf", () => {
     expect(seniorityOf(null)).toBe("other");
     expect(isDecisionMaker("Office Manager")).toBe(false);
     expect(isDecisionMaker("Founder")).toBe(true);
+    // Beckett Electrical's eight (17 Oct): directors by name, not buyers of a website.
+    expect(isDecisionMaker("Director of First Impressions")).toBe(false);
+    expect(isDecisionMaker("Assistant Director of First Impressions")).toBe(false);
+    expect(isDecisionMaker("HR/Payroll Director")).toBe(false);
+    expect(isDecisionMaker("Accounts Payable Director")).toBe(false);
+    expect(isDecisionMaker("Director of Preconstruction")).toBe(true);
+    expect(isDecisionMaker("Medical Director")).toBe(true);
   });
 });
 

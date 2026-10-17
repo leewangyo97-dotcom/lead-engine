@@ -28,6 +28,9 @@ export interface PersonView {
   location: string | null;
   sources: string[];
   blocked: boolean;
+  companyId: string;
+  /** How many people their company has: "+N more" in the one-per-business view. */
+  companyPeople: number;
   /** The local business behind their company, when there is one: Copy email writes about it. */
   prospectId: string | null;
   /** That business as Enhance and Make demo need it, read the way /prospects reads it. */
@@ -233,14 +236,26 @@ function Score({ p }: { p: PersonView }) {
   );
 }
 
+/** "+3 more here": the rest of a business's people, in the one-per-business view. */
+function MorePeople({ p, perBusiness }: { p: PersonView; perBusiness: boolean }) {
+  if (!perBusiness || p.companyPeople < 2) return null;
+  return (
+    <a href={`/people?company=${p.companyId}`} className="mt-1 block text-caption text-accent underline underline-offset-2">
+      +{p.companyPeople - 1} more here
+    </a>
+  );
+}
+
 export function PeopleTable({
   rows,
   sorts,
   seniorityLabel,
+  perBusiness = false,
 }: {
   rows: PersonView[];
   sorts: Record<SortKey, { href: string; mark: string }>;
   seniorityLabel: Record<string, string>;
+  perBusiness?: boolean;
 }) {
   const [changed, setChanged] = useState<Record<string, Partial<PersonView>>>({});
   const [gone, setGone] = useState<Set<string>>(new Set());
@@ -271,6 +286,7 @@ export function PeopleTable({
             <p className="mt-1 text-body-sm text-secondary">
               {p.title ?? seniorityLabel[p.seniority]} · {p.company}
             </p>
+            <MorePeople p={p} perBusiness={perBusiness} />
             <div className="mt-2">
               <Email p={p} />
             </div>
@@ -321,6 +337,7 @@ export function PeopleTable({
                 <td className="px-4 py-3 text-secondary">{seniorityLabel[p.seniority] ?? p.seniority}</td>
                 <td className="px-4 py-3">
                   <span className="text-primary">{p.company}</span>
+                  <MorePeople p={p} perBusiness={perBusiness} />
                   {p.domain && (
                     <a
                       href={`https://${p.domain}`}

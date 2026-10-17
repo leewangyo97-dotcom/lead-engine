@@ -134,6 +134,10 @@ Rules it keeps, all in code:
   and their sources; discovery can find them again, so use Do not contact to
   keep someone out.
 - People never contacted are deleted after 12 months (`pnpm retention`, nightly).
+- **One row per business** by default, its best person, with "+N more here"
+  for the rest; tick "Everyone at each business" to list all. `pnpm
+  people:tidy` applies the current name and role rules to people found before
+  them.
 - **Country and Category chips** narrow the table, and "From local businesses"
   then discovers only that country or category.
 - **Copy email** on a person at a local business writes to that person: their

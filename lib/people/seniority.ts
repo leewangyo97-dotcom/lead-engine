@@ -37,7 +37,16 @@ export function seniorityOf(title: string | null | undefined): Seniority {
   return "other";
 }
 
+/**
+ * Roles that carry a buyer's word but do not buy a website or an app. Found on
+ * 17 Oct: Beckett Electrical listed eight people, among them a "Director of
+ * First Impressions", her assistant, an "HR/Payroll Director" and an "Accounts
+ * Payable Director", each counted as a director and each a row on /people.
+ */
+const NOT_A_BUYER =
+  /\b(assistant|hr|human resources|payroll|accounts? (?:payable|receivable)|bookkeep\w*|receptionist|front desk|first impressions)\b/i;
+
 /** Whether a title is worth keeping at all: the buyer bands only. */
 export function isDecisionMaker(title: string | null | undefined): boolean {
-  return seniorityOf(title) !== "other";
+  return seniorityOf(title) !== "other" && !NOT_A_BUYER.test(title ?? "");
 }

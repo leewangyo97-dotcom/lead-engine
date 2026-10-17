@@ -24,9 +24,17 @@ const PREFERENCE = [/team|leadership|people|management|staff|founder|board/i, /a
 const NOT_A_NAME = /\b(team|about|contact|services?|our|meet|leadership|board|management|clinic|dental|medical|welcome|home|news|blog|careers?|privacy|terms|ltd|inc|llc|pty|group|company|limited|corporation|solutions|studio|center|centre|hours|location|book|appointment)\b/i;
 const NAME_WORD = /^(?:[A-Z][a-zA-Z'’-]+\.?|de|del|dela|van|von|der|da|di|bin|binti|la|le)$/;
 
+/**
+ * Headings that pass for names: two capitalised words beside a sentence that
+ * says "owner". Alta Roofing's "Quality Materials" and "The Alta Difference"
+ * were saved as founders on 17 Oct.
+ */
+const MARKETING =
+  /^the\s|\b(quality|materials|difference|experience|local|personal|choose|why|approach|mission|values|story|process|guarantee|promise|family|owned|operated|free|quote|estimate|satisfaction|reviews?|testimonials?|gallery|projects?|portfolio|expert|professional|trusted|certified|licensed|insured)\b/i;
+
 export function looksLikeName(text: string): boolean {
   const t = text.trim();
-  if (t.length < 4 || t.length > 40 || NOT_A_NAME.test(t)) return false;
+  if (t.length < 4 || t.length > 40 || NOT_A_NAME.test(t) || MARKETING.test(t)) return false;
   const words = t.split(/\s+/);
   return words.length >= 2 && words.length <= 4 && words.every((w) => NAME_WORD.test(w)) && /^[A-Z]/.test(words[words.length - 1]);
 }
@@ -40,9 +48,26 @@ const clean = (text: string) => text.replace(/\s+/g, " ").trim();
  */
 const load = (html: string) => cheerio.load(html.replace(/></g, "> <"));
 
-/** "CEO", from ", CEO • Apr 29": a byline's punctuation and date dropped. */
+// The role words a sentence-for-a-title is reduced to, in the order bands rank them.
+const ROLE_WORD =
+  /\b(co-?founder|founder|co-?owner|owner|proprietor|principal|managing partner|ceo|president|managing director|general manager|director)\b/i;
+
+/**
+ * "CEO", from ", CEO • Apr 29": a byline's punctuation and date dropped.
+ * A licence number goes too ("CO-OWNER - DEN 0002084625"), and a sentence
+ * standing in for a title ("Hi there! I'm the founder of Smile Me Dental.")
+ * becomes the role it names, or nothing.
+ */
 export function cleanTitle(raw: string): string {
-  return clean(raw).replace(/^[\s,;:–—-]+/, "").split(/\s[•·|]\s/)[0].trim();
+  const title = clean(raw)
+    .replace(/^[\s,;:–—-]+/, "")
+    .split(/\s[•·|]\s/)[0]
+    .replace(/\s*[-–—,]?\s*\b[A-Z]{0,5}\s*\d{5,}\b.*$/, "")
+    .trim();
+  const sentence = title.length > 60 || /[!?]|\.\s|\b(i'm|i am|i’m|we are|you)\b/i.test(title);
+  if (!sentence) return title;
+  const role = title.match(ROLE_WORD)?.[1];
+  return role ? role.charAt(0).toUpperCase() + role.slice(1).toLowerCase() : "";
 }
 
 function sameSite(href: string, domain: string): boolean {

@@ -21,6 +21,13 @@ export interface PeopleFilter {
   country?: string;
   /** An exact industry, from the Category chips; `industry` is the typed, partial one. */
   category?: string;
+  /** Everyone at one company: the "+N more" link of the one-per-business view. */
+  company?: string;
+  /**
+   * One row per business, its best person (the default), rather than everyone:
+   * Beckett Electrical's eight people read as the same row eight times (17 Oct).
+   */
+  perBusiness?: boolean;
   size?: string;
   location?: string;
   verified?: boolean;
@@ -49,6 +56,9 @@ export function parseFilter(params: Record<string, string | string[] | undefined
     industry: one("industry"),
     country: /^[A-Za-z]{2}$/.test(one("country") ?? "") ? one("country")!.toUpperCase() : undefined,
     category: one("category"),
+    company: one("company"),
+    // On unless asked for everyone, and never when looking at one company.
+    perBusiness: one("all") !== "1" && !one("company"),
     size: SIZE_BANDS.includes(one("size") as never) ? one("size") : undefined,
     location: one("location"),
     verified: one("verified") === "1",
@@ -76,6 +86,7 @@ function where(f: PeopleFilter): SQL | undefined {
     f.industry ? ilike(companies.industry, like(f.industry)) : undefined,
     f.country ? eq(companies.countryCode, f.country) : undefined,
     f.category ? eq(companies.industry, f.category) : undefined,
+    f.company ? eq(companies.id, f.company) : undefined,
     f.size ? eq(companies.sizeBand, f.size) : undefined,
     f.location ? ilike(companies.location, like(f.location)) : undefined,
     f.verified ? eq(people.emailStatus, "verified") : undefined,
@@ -107,6 +118,8 @@ const SELECT = {
   sizeBand: companies.sizeBand,
   location: companies.location,
   countryCode: companies.countryCode,
+  // How many people the company has, for "+N more" in the one-per-business view.
+  companyPeople: sql<number>`(select count(*)::int from ${people} p2 where p2.company_id = ${companies.id})`,
   // The local business this company came from, when it did: what Copy email writes about.
   prospectId: sql<string | null>`case when ${companies.origin} = 'prospect' then ${companies.originId} end`,
   // Which sources contributed anything to this person, for the table's column.
@@ -117,11 +130,37 @@ const SELECT = {
 
 export type PersonRow = Awaited<ReturnType<typeof listPeople>>["rows"][number];
 
+/**
+ * Each company's best person among those the filter matches, ranked as
+ * `bestOwner` ranks an addressee: a verified address first, then seniority,
+ * then score.
+ */
+async function bestPerCompany(condition: SQL | undefined): Promise<string[]> {
+  const rows = await getDb()
+    .selectDistinctOn([people.companyId], { id: people.id })
+    .from(people)
+    .innerJoin(companies, eq(companies.id, people.companyId))
+    .where(condition)
+    .orderBy(
+      people.companyId,
+      sql`(${people.emailStatus} = 'verified') desc`,
+      sql`case ${people.seniority} when 'founder_owner' then 0 when 'c_level' then 1 when 'vp' then 2 when 'director' then 3 else 9 end`,
+      sql`${people.score} desc nulls last`,
+      people.id,
+    );
+  return rows.map((r) => r.id);
+}
+
 export async function listPeople(f: PeopleFilter) {
   const db = getDb();
   const order = { score: people.score, name: people.name, company: companies.name, added: people.createdAt }[f.sort ?? "score"];
   const direction = f.dir === "asc" ? asc : desc;
-  const condition = where(f);
+  let condition = where(f);
+  if (f.perBusiness) {
+    const best = await bestPerCompany(condition);
+    if (best.length === 0) return { rows: [], total: 0 };
+    condition = and(condition ?? sql`true`, inArray(people.id, best));
+  }
   const [rows, [{ total }]] = await Promise.all([
     db
       .select(SELECT)

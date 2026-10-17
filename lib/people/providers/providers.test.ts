@@ -3,7 +3,7 @@ import { edgarProvider, filingUrl, matchFiling, normalizeCompanyName, parseFormD
 import { emailPatternProvider } from "./email-pattern";
 import { blogMatches, githubProvider, repoSignals } from "./github";
 import { emptyFindings, type CompanyRef, type ProviderContext } from "./types";
-import { extractCompany, extractPeople, keyPages, looksLikeName, websiteProvider } from "./website";
+import { cleanTitle, extractCompany, extractPeople, keyPages, looksLikeName, websiteProvider } from "./website";
 
 const ACME: CompanyRef = { id: "c1", name: "Acme Dental", domain: "acmedental.com.au", countryCode: "AU" };
 const NOW = new Date("2026-10-14T00:00:00Z");
@@ -50,6 +50,11 @@ describe("website provider", () => {
     expect(looksLikeName("Maria dela Cruz")).toBe(true);
     expect(looksLikeName("Our Services")).toBe(false);
     expect(looksLikeName("Acme Dental Pty Ltd")).toBe(false);
+    // Headings saved as founders at Alta Roofing (17 Oct).
+    expect(looksLikeName("Quality Materials")).toBe(false);
+    expect(looksLikeName("The Alta Difference")).toBe(false);
+    expect(looksLikeName("Dr Sue Fredericks")).toBe(true);
+    expect(looksLikeName("PATRIK KIMMICH")).toBe(true);
   });
 
   it("follows the site's own key pages, team before contact, and nothing off-site", () => {
@@ -186,5 +191,21 @@ describe("website provider, plain-text contacts", () => {
     const company = extractCompany([{ url: "https://acmedental.com.au/contact-us/", html }], ACME, NOW);
     expect(company.facts.filter((f) => f.field === "phone").map((f) => f.value)).toEqual(["+61397956776"]);
     expect(company.facts.filter((f) => f.field === "email").map((f) => f.value)).toEqual(["hello@acmedental.com.au"]);
+  });
+});
+
+describe("cleanTitle", () => {
+  it("drops a licence number after the role", () => {
+    expect(cleanTitle("CO-OWNER - DEN 0002084625")).toBe("CO-OWNER");
+  });
+
+  it("reduces a sentence standing in for a title to the role it names", () => {
+    expect(cleanTitle("Hi there! I’m the founder of Smile Me Dental.")).toBe("Founder");
+    expect(cleanTitle("We are a family business and you will love us.")).toBe("");
+  });
+
+  it("leaves a real title as it is", () => {
+    expect(cleanTitle("Medical Director and Anatomical Pathologist")).toBe("Medical Director and Anatomical Pathologist");
+    expect(cleanTitle(", CEO • Apr 29")).toBe("CEO");
   });
 });
