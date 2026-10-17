@@ -78,11 +78,19 @@ export async function listSearches(limit = 10) {
   return db.select().from(searches).orderBy(desc(searches.createdAt)).limit(limit);
 }
 
-/** The rows the queue draws from, before any narrowing. */
-const QUEUE_POPULATION = and(
-  eq(prospects.status, "new"),
-  or(isNotNull(prospects.phoneE164), isNotNull(prospects.email)),
+/**
+ * A way to reach them: a phone, a WhatsApp number or an email. Rows without
+ * one stay in the table, where a refresh or a read of their website may yet
+ * find one, but no list shows them (asked for on 17 Oct).
+ */
+export const REACHABLE = or(
+  isNotNull(prospects.phoneE164),
+  isNotNull(prospects.whatsappE164),
+  isNotNull(prospects.email),
 );
+
+/** The rows the queue draws from, before any narrowing. */
+const QUEUE_POPULATION = and(eq(prospects.status, "new"), REACHABLE);
 
 /**
  * What the queue can be narrowed by, with a count each.
@@ -105,7 +113,7 @@ export async function getQueueOptions(cityLimit = 12): Promise<QueueOptions> {
   const rows = await db.execute(sql`
     with queue as (
       select city, category from prospects
-      where status = 'new' and (phone_e164 is not null or email is not null)
+      where status = 'new' and (phone_e164 is not null or whatsapp_e164 is not null or email is not null)
     )
     -- Each arm is parenthesised: an unwrapped order-by-limit on the first
     -- select binds to the whole union, which is a syntax error here and would
@@ -185,7 +193,7 @@ export async function getProspects(
   limit = 200,
   offset = 0,
 ): Promise<ProspectRow[]> {
-  return queryProspects(eq(prospects.searchId, searchId), limit, offset);
+  return queryProspects(and(eq(prospects.searchId, searchId), REACHABLE), limit, offset);
 }
 
 async function queryProspects(
@@ -312,7 +320,10 @@ async function queryProspects(
 }
 
 export interface ProspectStats {
+  /** Rows listed: those with a phone, WhatsApp or email. */
   total: number;
+  /** Rows kept but not listed, with no way to reach them. */
+  hidden: number;
   withPhone: number;
   withEmail: number;
   withWebsite: number;
@@ -322,22 +333,26 @@ export async function getProspectStats(searchId: string): Promise<ProspectStats>
   const db = getDb();
   const rows = await db.execute(sql`
     select
-      count(*)::int as total,
+      count(*) filter (where phone_e164 is not null or whatsapp_e164 is not null or email is not null)::int as total,
+      count(*) filter (where phone_e164 is null and whatsapp_e164 is null and email is null)::int as hidden,
       count(*) filter (where phone_e164 is not null)::int as with_phone,
       count(*) filter (where email is not null)::int as with_email,
-      count(*) filter (where website is not null)::int as with_website
+      count(*) filter (where website is not null and (phone_e164 is not null or whatsapp_e164 is not null or email is not null))::int as with_website
     from prospects where search_id = ${searchId}
   `);
 
   const r = rows.rows[0] as {
     total: number;
+    hidden: number;
     with_phone: number;
     with_email: number;
     with_website: number;
   };
 
   return {
+    // The listed rows: the ones with a way to reach them. `hidden` is the rest.
     total: r?.total ?? 0,
+    hidden: r?.hidden ?? 0,
     withPhone: r?.with_phone ?? 0,
     withEmail: r?.with_email ?? 0,
     withWebsite: r?.with_website ?? 0,

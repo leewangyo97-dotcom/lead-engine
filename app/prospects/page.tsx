@@ -344,7 +344,13 @@ export default async function Prospects({
                 <span className="text-go">{stats.withPhone} with a phone</span>
                 <span>{stats.withEmail} with an email</span>
                 <span>{stats.withWebsite} with a website</span>
-                <RefreshAllButton searchId={active.id} count={stats.total} />
+                {/* Refresh covers every row, hidden ones too: it may find them a phone. */}
+                <RefreshAllButton searchId={active.id} count={stats.total + stats.hidden} />
+                {stats.hidden > 0 && (
+                  <span title="Kept, and checked again by refreshes and website reads">
+                    {stats.hidden} hidden: no phone or email
+                  </span>
+                )}
               </div>
             )}
 

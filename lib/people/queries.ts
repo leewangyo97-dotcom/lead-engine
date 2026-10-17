@@ -1,6 +1,6 @@
 import { and, asc, count, desc, eq, gte, ilike, inArray, lte, ne, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "../db";
-import { companies, people, peopleSources, suppressions } from "../db/schema";
+import { companies, people, peopleSources, prospects, suppressions } from "../db/schema";
 import type { Seniority } from "./seniority";
 import { isStatus } from "./status";
 
@@ -71,9 +71,30 @@ export function parseFilter(params: Record<string, string | string[] | undefined
   };
 }
 
+/**
+ * A way to reach the person: their own verified address or phone, or their
+ * business's phone or email (from the map listing, or published on the site
+ * they were found on). A guessed address is not one. People without any stay
+ * stored but are not listed or exported (asked for on 17 Oct).
+ */
+const REACHABLE = sql`(
+  (${people.emailStatus} = 'verified' and ${people.email} is not null)
+  or ${people.phone} is not null
+  or exists (
+    select 1 from ${prospects} pr
+    where ${companies.origin} = 'prospect' and pr.id = ${companies.originId}
+      and (pr.phone_e164 is not null or pr.whatsapp_e164 is not null or pr.email is not null)
+  )
+  or exists (
+    select 1 from ${peopleSources} ps
+    where ps.company_id = ${companies.id} and ps.person_id is null and ps.field in ('email', 'phone')
+  )
+)`;
+
 function where(f: PeopleFilter): SQL | undefined {
   const like = (v: string) => `%${v.replace(/[%_]/g, "")}%`;
   const parts: (SQL | undefined)[] = [
+    REACHABLE,
     f.q
       ? or(
           ilike(people.name, like(f.q)),
@@ -187,7 +208,7 @@ export async function peopleFacets(): Promise<{ countries: Facet[]; categories: 
       .select({ name: sql<string>`${column}`, count: count() })
       .from(people)
       .innerJoin(companies, eq(companies.id, people.companyId))
-      .where(sql`${column} is not null`)
+      .where(and(REACHABLE, sql`${column} is not null`))
       .groupBy(column)
       .orderBy(desc(count()));
   const [countries, categories] = await Promise.all([facet(companies.countryCode), facet(companies.industry)]);

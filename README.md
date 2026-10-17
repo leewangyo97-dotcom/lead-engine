@@ -42,6 +42,12 @@ Follow-ups that are due wait on `/followups`; "Start sweep" shows them one at a
 time with the same send buttons as `/prospects`, which write the right
 follow-up text themselves.
 
+Lists show only businesses and people with a phone, WhatsApp or email; the
+rest stay stored (a refresh or a website read may find them one) and a search
+says how many are hidden. Website reads decode addresses hidden from bots
+(Cloudflare's "email protection", "info [at] site [dot] com");
+`pnpm enrich --again` re-reads sites read before that gave no email.
+
 When anyone answers, mark it on `/replies`: every business messaged, oldest
 first, with a link that opens the Gmail search or the WhatsApp chat where an
 answer would be. The app cannot read either, so `/review` learns only from

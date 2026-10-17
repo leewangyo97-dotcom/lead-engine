@@ -1054,3 +1054,22 @@ people; a sentence-title becomes the role it names; assistant, HR, payroll,
 accounts payable, receptionist and "first impressions" roles are not
 decision-makers. `pnpm people:tidy` applied this to stored rows: 6 removed, 3
 titles tidied. Buffer (7 people), test data from building the tab, removed.
+
+## Country searches from Geofabrik; no-contact rows hidden; hidden emails decoded (17 October)
+
+Overpass could not finish Canada: a category at a time with the server's
+per-client cool-down, schools never loaded even split by province. Whole
+countries on GitHub Actions now come from the Geofabrik extract, filtered by
+osmium-tool, clipped to the country's own boundary relation, each element
+through the same toRawPlace. `pnpm places:compare` on Luxembourg, all 21
+categories: 4,860 of Overpass's 4,863 places, every one with the same name and
+position; the 3 missing are relations osmium cannot place (not multipolygons).
+Overpass stays the fallback, and the path for cities and regions.
+
+Joshua asked to leave out businesses and people with no phone or email: they
+are hidden from lists and exports, not deleted, since a refresh or a website
+read may yet find a contact. He also asked for personal emails; declined, as
+his own rule for decision-makers is business contacts only, and personal ones
+carry Data Privacy Act and GDPR risk. Instead website reads decode addresses
+the business published but hid from bots (Cloudflare "email protection",
+bracketed [at]/[dot]); a re-read of 40 sites read before found 5 emails.

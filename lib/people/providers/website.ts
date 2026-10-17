@@ -1,5 +1,6 @@
 import * as cheerio from "cheerio";
 import { findPhoneNumbersInText, type CountryCode } from "libphonenumber-js/max";
+import { unhideEmails } from "../../places/extract";
 import { toE164 } from "../../places/phone";
 import { isPersonalEmail, isRoleAddress, isValidSyntax } from "../email-pattern";
 import { isDecisionMaker } from "../seniority";
@@ -46,7 +47,8 @@ const clean = (text: string) => text.replace(/\s+/g, " ").trim();
  * adjacent elements, so a title read as "Chief of StaffPortland, USA" on
  * buffer.com, and "6776EMAIL" hid a phone number (14 Oct).
  */
-const load = (html: string) => cheerio.load(html.replace(/></g, "> <"));
+// Hidden addresses put back first (unhideEmails), so cards and contact pages read them.
+const load = (html: string) => cheerio.load(unhideEmails(html).replace(/></g, "> <"));
 
 // The role words a sentence-for-a-title is reduced to, in the order bands rank them.
 const ROLE_WORD =

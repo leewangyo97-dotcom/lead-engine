@@ -38,9 +38,9 @@ opens a page that is unambiguously the message.
   failed the real sample is 18, not 24. Each has a working email.
 - **Mark every answer on `/replies`** (15 Oct): 68 messaged, one click to Gmail/WhatsApp. 0 marked.
 - **Inbox "Waiting on you"** (15 Oct) counts all of the above in one card, with links (`lib/today.ts`).
-- **Dead email domains refused** (15 Oct): nightly `pnpm email:mx`, DNS only. 31 domains, 33 prospects.
-- **`pnpm setup:check`** (15 Oct) lists what setup is missing, with fixes. 4 to do on 15 Oct.
-- **/people** (15 Oct): Country/Category chips; Copy email per person (shared `CopiedPanel`).
+- Dead email domains refused nightly (`pnpm email:mx`); `pnpm setup:check` lists missing setup (15 Oct).
+- **/people**: chips, Copy email per person, one row per business (17 Oct). Lists hide no-contact rows.
+- **Country searches** (17 Oct): Geofabrik + osmium on Actions; `pnpm places:compare` matched Overpass 99.9%.
 
 ### 2. Decisions only Joshua can make
 

@@ -305,6 +305,9 @@ export default async function PeoplePage({ searchParams }: { searchParams: Promi
             {total}{" "}
             {filter.perBusiness ? (total === 1 ? "business" : "businesses") : total === 1 ? "person" : "people"}
           </span>
+          <span title="Kept, and listed once a phone or email is found for them or their business">
+            no phone or email: not listed
+          </span>
           {filter.company && rows[0] && (
             <span>
               everyone at {rows[0].company} ·{" "}

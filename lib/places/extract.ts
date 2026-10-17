@@ -36,7 +36,46 @@ export interface ExtractedEmail {
   confidence: "mailto" | "text";
 }
 
-export function extractEmails(html: string): ExtractedEmail[] {
+/**
+ * Cloudflare's "email protection": the address XOR'd with the first byte of
+ * the hex string. Sites behind Cloudflare publish their address this way by
+ * default, and to a plain reader it says "[email protected]".
+ */
+export function decodeCfEmail(hex: string): string | null {
+  if (!/^[0-9a-f]+$/i.test(hex) || hex.length < 8 || hex.length % 2) return null;
+  const key = parseInt(hex.slice(0, 2), 16);
+  let out = "";
+  for (let i = 2; i < hex.length; i += 2) out += String.fromCharCode(parseInt(hex.slice(i, i + 2), 16) ^ key);
+  return /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(out) ? out : null;
+}
+
+/**
+ * The addresses a business published but hid from bots, put back where any
+ * reader sees them: Cloudflare-protected links and spans, "info [at] site
+ * [dot] com" in brackets (bare "at" and "dot" are ordinary words, so they
+ * are left alone), and an "@" or "." written as an HTML entity. Nothing is
+ * guessed: each is the business's own address, spelled out differently.
+ */
+export function unhideEmails(html: string): string {
+  return html
+    .replace(/&#0*64;|&#x0*40;/gi, "@")
+    .replace(/&#0*46;|&#x0*2e;/gi, ".")
+    .replace(/href=(["'])[^"']*\/cdn-cgi\/l\/email-protection#([0-9a-f]+)\1/gi, (match, quote, hex) => {
+      const email = decodeCfEmail(hex);
+      return email ? `href=${quote}mailto:${email}${quote}` : match;
+    })
+    .replace(/<([a-z]+)([^>]*?)\sdata-cfemail=(["'])([0-9a-f]+)\3([^>]*)>[\s\S]*?<\/\1>/gi, (match, tag, before, _q, hex, after) => {
+      const email = decodeCfEmail(hex);
+      return email ? `<${tag}${before}${after}>${email}</${tag}>` : match;
+    })
+    .replace(
+      /([a-z0-9._%+-]+)\s*[[({]\s*at\s*[\])}]\s*([a-z0-9-]+(?:\s*[[({]\s*(?:dot|\.)\s*[\])}]\s*[a-z0-9-]+)+)/gi,
+      (_m, user, rest: string) => `${user}@${rest.replace(/\s*[[({]\s*(?:dot|\.)\s*[\])}]\s*/gi, ".")}`,
+    );
+}
+
+export function extractEmails(rawHtml: string): ExtractedEmail[] {
+  const html = unhideEmails(rawHtml);
   const found = new Map<string, "mailto" | "text">();
 
   // A mailto: href is the business stating its own address. Anything scraped
