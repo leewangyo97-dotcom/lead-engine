@@ -1,4 +1,5 @@
 import { eq, sql } from "drizzle-orm";
+import pMap from "p-map";
 import { getDb } from "../db";
 import { chunk } from "../chunk";
 import { prospects, searches } from "../db/schema";
@@ -15,6 +16,23 @@ export interface SearchProgress {
   found: number;
   inserted: number;
   duplicates: number;
+  /** Categories of an area search that did not load; the rest were saved. */
+  failed: string[];
+}
+
+/**
+ * How many categories of a country search run at once. Overpass gives each
+ * client two query slots; a third would only wait for one, or be refused.
+ */
+export const AREA_CONCURRENCY = 2;
+
+/** The note a partly loaded search keeps, so the page can say what is missing. */
+export function partialNote(failed: string[], total: number): string | null {
+  if (failed.length === 0) return null;
+  return (
+    `${failed.length} of ${total} categories did not load (${failed.join(", ")}). ` +
+    `Search again to retry them; the places already found are kept.`
+  );
 }
 
 /**
@@ -26,7 +44,11 @@ export interface SearchProgress {
  * which no serverless request will sit through. Adding a queue dependency to
  * hold one row of state would be worse than the column.
  */
-export async function runSearch(searchId: string): Promise<SearchProgress> {
+export async function runSearch(
+  searchId: string,
+  /** One line per category of an area search, for the terminal and the Actions log. */
+  onProgress?: (line: string) => void,
+): Promise<SearchProgress> {
   const db = getDb();
 
   const [search] = await db.select().from(searches).where(eq(searches.id, searchId)).limit(1);
@@ -56,23 +78,60 @@ export async function runSearch(searchId: string): Promise<SearchProgress> {
       })
       .where(eq(searches.id, searchId));
 
-    const raw = place.isArea
-      ? await overpassProvider.searchArea!({ osmId: place.osmId, categories })
-      : await overpassProvider.search({
-          lat: place.lat,
-          lon: place.lon,
-          radiusM: search.radiusM ?? 15_000,
-          categories,
-        });
+    let found = 0;
+    let inserted = 0;
+    const failed: { category: string; error: string }[] = [];
 
-    const inserted = await persist(searchId, place.countryCode ?? null, raw);
+    if (place.isArea) {
+      /*
+       * One category per query, two at a time, each saved as it arrives.
+       *
+       * Every category in one query was more than the free server would run
+       * for a large country: Canada failed with a 502 on every attempt (17
+       * Oct), while one category over all of Canada (dentists, 5,729 places)
+       * answered in 38 seconds. Saved per category, a failure late on keeps
+       * everything found before it, and the categories that failed are named.
+       */
+      let done = 0;
+      await pMap(
+        categories,
+        async (category) => {
+          try {
+            const raw = await overpassProvider.searchArea!({
+              osmId: place.osmId,
+              categories: [category],
+              countryCode: place.countryCode,
+            });
+            const added = await persist(searchId, place.countryCode ?? null, raw);
+            found += raw.length;
+            inserted += added;
+            onProgress?.(`${++done}/${categories.length} ${category}: ${raw.length} found, ${added} new`);
+          } catch (err) {
+            failed.push({ category, error: err instanceof Error ? err.message : String(err) });
+            onProgress?.(`${++done}/${categories.length} ${category}: did not load`);
+          }
+        },
+        { concurrency: AREA_CONCURRENCY },
+      );
+      if (failed.length === categories.length) throw new Error(failed[0].error);
+    } else {
+      const raw = await overpassProvider.search({
+        lat: place.lat,
+        lon: place.lon,
+        radiusM: search.radiusM ?? 15_000,
+        categories,
+      });
+      found = raw.length;
+      inserted = await persist(searchId, place.countryCode ?? null, raw);
+    }
 
+    const failedNames = failed.map((f) => f.category);
     await db
       .update(searches)
-      .set({ status: "complete", completedAt: new Date() })
+      .set({ status: "complete", completedAt: new Date(), error: partialNote(failedNames, categories.length) })
       .where(eq(searches.id, searchId));
 
-    return { found: raw.length, inserted, duplicates: raw.length - inserted };
+    return { found, inserted, duplicates: found - inserted, failed: failedNames };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     await db

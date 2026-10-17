@@ -226,6 +226,16 @@ the area queries are the ones that get shed first under load.
 The nightly and monthly jobs mark these steps `continue-on-error`, so a busy
 endpoint never fails the run or blocks the job pipeline.
 
+**A whole country failing every time with 502 (fixed 17 Oct).** All 21
+categories over Canada in one query was more than the free server would run;
+one category over Canada answers in under a minute. A country search now asks
+for one category at a time, two at once (the server's limit per client), and
+saves each as it arrives. A category that still fails is retried on the
+maps.mail.ru mirror, then split by province or state. If some categories
+still do not load, the search is kept as complete with a note naming them;
+search again to retry, and the places already found are skipped as
+duplicates. The terminal and the Actions log print one line per category.
+
 ## `enrich: nothing pending with a website`
 
 Not a fault. Stage A stores a website only when OpenStreetMap has the tag, and

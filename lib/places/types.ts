@@ -42,7 +42,7 @@ export interface PlaceProvider {
   readonly name: string;
   search(input: PlaceSearchInput): Promise<RawPlace[]>;
   /** Whole-country and region searches resolve an admin area instead of a radius. */
-  searchArea?(input: { osmId: number; categories: PlaceCategory[] }): Promise<RawPlace[]>;
+  searchArea?(input: { osmId: number; categories: PlaceCategory[]; countryCode?: string | null }): Promise<RawPlace[]>;
 }
 
 export interface GeocodedPlace {

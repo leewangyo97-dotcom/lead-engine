@@ -353,6 +353,13 @@ export default async function Prospects({
                 {active.error ?? "This search failed."}
               </p>
             )}
+            {/* A country search that loaded most categories keeps them and says
+                which ones did not (lib/places/search-runner.ts). */}
+            {active?.status === "complete" && active.error && (
+              <p role="status" className="mt-4 rounded-sm border border-hold bg-hold-tint p-3 text-body-sm">
+                {active.error}
+              </p>
+            )}
 
             {rows.length === 0 ? (
               <p className="mt-6 rounded-md border border-rule bg-surface p-7 text-body text-muted">

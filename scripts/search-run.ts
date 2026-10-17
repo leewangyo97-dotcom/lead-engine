@@ -39,9 +39,10 @@ async function main() {
       // throw straight out of this loop, so a single bad row meant every search
       // behind it stayed queued with nothing said about them.
       try {
-        const r = await runSearch(s.id);
+        const r = await runSearch(s.id, (line) => console.log(`search-run: ${s.query} — ${line}`));
         console.log(
-          `search-run: ${s.query} — found ${r.found}, new ${r.inserted}, dupes ${r.duplicates}`,
+          `search-run: ${s.query} — found ${r.found}, new ${r.inserted}, dupes ${r.duplicates}` +
+            (r.failed.length ? `; did not load: ${r.failed.join(", ")}` : ""),
         );
       } catch (err) {
         failures += 1;
@@ -76,7 +77,7 @@ async function main() {
     .values({ query, categories, radiusM: 15_000 })
     .returning({ id: searches.id });
 
-  const r = await runSearch(row.id);
+  const r = await runSearch(row.id, (line) => console.log(`search-run: ${query} — ${line}`));
   console.log(
     `search-run: ${query} — found ${r.found}, new ${r.inserted}, dupes ${r.duplicates} (search ${row.id})`,
   );

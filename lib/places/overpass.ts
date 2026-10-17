@@ -3,7 +3,16 @@ import { OSM_CATEGORIES, type PlaceCategory } from "./osm-categories";
 import { OSM_USER_AGENT } from "./nominatim";
 import type { PlaceProvider, PlaceSearchInput, RawPlace } from "./types";
 
-const OVERPASS = "https://overpass-api.de/api/interpreter";
+/**
+ * Public Overpass instances (wiki.openstreetmap.org/wiki/Overpass_API), tried
+ * in order: the main one, and a mirror only when it fails, so the load stays
+ * where its operators expect it. On 17 Oct two other listed mirrors
+ * (kumi.systems, private.coffee) answered 500 to a one-node query.
+ */
+export const OVERPASS_ENDPOINTS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+];
 
 /** Overpass area ids are the relation's osm_id offset by this constant. */
 const AREA_ID_OFFSET = 3_600_000_000;
@@ -49,7 +58,19 @@ export function buildAreaQuery(
 
   return (
     `[out:json][timeout:${timeoutS}];\n` +
-    `area(${AREA_ID_OFFSET + osmId})->.searchArea;\n(\n${clauses}\n);\nout center tags;`
+    `area(${AREA_ID_OFFSET + osmId})->.searchArea;\n(\n${clauses}\n);\nout center tags qt;`
+  );
+}
+
+/**
+ * A country's own first-level divisions (provinces, states), for a category
+ * too big to ask for nationally in one query. The ISO 3166-2 prefix keeps out
+ * a neighbour's states, whose borders share nodes with this country's.
+ */
+export function buildSubAreasQuery(osmId: number, countryCode: string, timeoutS = 90): string {
+  return (
+    `[out:json][timeout:${timeoutS}];area(${AREA_ID_OFFSET + osmId})->.c;` +
+    `rel(area.c)["boundary"="administrative"]["admin_level"="4"]["ISO3166-2"~"^${countryCode.toUpperCase()}-"];out ids;`
   );
 }
 
@@ -151,24 +172,55 @@ export function friendlyOverpassError(message: string): string {
   return message;
 }
 
-async function run(query: string, timeoutMs: number, requested: PlaceCategory[]) {
-  try {
-    const data = await fetchJson<{ elements: OverpassElement[] }>(OVERPASS, {
-      method: "POST",
-      body: new URLSearchParams({ data: query }).toString(),
-      headers: {
-        "User-Agent": OSM_USER_AGENT,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      timeoutMs,
-    });
+/**
+ * A 200 that still failed. Overpass reports a query that ran out of time or
+ * memory in `remark`, beside whatever it had found by then: taken as success,
+ * a search would quietly keep half its results.
+ */
+export function overpassRemarkError(remark: string | undefined): string | null {
+  return remark && /runtime error|timed out|out of memory/i.test(remark) ? remark : null;
+}
 
-    return data.elements
-      .map((el) => toRawPlace(el, requested))
-      .filter((p): p is RawPlace => p !== null);
-  } catch (err) {
-    throw new Error(friendlyOverpassError(err instanceof Error ? err.message : String(err)));
+async function overpassJson(
+  query: string,
+  timeoutMs: number,
+  endpoints: string[] = OVERPASS_ENDPOINTS,
+): Promise<{ elements: OverpassElement[] }> {
+  let last = "";
+  for (const endpoint of endpoints) {
+    try {
+      const data = await fetchJson<{ elements: OverpassElement[]; remark?: string }>(endpoint, {
+        method: "POST",
+        body: new URLSearchParams({ data: query }).toString(),
+        headers: {
+          "User-Agent": OSM_USER_AGENT,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        timeoutMs,
+        attempts: 2,
+        // A loaded server needs longer than fetchJson's half second to recover.
+        sleep: (ms) => new Promise((r) => setTimeout(r, ms * 20)),
+      });
+      const failed = overpassRemarkError(data.remark);
+      if (failed) throw new Error(`${endpoint}: ${failed}`);
+      return data;
+    } catch (err) {
+      last = err instanceof Error ? err.message : String(err);
+    }
   }
+  throw new Error(friendlyOverpassError(last));
+}
+
+async function run(query: string, timeoutMs: number, requested: PlaceCategory[]) {
+  const data = await overpassJson(query, timeoutMs);
+  return data.elements
+    .map((el) => toRawPlace(el, requested))
+    .filter((p): p is RawPlace => p !== null);
+}
+
+async function subAreas(osmId: number, countryCode: string): Promise<number[]> {
+  const data = await overpassJson(buildSubAreasQuery(osmId, countryCode), 120_000);
+  return data.elements.filter((e) => e.type === "relation").map((e) => e.id);
 }
 
 /**
@@ -216,9 +268,24 @@ export const overpassProvider: PlaceProvider = {
     return run(buildRadiusQuery(input), 100_000, input.categories);
   },
 
-  async searchArea({ osmId, categories }): Promise<RawPlace[]> {
+  async searchArea({ osmId, categories, countryCode }): Promise<RawPlace[]> {
     // A country-wide query genuinely takes minutes; the client timeout has to
     // exceed the [timeout:180] in the query or we abort work Overpass is doing.
-    return run(buildAreaQuery(osmId, categories), 200_000, categories);
+    try {
+      return await run(buildAreaQuery(osmId, categories), 200_000, categories);
+    } catch (err) {
+      // Too big as one query even after the mirror: the same search one
+      // province or state at a time, deduplicated where borders overlap.
+      if (!countryCode) throw err;
+      const parts = await subAreas(osmId, countryCode).catch(() => []);
+      if (parts.length < 2) throw err;
+      const found = new Map<string, RawPlace>();
+      for (const part of parts) {
+        for (const place of await run(buildAreaQuery(part, categories), 200_000, categories)) {
+          found.set(place.sourceId, place);
+        }
+      }
+      return [...found.values()];
+    }
   },
 };
