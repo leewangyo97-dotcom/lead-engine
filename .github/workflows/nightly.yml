@@ -35,7 +35,8 @@ permissions:
 jobs:
   harvest:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # 25, not 15: scoring 160,000 prospects after Canada (17 Oct) takes minutes.
+    timeout-minutes: 25
     # The monthly cron exists only to trigger retention. On a weekday the 1st
     # fires both schedules, and the weekday one already covers the harvest.
     if: github.event.schedule != '17 20 1 * *'
